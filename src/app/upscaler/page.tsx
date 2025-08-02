@@ -11,9 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wand2, Download, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import Upscaler from 'upscaler';
+import { upscaleFile } from '@/app/actions';
 
-type UpscaleFactor = 2 | 3 | 4;
+type UpscaleFactor = 2 | 4;
 
 export default function UpscalerPage() {
   const [originalFile, setOriginalFile] = useState<File | null>(null);
@@ -23,7 +23,6 @@ export default function UpscalerPage() {
   const [upscaleFactor, setUpscaleFactor] = useState<UpscaleFactor>(2);
   
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -41,7 +40,7 @@ export default function UpscalerPage() {
   }, [originalFileUrl, upscaledImageUrl]);
 
   const handleProcessing = async () => {
-    if (!originalFileUrl) {
+    if (!originalFile) {
         toast({
             variant: 'destructive',
             title: 'No Image Uploaded',
@@ -51,33 +50,42 @@ export default function UpscalerPage() {
     }
 
     setIsLoading(true);
-    setLoadingProgress(0);
     setError(null);
     setUpscaledImageUrl(null);
 
     try {
-        const upscaler = new Upscaler({
-            model: `esrgan-slim/x${upscaleFactor}`
-        });
-        const resultUrl = await upscaler.upscale(originalFileUrl, {
-            output: 'blob-url',
-            patchSize: 64,
-            padding: 2,
-            progress: (progress) => {
-                setLoadingProgress(Math.round(progress * 100));
+        const reader = new FileReader();
+        reader.readAsDataURL(originalFile);
+        reader.onload = async () => {
+            try {
+                const fileDataUri = reader.result as string;
+                const resultUrl = await upscaleFile(fileDataUri, upscaleFactor);
+                setUpscaledImageUrl(resultUrl);
+            } catch(e) {
+                 const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred during upscaling.';
+                setError(errorMessage);
+                toast({
+                    variant: 'destructive',
+                    title: 'Upscaling Error',
+                    description: errorMessage,
+                });
+            } finally {
+                setIsLoading(false);
             }
-        });
-        setUpscaledImageUrl(resultUrl);
+        };
+        reader.onerror = () => {
+            setIsLoading(false);
+            throw new Error('Failed to read file.');
+        };
     } catch (e) {
         const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred during upscaling.';
-        console.error("UpscalerJS Error:", e);
+        console.error("Upscaler Error:", e);
         setError(errorMessage);
         toast({
             variant: 'destructive',
             title: 'Upscaling Error',
-            description: "Failed to upscale image. The model may not support this image type or size. Please try a different image.",
+            description: "Failed to upscale image. Please try a different image.",
         });
-    } finally {
         setIsLoading(false);
     }
   };
@@ -88,7 +96,7 @@ export default function UpscalerPage() {
       a.href = upscaledImageUrl;
       a.download = `upscaled-${upscaleFactor}x-image.png`;
       document.body.appendChild(a);
-      a.click();
+a.click();
       document.body.removeChild(a);
     }
   };
@@ -102,7 +110,7 @@ export default function UpscalerPage() {
                 Transform Your Images with Free AI Upscaling
             </h1>
             <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
-                Stop using blurry, low-resolution images. Our free AI tool instantly upscales your photos to 2x, 3x, or 4x their original size, revealing stunning detail. All processing happens in your browser, so your images stay private and secure.
+                Stop using blurry, low-resolution images. Our free AI tool instantly upscales your photos to 2x or 4x their original size, revealing stunning detail.
             </p>
         </section>
 
@@ -112,8 +120,8 @@ export default function UpscalerPage() {
                     onFileUpload={handleFileUpload}
                     fileUrl={originalFileUrl}
                     fileType={originalFile ? originalFile.type : null}
-                    isLoading={false}
-                    loadingStatus=""
+                    isLoading={isLoading}
+                    loadingStatus="Upscaling with AI..."
                     accept={{'image/*': ['.jpeg', '.png', '.gif', '.webp']}}
                     dropzoneText="Only images are supported for upscaling"
                 />
@@ -133,10 +141,6 @@ export default function UpscalerPage() {
                                     <Label htmlFor="r1">2x</Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="3" id="r2" />
-                                    <Label htmlFor="r3">3x</Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="4" id="r4" />
                                     <Label htmlFor="r4">4x</Label>
                                 </div>
@@ -145,7 +149,7 @@ export default function UpscalerPage() {
                         
                         <Button onClick={handleProcessing} disabled={isLoading || !originalFile} className="w-full">
                             {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
-                            {isLoading ? `Upscaling... ${loadingProgress}%` : 'Upscale Image'}
+                            {isLoading ? `Upscaling...` : 'Upscale Image'}
                         </Button>
                     </CardContent>
                 </Card>
@@ -166,8 +170,8 @@ export default function UpscalerPage() {
                             {isLoading && (
                                 <div className="absolute inset-0 bg-background/90 flex flex-col items-center justify-center z-10 rounded-lg">
                                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                                    <p className="mt-4 text-center font-medium">Upscaling: {loadingProgress}%</p>
-                                    <p className="text-sm text-muted-foreground">Please keep this window open.</p>
+                                    <p className="mt-4 text-center font-medium">Upscaling with AI</p>
+                                    <p className="text-sm text-muted-foreground">This may take a moment...</p>
                                 </div>
                             )}
                             {upscaledImageUrl && !isLoading ? (
