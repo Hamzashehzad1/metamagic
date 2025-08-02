@@ -11,9 +11,6 @@ export function Header() {
           <Button variant="ghost" asChild>
             <Link href="/">Metadata Generator</Link>
           </Button>
-          <Button variant="ghost" asChild>
-            <Link href="/upscaler">Image Upscaler</Link>
-          </Button>
         </nav>
         <div className="flex items-center gap-2">
             <ThemeToggle />
