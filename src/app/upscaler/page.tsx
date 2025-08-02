@@ -57,7 +57,7 @@ export default function UpscalerPage() {
 
     try {
         const upscaler = new Upscaler({
-            model: `esrgan-thick/x${upscaleFactor}`
+            model: `esrgan-slim/x${upscaleFactor}`
         });
         const resultUrl = await upscaler.upscale(originalFileUrl, {
             output: 'blob-url',
