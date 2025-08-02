@@ -10,7 +10,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {googleAI} from '@genkit-ai/googleai';
 
 const UpscaleImageInputSchema = z.object({
   photoDataUri: z
@@ -43,7 +42,7 @@ const upscaleImageFlow = ai.defineFlow(
   },
   async (input) => {
     const { media } = await ai.generate({
-      model: googleAI('gemini-2.0-flash'),
+      model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: [
         {
           text: `You are an expert image editor. Upscale this image to a higher resolution (${input.upscaleFactor}), enhancing its quality and clarity while preserving the original details and composition. Do not change the content of the image.
