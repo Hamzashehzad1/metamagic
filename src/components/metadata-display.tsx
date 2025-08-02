@@ -28,8 +28,8 @@ export function MetadataDisplay({ metadata, isLoading, imageUrl }: MetadataDispl
       filename = 'metadata.json';
       mimeType = 'application/json';
     } else {
-      const { caption, ocrText, seoKeywords, seoTitle, seoDescription } = metadata;
-      content = `Image Caption:\n${caption}\n\nOCR Text:\n${ocrText}\n\nSEO Keywords:\n${seoKeywords}\n\nSEO Title:\n${seoTitle}\n\nSEO Description:\n${seoDescription}`;
+      const { caption, seoKeywords, seoTitle, seoDescription } = metadata;
+      content = `Image Caption:\n${caption}\n\nSEO Keywords:\n${seoKeywords}\n\nSEO Title:\n${seoTitle}\n\nSEO Description:\n${seoDescription}`;
       filename = 'metadata.txt';
       mimeType = 'text/plain';
     }
@@ -89,7 +89,6 @@ export function MetadataDisplay({ metadata, isLoading, imageUrl }: MetadataDispl
             </div>
         )}
         <MetadataCard title="AI Generated Caption" content={metadata.caption} />
-        <MetadataCard title="Extracted Text (OCR)" content={metadata.ocrText} />
         <MetadataCard title="SEO Keywords" content={metadata.seoKeywords} />
         <MetadataCard title="SEO Title" content={metadata.seoTitle} />
         <MetadataCard title="SEO Description" content={metadata.seoDescription} />

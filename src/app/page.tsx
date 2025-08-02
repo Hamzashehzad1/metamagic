@@ -5,7 +5,6 @@ import { Header } from '@/components/header';
 import { ImageUploader } from '@/components/image-uploader';
 import { MetadataDisplay } from '@/components/metadata-display';
 import { type Metadata, processImage } from '@/app/actions';
-import Tesseract from 'tesseract.js';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
@@ -44,15 +43,8 @@ export default function Home() {
           try {
             const photoDataUri = reader.result as string;
 
-            setLoadingStatus('Extracting text with OCR...');
-            const { data: { text: ocrText } } = await Tesseract.recognize(
-              imageFile,
-              'eng',
-              { logger: m => console.log(m) }
-            );
-
             setLoadingStatus('Generating caption & SEO data...');
-            const result = await processImage(photoDataUri, ocrText);
+            const result = await processImage(photoDataUri);
             
             setMetadata(result);
           } catch (e) {

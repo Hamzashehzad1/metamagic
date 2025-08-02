@@ -5,15 +5,13 @@ import { extractSeoMetadata } from '@/ai/flows/extract-seo-metadata';
 
 export interface Metadata {
   caption: string;
-  ocrText: string;
   seoKeywords: string;
   seoTitle: string;
   seoDescription: string;
 }
 
 export async function processImage(
-  photoDataUri: string,
-  ocrText: string
+  photoDataUri: string
 ): Promise<Metadata> {
   try {
     const { caption } = await generateImageCaption({ photoDataUri });
@@ -21,12 +19,10 @@ export async function processImage(
     const { seoKeywords, seoTitle, seoDescription } = await extractSeoMetadata({
       photoDataUri,
       imageCaption: caption,
-      ocrText,
     });
 
     return {
       caption,
-      ocrText,
       seoKeywords,
       seoTitle,
       seoDescription,
