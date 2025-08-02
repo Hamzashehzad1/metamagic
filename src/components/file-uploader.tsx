@@ -7,27 +7,61 @@ import { UploadCloud, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
-interface ImageUploaderProps {
-  onImageUpload: (file: File) => void;
-  imageUrl: string | null;
+interface FileUploaderProps {
+  onFileUpload: (file: File) => void;
+  fileUrl: string | null;
+  fileType: string | null;
   isLoading: boolean;
   loadingStatus: string;
 }
 
-export function ImageUploader({ onImageUpload, imageUrl, isLoading, loadingStatus }: ImageUploaderProps) {
+export function FileUploader({ onFileUpload, fileUrl, fileType, isLoading, loadingStatus }: FileUploaderProps) {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
-      onImageUpload(acceptedFiles[0]);
+      onFileUpload(acceptedFiles[0]);
     }
-  }, [onImageUpload]);
+  }, [onFileUpload]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.jpeg', '.png', '.gif', '.webp'],
+      'image/*': ['.jpeg', '.png', '.gif', '.webp', '.svg'],
+      'video/*': ['.mp4', '.webm'],
     },
     multiple: false,
   });
+
+  const renderPreview = () => {
+    if (!fileUrl || !fileType) return null;
+
+    if (fileType.startsWith('image/')) {
+        return (
+            <Image
+              src={fileUrl}
+              alt="File preview"
+              layout="fill"
+              objectFit="contain"
+              className="rounded-lg p-2"
+              data-ai-hint="uploaded image"
+            />
+        )
+    }
+
+    if (fileType.startsWith('video/')) {
+        return (
+            <video
+                src={fileUrl}
+                controls
+                className="w-full h-full object-contain rounded-lg p-2"
+                data-ai-hint="uploaded video"
+            >
+                Your browser does not support the video tag.
+            </video>
+        )
+    }
+
+    return <p>Unsupported file type</p>;
+  }
 
   return (
     <Card className="h-full">
@@ -48,21 +82,14 @@ export function ImageUploader({ onImageUpload, imageUrl, isLoading, loadingStatu
             </div>
           )}
           
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt="Image preview"
-              layout="fill"
-              objectFit="contain"
-              className="rounded-lg p-2"
-              data-ai-hint="uploaded image"
-            />
+          {fileUrl ? (
+            renderPreview()
           ) : (
             <div className="text-center p-4">
               <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-              <p className="mt-4 font-semibold">Drag & drop an image here</p>
+              <p className="mt-4 font-semibold">Drag & drop a file here</p>
               <p className="text-sm text-muted-foreground">or click to select a file</p>
-              <p className="text-xs text-muted-foreground mt-2">PNG, JPG, GIF, WEBP supported</p>
+              <p className="text-xs text-muted-foreground mt-2">Images, Videos, and SVGs supported</p>
             </div>
           )}
         </div>

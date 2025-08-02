@@ -10,14 +10,14 @@ export interface Metadata {
   seoDescription: string;
 }
 
-export async function processImage(
-  photoDataUri: string
+export async function processFile(
+  fileDataUri: string
 ): Promise<Metadata> {
   try {
-    const { caption } = await generateImageCaption({ photoDataUri });
+    const { caption } = await generateImageCaption({ photoDataUri: fileDataUri });
 
     const { seoKeywords, seoTitle, seoDescription } = await extractSeoMetadata({
-      photoDataUri,
+      photoDataUri: fileDataUri,
       imageCaption: caption,
     });
 
@@ -28,7 +28,7 @@ export async function processImage(
       seoDescription,
     };
   } catch (error) {
-    console.error('Error processing image:', error);
+    console.error('Error processing file:', error);
     throw new Error('Failed to generate metadata from AI. Please try again.');
   }
 }
