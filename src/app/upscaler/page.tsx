@@ -13,7 +13,7 @@ import { Wand2, Download, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import Upscaler from 'upscaler';
 // @ts-ignore
-import upscalerModel from '@upscalerjs/esrgan-slim/4x';
+import upscalerModel from '@upscalerjs/esrgan-slim';
 
 
 type UpscaleFactor = 2 | 4;
