@@ -6,13 +6,15 @@ import { MetadataCard } from './metadata-card';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Download } from 'lucide-react';
+import Image from 'next/image';
 
 interface MetadataDisplayProps {
   metadata: Metadata | null;
   isLoading: boolean;
+  imageUrl: string | null;
 }
 
-export function MetadataDisplay({ metadata, isLoading }: MetadataDisplayProps) {
+export function MetadataDisplay({ metadata, isLoading, imageUrl }: MetadataDisplayProps) {
 
   const exportAs = (type: 'json' | 'txt') => {
     if (!metadata) return;
@@ -50,6 +52,7 @@ export function MetadataDisplay({ metadata, isLoading }: MetadataDisplayProps) {
           <CardTitle className="font-headline">Generated Metadata</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <Skeleton className="h-48 w-full" />
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
@@ -80,6 +83,11 @@ export function MetadataDisplay({ metadata, isLoading }: MetadataDisplayProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {imageUrl && (
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg border">
+                <Image src={imageUrl} alt="Uploaded image" layout="fill" objectFit="contain" data-ai-hint="uploaded image" />
+            </div>
+        )}
         <MetadataCard title="AI Generated Caption" content={metadata.caption} />
         <MetadataCard title="Extracted Text (OCR)" content={metadata.ocrText} />
         <MetadataCard title="SEO Keywords" content={metadata.seoKeywords} />

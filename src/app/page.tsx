@@ -110,7 +110,7 @@ export default function Home() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <MetadataDisplay metadata={metadata} isLoading={isLoading} />
+            <MetadataDisplay metadata={metadata} isLoading={isLoading} imageUrl={imageUrl} />
           </div>
         </div>
       </main>
