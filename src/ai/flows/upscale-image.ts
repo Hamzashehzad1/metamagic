@@ -34,21 +34,6 @@ export async function upscaleImage(input: UpscaleImageInput): Promise<UpscaleIma
   return upscaleImageFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'upscaleImagePrompt',
-  input: { schema: UpscaleImageInputSchema },
-  prompt: `You are an expert image editor. Upscale this image to a higher resolution ({{upscaleFactor}}), enhancing its quality and clarity while preserving the original details and composition. Do not change the content of the image.
-
-Apply the following enhancement settings:
-- Sharpness: {{sharpness}}/100
-- Noise Reduction: {{noiseReduction}}/100
-- Color Enhancement: {{colorEnhancement}}/100
-- Brightness: {{brightness}}/100
-
-Image to upscale and enhance:
-{{media url=photoDataUri}}`
-});
-
 const upscaleImageFlow = ai.defineFlow(
   {
     name: 'upscaleImageFlow',

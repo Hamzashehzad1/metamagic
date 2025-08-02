@@ -8,12 +8,12 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal, Download, Wand2 } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
 import { upscaleImageAction } from '@/app/actions';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
+import { cn } from '@/lib/utils';
 
 // Debounce function
 const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) => {
@@ -136,7 +136,7 @@ export default function UpscalerPage() {
     a.href = upscaledUrl;
     a.download = `upscaled_${originalFile?.name || 'image'}.png`;
     document.body.appendChild(a);
-    a.click();
+a.click();
     document.body.removeChild(a);
   };
 
@@ -192,7 +192,7 @@ export default function UpscalerPage() {
                     )}
                     { !upscaledUrl && !isLoading && <p className="text-muted-foreground text-center">Upload an image to see the magic happen.</p>}
                     {upscaledUrl && (
-                        <Image src={upscaledUrl} alt="Upscaled" width={1024} height={1024} className={cn("object-contain max-h-full rounded-md", isLoading && "opacity-50")} />
+                        <Image src={upscaledUrl} alt="Upscaled" width={1024} height={1024} className={cn("object-contain max-h-full max-w-full rounded-md", isLoading && "opacity-50")} />
                     )}
                 </div>
             </div>
@@ -242,7 +242,7 @@ export default function UpscalerPage() {
               <div className="w-full max-w-4xl">
                   <h2 className="text-2xl font-bold mb-4">Original Image</h2>
                   <div className="border rounded-lg p-2 aspect-video flex items-center justify-center bg-muted/20">
-                      <Image src={originalUrl} alt="Original" width={1024} height={1024} className="object-contain max-h-full rounded-md" />
+                      <Image src={originalUrl} alt="Original" width={1024} height={1024} className="object-contain max-h-full max-w-full rounded-md" />
                   </div>
               </div>
             )}
@@ -256,5 +256,3 @@ export default function UpscalerPage() {
     </div>
   );
 }
-
-    
