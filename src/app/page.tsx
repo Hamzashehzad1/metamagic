@@ -99,7 +99,7 @@ export default function Home() {
         </section>
 
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mb-16">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 self-start sticky top-24">
             <ImageUploader 
               onImageUpload={handleImageUpload}
               imageUrl={imageUrl}
@@ -115,7 +115,7 @@ export default function Home() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <MetadataDisplay metadata={metadata} isLoading={isLoading} imageUrl={imageUrl} />
+            <MetadataDisplay metadata={metadata} isLoading={isLoading} />
           </div>
         </div>
 
