@@ -1,34 +1,19 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { Header } from '@/components/header';
 import { FileUploader } from '@/components/file-uploader';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal, Download, Wand2 } from 'lucide-react';
+import { Terminal, Download, Wand2, Sparkles } from 'lucide-react';
 import { upscaleImageAction } from '@/app/actions';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
-
-// Debounce function
-const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) => {
-  let timeout: NodeJS.Timeout | null = null;
-
-  const debounced = (...args: Parameters<F>) => {
-    if (timeout !== null) {
-      clearTimeout(timeout);
-      timeout = null;
-    }
-    timeout = setTimeout(() => func(...args), waitFor);
-  };
-
-  return debounced as (...args: Parameters<F>) => void;
-};
 
 
 export default function UpscalerPage() {
@@ -41,19 +26,16 @@ export default function UpscalerPage() {
 
   // Enhancement settings
   const [upscaleFactor, setUpscaleFactor] = useState<'2x' | '4x' | '8x'>('2x');
-  const [sharpness, setSharpness] = useState([50]);
-  const [noiseReduction, setNoiseReduction] = useState([50]);
-  const [colorEnhancement, setColorEnhancement] = useState([50]);
-  const [brightness, setBrightness] = useState([50]);
+  const [sharpness, setSharpness] = useState([0]);
+  const [noiseReduction, setNoiseReduction] = useState([0]);
+  const [colorEnhancement, setColorEnhancement] = useState([0]);
+  const [brightness, setBrightness] = useState([0]);
 
-  const isInitialMount = useRef(true);
-
-  const handleUpscale = useCallback(async () => {
+  const handleUpscale = useCallback(async (autoEnhance = false) => {
     if (!originalFile) return;
 
     setIsLoading(true);
     setError(null);
-    // Do not clear upscaledUrl here to keep the previous version visible while loading
     
     try {
       const reader = new FileReader();
@@ -69,6 +51,7 @@ export default function UpscalerPage() {
             noiseReduction: noiseReduction[0],
             colorEnhancement: colorEnhancement[0],
             brightness: brightness[0],
+            autoEnhance,
           });
           setUpscaledUrl(result.upscaledImageUrl);
         } catch (e) {
@@ -99,19 +82,6 @@ export default function UpscalerPage() {
     }
   }, [originalFile, upscaleFactor, sharpness, noiseReduction, colorEnhancement, brightness, toast]);
 
-  const debouncedUpscale = useCallback(debounce(handleUpscale, 500), [handleUpscale]);
-
-  useEffect(() => {
-    if (isInitialMount.current) {
-        isInitialMount.current = false;
-        return;
-    }
-    if (originalFile) {
-      debouncedUpscale();
-    }
-  }, [upscaleFactor, sharpness, noiseReduction, colorEnhancement, brightness, originalFile, debouncedUpscale]);
-
-
   const handleFileUpload = useCallback((uploadedFile: File) => {
     if (originalUrl) {
       URL.revokeObjectURL(originalUrl);
@@ -122,13 +92,11 @@ export default function UpscalerPage() {
     setError(null);
   }, [originalUrl]);
   
-    useEffect(() => {
+  useEffect(() => {
     if (originalFile) {
-      handleUpscale();
+        setUpscaledUrl(URL.createObjectURL(originalFile));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [originalFile]);
-
 
   const handleDownload = () => {
     if (!upscaledUrl) return;
@@ -136,7 +104,7 @@ export default function UpscalerPage() {
     a.href = upscaledUrl;
     a.download = `upscaled_${originalFile?.name || 'image'}.png`;
     document.body.appendChild(a);
-a.click();
+    a.click();
     document.body.removeChild(a);
   };
 
@@ -202,7 +170,7 @@ a.click();
                     <Card>
                         <CardHeader>
                             <CardTitle>Enhancement Settings</CardTitle>
-                            <CardDescription>Fine-tune the AI to get the perfect result. Changes are applied automatically.</CardDescription>
+                            <CardDescription>Fine-tune the AI to get the perfect result.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div>
@@ -232,6 +200,16 @@ a.click();
                                     <Label htmlFor="brightness" className="font-semibold">Brightness: {brightness}%</Label>
                                     <Slider id="brightness" value={brightness} onValueChange={setBrightness} max={100} step={1} disabled={isLoading} />
                                 </div>
+                            </div>
+                             <div className="flex flex-col md:flex-row gap-4">
+                                <Button onClick={() => handleUpscale(true)} disabled={isLoading} className="flex-1" variant="outline">
+                                    <Sparkles className="mr-2" />
+                                    Auto Enhance
+                                </Button>
+                                <Button onClick={() => handleUpscale(false)} disabled={isLoading} className="flex-1">
+                                    <Wand2 className="mr-2" />
+                                    Apply Enhancements
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
