@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Header } from '@/components/header';
 import { FileUploader } from '@/components/file-uploader';
@@ -14,6 +14,22 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
+
+// Debounce function
+const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) => {
+  let timeout: NodeJS.Timeout | null = null;
+
+  const debounced = (...args: Parameters<F>) => {
+    if (timeout !== null) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+    timeout = setTimeout(() => func(...args), waitFor);
+  };
+
+  return debounced as (...args: Parameters<F>) => void;
+};
+
 
 export default function UpscalerPage() {
   const [originalFile, setOriginalFile] = useState<File | null>(null);
@@ -30,24 +46,15 @@ export default function UpscalerPage() {
   const [colorEnhancement, setColorEnhancement] = useState([50]);
   const [brightness, setBrightness] = useState([50]);
 
+  const isInitialMount = useRef(true);
 
-  const handleFileUpload = useCallback((uploadedFile: File) => {
-    if (originalUrl) {
-      URL.revokeObjectURL(originalUrl);
-    }
-    setOriginalFile(uploadedFile);
-    setOriginalUrl(URL.createObjectURL(uploadedFile));
-    setUpscaledUrl(null);
-    setError(null);
-  }, [originalUrl]);
-
-  const handleUpscale = async () => {
+  const handleUpscale = useCallback(async () => {
     if (!originalFile) return;
 
     setIsLoading(true);
     setError(null);
-    setUpscaledUrl(null);
-
+    // Do not clear upscaledUrl here to keep the previous version visible while loading
+    
     try {
       const reader = new FileReader();
       reader.readAsDataURL(originalFile);
@@ -77,6 +84,7 @@ export default function UpscalerPage() {
         }
       };
       reader.onerror = () => {
+        setIsLoading(false);
         throw new Error('Failed to read file.');
       };
     } catch (e) {
@@ -89,8 +97,39 @@ export default function UpscalerPage() {
       });
       setIsLoading(false);
     }
-  };
+  }, [originalFile, upscaleFactor, sharpness, noiseReduction, colorEnhancement, brightness, toast]);
+
+  const debouncedUpscale = useCallback(debounce(handleUpscale, 500), [handleUpscale]);
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+        isInitialMount.current = false;
+        return;
+    }
+    if (originalFile) {
+      debouncedUpscale();
+    }
+  }, [upscaleFactor, sharpness, noiseReduction, colorEnhancement, brightness, originalFile, debouncedUpscale]);
+
+
+  const handleFileUpload = useCallback((uploadedFile: File) => {
+    if (originalUrl) {
+      URL.revokeObjectURL(originalUrl);
+    }
+    setOriginalFile(uploadedFile);
+    setOriginalUrl(URL.createObjectURL(uploadedFile));
+    setUpscaledUrl(null);
+    setError(null);
+  }, [originalUrl]);
   
+    useEffect(() => {
+    if (originalFile) {
+      handleUpscale();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [originalFile]);
+
+
   const handleDownload = () => {
     if (!upscaledUrl) return;
     const a = document.createElement('a');
@@ -105,7 +144,7 @@ export default function UpscalerPage() {
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
       <main className="flex-1 container mx-auto p-4 md:p-6">
-        <section className="text-center mb-12">
+        <section className="text-center mb-12 max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter">
             Don't Let a Low-Res Image Kill Your Conversion Rate
           </h1>
@@ -114,96 +153,99 @@ export default function UpscalerPage() {
           </p>
         </section>
         
-        <div className="grid gap-8 lg:grid-cols-3">
-            <div className="lg:col-span-1">
-                <Card className="sticky top-24">
-                    <CardHeader>
-                        <CardTitle>Enhancement Settings</CardTitle>
-                        <CardDescription>Fine-tune the AI to get the perfect result.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div>
-                            <Label className="font-semibold">Upscale Factor</Label>
-                            <p className="text-sm text-muted-foreground mb-2">How much larger do you want your image?</p>
-                            <RadioGroup value={upscaleFactor} onValueChange={(value) => setUpscaleFactor(value as '2x'|'4x'|'8x')} className="flex gap-4">
-                                <div><RadioGroupItem value="2x" id="2x" /><Label htmlFor="2x" className="ml-2">2x</Label></div>
-                                <div><RadioGroupItem value="4x" id="4x" /><Label htmlFor="4x" className="ml-2">4x</Label></div>
-                                <div><RadioGroupItem value="8x" id="8x" /><Label htmlFor="8x" className="ml-2">8x</Label></div>
-                            </RadioGroup>
-                        </div>
-                        
-                        <div className="space-y-4">
-                            <div>
-                                <Label htmlFor="sharpness" className="font-semibold">Sharpness</Label>
-                                <Slider id="sharpness" value={sharpness} onValueChange={setSharpness} max={100} step={1} />
-                            </div>
-                            <div>
-                                <Label htmlFor="noiseReduction" className="font-semibold">Noise Reduction</Label>
-                                <Slider id="noiseReduction" value={noiseReduction} onValueChange={setNoiseReduction} max={100} step={1} />
-                            </div>
-                             <div>
-                                <Label htmlFor="colorEnhancement" className="font-semibold">Color Enhancement</Label>
-                                <Slider id="colorEnhancement" value={colorEnhancement} onValueChange={setColorEnhancement} max={100} step={1} />
-                            </div>
-                             <div>
-                                <Label htmlFor="brightness" className="font-semibold">Brightness</Label>
-                                <Slider id="brightness" value={brightness} onValueChange={setBrightness} max={100} step={1} />
-                            </div>
-                        </div>
-
-                         <Button onClick={handleUpscale} disabled={isLoading || !originalFile} size="lg" className="w-full">
-                            <Wand2 className="mr-2" />
-                            {isLoading ? 'Enhancing Your Image...' : 'Process Image'}
-                        </Button>
-                    </CardContent>
-                </Card>
-            </div>
-            <div className="lg:col-span-2 space-y-8">
-                 <FileUploader
+        <div className="flex flex-col items-center gap-8">
+            <div className="w-full max-w-4xl">
+                <FileUploader
                     onFileUpload={handleFileUpload}
                     fileUrl={originalUrl}
                     fileType={originalFile?.type || null}
                     isLoading={isLoading && !upscaledUrl}
-                    loadingStatus="Uploading..."
+                    loadingStatus="Uploading & Enhancing..."
                     accept={{ 'image/*': ['.jpeg', '.png', '.webp'] }}
-                    dropzoneText="Only image files are supported"
+                    dropzoneText="Drop an image here to begin (JPEG, PNG, WEBP)"
                 />
-
-                {error && (
-                    <Alert variant="destructive" className="max-w-4xl mx-auto">
-                        <Terminal className="h-4 w-4" />
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                )}
-
-                <div>
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-2xl font-bold text-center">Your Enhanced Image</h2>
-                        {upscaledUrl && (
-                            <Button variant="outline" size="sm" onClick={handleDownload}>
-                                <Download className="mr-2 h-4 w-4" /> Download
-                            </Button>
-                        )}
-                    </div>
-                    <div className="border rounded-lg p-2 aspect-video flex items-center justify-center bg-muted/20 min-h-[300px]">
-                        {isLoading && <Skeleton className="w-full h-full" />}
-                        {!isLoading && !upscaledUrl && <p className="text-muted-foreground">Your masterpiece will appear here</p>}
-                        {upscaledUrl && (
-                            <Image src={upscaledUrl} alt="Upscaled" width={1024} height={1024} className="object-contain max-h-full rounded-md" />
-                        )}
-                    </div>
-                </div>
-
-                {originalUrl && (
-                  <div>
-                      <h2 className="text-2xl font-bold text-center mb-4">Original Image</h2>
-                      <div className="border rounded-lg p-2 aspect-video flex items-center justify-center bg-muted/20">
-                          <Image src={originalUrl} alt="Original" width={1024} height={1024} className="object-contain max-h-full rounded-md" />
-                      </div>
-                  </div>
-                )}
             </div>
+            
+            {error && (
+                <Alert variant="destructive" className="w-full max-w-4xl">
+                    <Terminal className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            )}
+
+            <div className="w-full max-w-4xl">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold">Your Enhanced Image</h2>
+                    {upscaledUrl && (
+                        <Button variant="outline" size="sm" onClick={handleDownload} disabled={isLoading}>
+                            <Download className="mr-2 h-4 w-4" /> Download
+                        </Button>
+                    )}
+                </div>
+                <div className="border rounded-lg p-2 aspect-video flex items-center justify-center bg-muted/20 min-h-[300px] relative">
+                    {isLoading && (
+                       <div className="absolute inset-0 bg-background/80 flex flex-col items-center justify-center z-10 rounded-lg">
+                            <Wand2 className="h-10 w-10 animate-spin text-primary" />
+                            <p className="mt-4 text-lg font-medium">AI is enhancing your image...</p>
+                        </div>
+                    )}
+                    { !upscaledUrl && !isLoading && <p className="text-muted-foreground text-center">Upload an image to see the magic happen.</p>}
+                    {upscaledUrl && (
+                        <Image src={upscaledUrl} alt="Upscaled" width={1024} height={1024} className={cn("object-contain max-h-full rounded-md", isLoading && "opacity-50")} />
+                    )}
+                </div>
+            </div>
+
+            {originalUrl && (
+                <div className="w-full max-w-4xl">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Enhancement Settings</CardTitle>
+                            <CardDescription>Fine-tune the AI to get the perfect result. Changes are applied automatically.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div>
+                                <Label className="font-semibold">Upscale Factor</Label>
+                                <p className="text-sm text-muted-foreground mb-2">How much larger do you want your image?</p>
+                                <RadioGroup value={upscaleFactor} onValueChange={(value) => setUpscaleFactor(value as '2x'|'4x'|'8x')} className="flex gap-4" disabled={isLoading}>
+                                    <div><RadioGroupItem value="2x" id="2x" /><Label htmlFor="2x" className="ml-2">2x</Label></div>
+                                    <div><RadioGroupItem value="4x" id="4x" /><Label htmlFor="4x" className="ml-2">4x</Label></div>
+                                    <div><RadioGroupItem value="8x" id="8x" /><Label htmlFor="8x" className="ml-2">8x</Label></div>
+                                </RadioGroup>
+                            </div>
+                            
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div className="space-y-1">
+                                    <Label htmlFor="sharpness" className="font-semibold">Sharpness: {sharpness}%</Label>
+                                    <Slider id="sharpness" value={sharpness} onValueChange={setSharpness} max={100} step={1} disabled={isLoading} />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="noiseReduction" className="font-semibold">Noise Reduction: {noiseReduction}%</Label>
+                                    <Slider id="noiseReduction" value={noiseReduction} onValueChange={setNoiseReduction} max={100} step={1} disabled={isLoading} />
+                                </div>
+                                 <div className="space-y-1">
+                                    <Label htmlFor="colorEnhancement" className="font-semibold">Color Enhancement: {colorEnhancement}%</Label>
+                                    <Slider id="colorEnhancement" value={colorEnhancement} onValueChange={setColorEnhancement} max={100} step={1} disabled={isLoading} />
+                                </div>
+                                 <div className="space-y-1">
+                                    <Label htmlFor="brightness" className="font-semibold">Brightness: {brightness}%</Label>
+                                    <Slider id="brightness" value={brightness} onValueChange={setBrightness} max={100} step={1} disabled={isLoading} />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+            
+            {originalUrl && (
+              <div className="w-full max-w-4xl">
+                  <h2 className="text-2xl font-bold mb-4">Original Image</h2>
+                  <div className="border rounded-lg p-2 aspect-video flex items-center justify-center bg-muted/20">
+                      <Image src={originalUrl} alt="Original" width={1024} height={1024} className="object-contain max-h-full rounded-md" />
+                  </div>
+              </div>
+            )}
         </div>
       </main>
       <footer className="py-4 px-4 md:px-6 border-t mt-16">
@@ -214,3 +256,5 @@ export default function UpscalerPage() {
     </div>
   );
 }
+
+    

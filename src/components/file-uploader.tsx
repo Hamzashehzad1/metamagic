@@ -78,7 +78,7 @@ export function FileUploader({
         <div
           {...getRootProps()}
           className={cn(
-            "relative flex flex-col items-center justify-center w-full h-full min-h-[300px] md:min-h-[400px] border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors",
+            "relative flex flex-col items-center justify-center w-full h-full min-h-[300px] border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors",
             isDragActive ? "border-primary bg-primary/10" : "border-border"
           )}
         >
@@ -91,10 +91,10 @@ export function FileUploader({
             </div>
           )}
           
-          {fileUrl ? (
+          {(fileUrl && !isLoading) ? (
             renderPreview()
           ) : (
-            <div className="text-center p-4">
+            !isLoading && <div className="text-center p-4">
               <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
               <p className="mt-4 font-semibold">Drag & drop a file here</p>
               <p className="text-sm text-muted-foreground">or click to select a file</p>
@@ -106,3 +106,5 @@ export function FileUploader({
     </Card>
   );
 }
+
+    
