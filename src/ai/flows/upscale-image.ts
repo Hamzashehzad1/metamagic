@@ -43,7 +43,7 @@ const upscaleImageFlow = ai.defineFlow(
   },
   async (input) => {
     const { media } = await ai.generate({
-      model: googleAI('imagen-2'),
+      model: googleAI('gemini-2.0-flash'),
       prompt: [
         {
           text: `You are an expert image editor. Upscale this image to a higher resolution (${input.upscaleFactor}), enhancing its quality and clarity while preserving the original details and composition. Do not change the content of the image.
@@ -55,7 +55,10 @@ Apply the following enhancement settings:
 - Brightness: ${input.brightness}/100`
         },
         { media: { url: input.photoDataUri } }
-      ]
+      ],
+      config: {
+        responseModalities: ['IMAGE', 'TEXT'],
+      }
     });
     
     if (!media?.url) {
