@@ -101,7 +101,7 @@ export default function Home() {
         </section>
 
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mb-16">
-          <div className="lg:col-span-2 self-start sticky top-24">
+          <div className="lg:col-span-2 self-start sticky top-24 z-10">
             <FileUploader 
               onFileUpload={handleFileUpload}
               fileUrl={fileUrl}

@@ -2,6 +2,7 @@
 
 import { generateImageCaption } from '@/ai/flows/generate-image-caption';
 import { extractSeoMetadata } from '@/ai/flows/extract-seo-metadata';
+import { upscaleImage } from '@/ai/flows/upscale-image';
 
 export interface Metadata {
   caption: string;
@@ -31,4 +32,16 @@ export async function processFile(
     console.error('Error processing file:', error);
     throw new Error('Failed to generate metadata from AI. Please try again.');
   }
+}
+
+export async function upscaleImageAction(
+    fileDataUri: string
+  ): Promise<{ upscaledImageUrl: string }> {
+    try {
+      const result = await upscaleImage({ photoDataUri: fileDataUri });
+      return { upscaledImageUrl: result.upscaledImageUrl };
+    } catch (error) {
+      console.error('Error upscaling image:', error);
+      throw new Error('Failed to upscale image with AI. Please try again.');
+    }
 }

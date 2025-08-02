@@ -13,9 +13,22 @@ interface FileUploaderProps {
   fileType: string | null;
   isLoading: boolean;
   loadingStatus: string;
+  accept?: Record<string, string[]>;
+  dropzoneText?: string;
 }
 
-export function FileUploader({ onFileUpload, fileUrl, fileType, isLoading, loadingStatus }: FileUploaderProps) {
+export function FileUploader({ 
+    onFileUpload, 
+    fileUrl, 
+    fileType, 
+    isLoading, 
+    loadingStatus, 
+    accept = {
+        'image/*': ['.jpeg', '.png', '.gif', '.webp', '.svg+xml'],
+        'video/*': ['.mp4', '.webm'],
+    },
+    dropzoneText = "Images, Videos, and SVGs supported"
+}: FileUploaderProps) {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
       onFileUpload(acceptedFiles[0]);
@@ -24,10 +37,7 @@ export function FileUploader({ onFileUpload, fileUrl, fileType, isLoading, loadi
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      'image/*': ['.jpeg', '.png', '.gif', '.webp', '.svg'],
-      'video/*': ['.mp4', '.webm'],
-    },
+    accept,
     multiple: false,
   });
 
@@ -39,9 +49,8 @@ export function FileUploader({ onFileUpload, fileUrl, fileType, isLoading, loadi
             <Image
               src={fileUrl}
               alt="File preview"
-              layout="fill"
-              objectFit="contain"
-              className="rounded-lg p-2"
+              fill
+              className="rounded-lg object-contain p-2"
               data-ai-hint="uploaded image"
             />
         )
@@ -89,7 +98,7 @@ export function FileUploader({ onFileUpload, fileUrl, fileType, isLoading, loadi
               <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
               <p className="mt-4 font-semibold">Drag & drop a file here</p>
               <p className="text-sm text-muted-foreground">or click to select a file</p>
-              <p className="text-xs text-muted-foreground mt-2">Images, Videos, and SVGs supported</p>
+              <p className="text-xs text-muted-foreground mt-2">{dropzoneText}</p>
             </div>
           )}
         </div>
