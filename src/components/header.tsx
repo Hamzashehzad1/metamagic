@@ -1,6 +1,5 @@
 import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
-import { Button } from "./ui/button";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -19,14 +18,14 @@ export function Header() {
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
-              <Link href="/" passHref>
+              <Link href="/" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   Metadata Generator
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <Link href="/upscaler" passHref>
+              <Link href="/upscaler" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   Image Upscaler
                 </NavigationMenuLink>
