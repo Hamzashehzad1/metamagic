@@ -34,6 +34,21 @@ export async function upscaleImage(input: UpscaleImageInput): Promise<UpscaleIma
   return upscaleImageFlow(input);
 }
 
+const prompt = ai.definePrompt({
+  name: 'upscaleImagePrompt',
+  input: { schema: UpscaleImageInputSchema },
+  prompt: `You are an expert image editor. Upscale this image to a higher resolution ({{upscaleFactor}}), enhancing its quality and clarity while preserving the original details and composition. Do not change the content of the image.
+
+Apply the following enhancement settings:
+- Sharpness: {{sharpness}}/100
+- Noise Reduction: {{noiseReduction}}/100
+- Color Enhancement: {{colorEnhancement}}/100
+- Brightness: {{brightness}}/100
+
+Image to upscale and enhance:
+{{media url=photoDataUri}}`
+});
+
 const upscaleImageFlow = ai.defineFlow(
   {
     name: 'upscaleImageFlow',
@@ -43,7 +58,8 @@ const upscaleImageFlow = ai.defineFlow(
   async (input) => {
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `You are an expert image editor. Upscale this image to a higher resolution (${input.upscaleFactor}), enhancing its quality and clarity while preserving the original details and composition. Do not change the content of the image.
+      prompt: [
+        {text: `You are an expert image editor. Upscale this image to a higher resolution (${input.upscaleFactor}), enhancing its quality and clarity while preserving the original details and composition. Do not change the content of the image.
 
 Apply the following enhancement settings:
 - Sharpness: ${input.sharpness}/100
@@ -51,8 +67,9 @@ Apply the following enhancement settings:
 - Color Enhancement: ${input.colorEnhancement}/100
 - Brightness: ${input.brightness}/100
 
-Image to upscale and enhance:
-{{media url=photoDataUri}}`,
+Image to upscale and enhance:`},
+        {media: {url: input.photoDataUri}}
+      ],
       config: {
         responseModalities: ['IMAGE'],
       },
