@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Clipboard, ClipboardCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
 
 interface MetadataCardProps {
   title: string;
@@ -34,6 +35,31 @@ export function MetadataCard({ title, content }: MetadataCardProps) {
       setIsCopied(true);
     }
   };
+  
+  const renderContent = () => {
+    if (!content) {
+      return <span className="text-muted-foreground">Nothing generated.</span>;
+    }
+
+    if (title === 'SEO Keywords') {
+      const keywords = content.split(',').map(keyword => keyword.trim()).filter(Boolean);
+      return (
+        <div className="flex flex-wrap gap-2">
+          {keywords.map((keyword, index) => (
+            <Badge key={index} variant="secondary" className="rounded-md">
+              {keyword}
+            </Badge>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <p className="text-sm text-foreground/80 whitespace-pre-wrap min-h-[20px]">
+        {content}
+      </p>
+    );
+  };
 
   return (
     <Card className="bg-background/50 transition-shadow hover:shadow-md">
@@ -48,9 +74,7 @@ export function MetadataCard({ title, content }: MetadataCardProps) {
         </Button>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-foreground/80 whitespace-pre-wrap min-h-[20px]">
-            {content || <span className="text-muted-foreground">Nothing generated.</span>}
-        </p>
+        {renderContent()}
       </CardContent>
     </Card>
   );
