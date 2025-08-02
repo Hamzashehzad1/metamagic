@@ -1,9 +1,9 @@
 'use server';
 
 /**
- * @fileOverview A flow to upscale an image.
+ * @fileOverview A flow to upscale and enhance an image.
  *
- * - upscaleImage - A function that handles the image upscaling process.
+ * - upscaleImage - A function that handles the image upscaling and enhancement process.
  * - UpscaleImageInput - The input type for the upscaleImage function.
  * - UpscaleImageOutput - The return type for the upscaleImage function.
  */
@@ -17,6 +17,11 @@ const UpscaleImageInputSchema = z.object({
     .describe(
       "A photo to upscale, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
+    upscaleFactor: z.enum(['2x', '4x', '8x']).default('2x'),
+    sharpness: z.number().min(0).max(100).default(50),
+    noiseReduction: z.number().min(0).max(100).default(50),
+    colorEnhancement: z.number().min(0).max(100).default(50),
+    brightness: z.number().min(0).max(100).default(50),
 });
 export type UpscaleImageInput = z.infer<typeof UpscaleImageInputSchema>;
 
@@ -38,9 +43,15 @@ const upscaleImageFlow = ai.defineFlow(
   async (input) => {
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `You are an expert image editor. Upscale this image to a higher resolution, enhancing its quality and clarity while preserving the original details and composition. Do not change the content of the image.
+      prompt: `You are an expert image editor. Upscale this image to a higher resolution (${input.upscaleFactor}), enhancing its quality and clarity while preserving the original details and composition. Do not change the content of the image.
 
-Image to upscale:
+Apply the following enhancement settings:
+- Sharpness: ${input.sharpness}/100
+- Noise Reduction: ${input.noiseReduction}/100
+- Color Enhancement: ${input.colorEnhancement}/100
+- Brightness: ${input.brightness}/100
+
+Image to upscale and enhance:
 {{media url=photoDataUri}}`,
       config: {
         responseModalities: ['IMAGE'],

@@ -2,7 +2,7 @@
 
 import { generateImageCaption } from '@/ai/flows/generate-image-caption';
 import { extractSeoMetadata } from '@/ai/flows/extract-seo-metadata';
-import { upscaleImage } from '@/ai/flows/upscale-image';
+import { upscaleImage, type UpscaleImageInput } from '@/ai/flows/upscale-image';
 
 export interface Metadata {
   caption: string;
@@ -35,10 +35,10 @@ export async function processFile(
 }
 
 export async function upscaleImageAction(
-    fileDataUri: string
+    input: UpscaleImageInput
   ): Promise<{ upscaledImageUrl: string }> {
     try {
-      const result = await upscaleImage({ photoDataUri: fileDataUri });
+      const result = await upscaleImage(input);
       return { upscaledImageUrl: result.upscaledImageUrl };
     } catch (error) {
       console.error('Error upscaling image:', error);
