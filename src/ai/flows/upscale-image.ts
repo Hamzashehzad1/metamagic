@@ -38,17 +38,17 @@ const upscaleImageFlow = ai.defineFlow(
   async (input) => {
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: [
-        {media: {url: input.photoDataUri}},
-        {text: 'Upscale this image to a higher resolution. Enhance the quality and clarity while preserving the original details and composition.'},
-      ],
+      prompt: `You are an expert image editor. Upscale this image to a higher resolution, enhancing its quality and clarity while preserving the original details and composition. Do not change the content of the image.
+
+Image to upscale:
+{{media url=photoDataUri}}`,
       config: {
-        responseModalities: ['TEXT', 'IMAGE'],
+        responseModalities: ['IMAGE'],
       },
     });
     
     if (!media?.url) {
-      throw new Error('Image generation failed to return an image.');
+      throw new Error('Image generation failed to return an upscaled image.');
     }
 
     return { upscaledImageUrl: media.url };
