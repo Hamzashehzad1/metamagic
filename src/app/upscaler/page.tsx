@@ -11,7 +11,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wand2, Download, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { upscaleFile } from '@/app/actions';
+import Upscaler from 'upscaler';
+// @ts-ignore
+import upscalerModel from '@upscalerjs/esrgan-slim/4x';
+
 
 type UpscaleFactor = 2 | 4;
 
@@ -20,7 +23,7 @@ export default function UpscalerPage() {
   const [originalFileUrl, setOriginalFileUrl] = useState<string | null>(null);
   const [upscaledImageUrl, setUpscaledImageUrl] = useState<string | null>(null);
   
-  const [upscaleFactor, setUpscaleFactor] = useState<UpscaleFactor>(2);
+  const [upscaleFactor, setUpscaleFactor] = useState<UpscaleFactor>(4);
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +43,7 @@ export default function UpscalerPage() {
   }, [originalFileUrl, upscaledImageUrl]);
 
   const handleProcessing = async () => {
-    if (!originalFile) {
+    if (!originalFileUrl) {
         toast({
             variant: 'destructive',
             title: 'No Image Uploaded',
@@ -54,29 +57,14 @@ export default function UpscalerPage() {
     setUpscaledImageUrl(null);
 
     try {
-        const reader = new FileReader();
-        reader.readAsDataURL(originalFile);
-        reader.onload = async () => {
-            try {
-                const fileDataUri = reader.result as string;
-                const resultUrl = await upscaleFile(fileDataUri, upscaleFactor);
-                setUpscaledImageUrl(resultUrl);
-            } catch(e) {
-                 const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred during upscaling.';
-                setError(errorMessage);
-                toast({
-                    variant: 'destructive',
-                    title: 'Upscaling Error',
-                    description: errorMessage,
-                });
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        reader.onerror = () => {
-            setIsLoading(false);
-            throw new Error('Failed to read file.');
-        };
+        const upscaler = new Upscaler({
+            model: upscalerModel
+        });
+        const resultUrl = await upscaler.upscale(originalFileUrl, {
+            patchSize: 64,
+            padding: 4,
+        });
+        setUpscaledImageUrl(resultUrl);
     } catch (e) {
         const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred during upscaling.';
         console.error("Upscaler Error:", e);
@@ -86,6 +74,7 @@ export default function UpscalerPage() {
             title: 'Upscaling Error',
             description: "Failed to upscale image. Please try a different image.",
         });
+    } finally {
         setIsLoading(false);
     }
   };
@@ -96,7 +85,7 @@ export default function UpscalerPage() {
       a.href = upscaledImageUrl;
       a.download = `upscaled-${upscaleFactor}x-image.png`;
       document.body.appendChild(a);
-a.click();
+      a.click();
       document.body.removeChild(a);
     }
   };
@@ -110,7 +99,7 @@ a.click();
                 Transform Your Images with Free AI Upscaling
             </h1>
             <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
-                Stop using blurry, low-resolution images. Our free AI tool instantly upscales your photos to 2x or 4x their original size, revealing stunning detail.
+                Stop using blurry, low-resolution images. Our free tool instantly upscales your photos to 2x or 4x their original size, revealing stunning detail.
             </p>
         </section>
 
@@ -121,7 +110,7 @@ a.click();
                     fileUrl={originalFileUrl}
                     fileType={originalFile ? originalFile.type : null}
                     isLoading={isLoading}
-                    loadingStatus="Upscaling with AI..."
+                    loadingStatus="Upscaling in browser..."
                     accept={{'image/*': ['.jpeg', '.png', '.gif', '.webp']}}
                     dropzoneText="Only images are supported for upscaling"
                 />
@@ -129,17 +118,13 @@ a.click();
                     <CardHeader>
                         <CardTitle>Upscale Settings</CardTitle>
                         <CardDescription>
-                           Choose how much larger you want to make your image.
+                           Choose how much larger you want to make your image. The current model supports 4x.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                          <div className="space-y-4">
                             <Label className="text-base font-medium">Upscale Factor</Label>
                             <RadioGroup value={String(upscaleFactor)} onValueChange={(v) => setUpscaleFactor(Number(v) as UpscaleFactor)} className="flex space-x-4">
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="2" id="r1" />
-                                    <Label htmlFor="r1">2x</Label>
-                                </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="4" id="r4" />
                                     <Label htmlFor="r4">4x</Label>
@@ -170,7 +155,7 @@ a.click();
                             {isLoading && (
                                 <div className="absolute inset-0 bg-background/90 flex flex-col items-center justify-center z-10 rounded-lg">
                                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                                    <p className="mt-4 text-center font-medium">Upscaling with AI</p>
+                                    <p className="mt-4 text-center font-medium">Upscaling in browser</p>
                                     <p className="text-sm text-muted-foreground">This may take a moment...</p>
                                 </div>
                             )}
