@@ -19,14 +19,14 @@ export function Header() {
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
-              <Link href="/" legacyBehavior passHref>
+              <Link href="/" passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   Metadata Generator
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <Link href="/upscaler" legacyBehavior passHref>
+              <Link href="/upscaler" passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   Image Upscaler
                 </NavigationMenuLink>
