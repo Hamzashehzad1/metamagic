@@ -10,12 +10,13 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {googleAI} from '@genkit-ai/googleai';
 
 const UpscaleImageInputSchema = z.object({
   photoDataUri: z
     .string()
     .describe(
-      "A photo to upscale, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "A photo to upscale, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
     upscaleFactor: z.enum(['2x', '4x', '8x']).default('2x'),
     sharpness: z.number().min(0).max(100).default(50),
@@ -42,9 +43,8 @@ const upscaleImageFlow = ai.defineFlow(
   },
   async (input) => {
     const { media } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: [
-        {text: `You are an expert image editor. Upscale this image to a higher resolution (${input.upscaleFactor}), enhancing its quality and clarity while preserving the original details and composition. Do not change the content of the image.
+      model: googleAI('imagen-2'),
+      prompt: `You are an expert image editor. Upscale this image to a higher resolution (${input.upscaleFactor}), enhancing its quality and clarity while preserving the original details and composition. Do not change the content of the image.
 
 Apply the following enhancement settings:
 - Sharpness: ${input.sharpness}/100
@@ -52,12 +52,8 @@ Apply the following enhancement settings:
 - Color Enhancement: ${input.colorEnhancement}/100
 - Brightness: ${input.brightness}/100
 
-Image to upscale and enhance:`},
-        {media: {url: input.photoDataUri}}
-      ],
-      config: {
-        responseModalities: ['IMAGE'],
-      },
+Image to upscale and enhance:
+{{media url=photoDataUri}}`
     });
     
     if (!media?.url) {
