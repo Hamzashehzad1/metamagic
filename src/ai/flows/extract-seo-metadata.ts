@@ -18,6 +18,12 @@ const ExtractSeoMetadataInputSchema = z.object({
       "A photo, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
   imageCaption: z.string().describe('The caption of the image.'),
+  titleLength: z.number().optional().describe('The desired length of the SEO title.'),
+  keywordFormat: z.enum(['Single Only', 'Double Only', 'Mixed']).optional().describe('The format for the SEO keywords.'),
+  keywordCount: z.number().optional().describe('The desired number of SEO keywords.'),
+  descriptionLength: z.number().optional().describe('The desired length of the SEO description.'),
+  includeKeywords: z.string().optional().describe('A comma-separated list of keywords to include.'),
+  excludeKeywords: z.string().optional().describe('A comma-separated list of keywords to exclude.'),
 });
 export type ExtractSeoMetadataInput = z.infer<typeof ExtractSeoMetadataInputSchema>;
 
@@ -36,15 +42,20 @@ const prompt = ai.definePrompt({
   name: 'extractSeoMetadataPrompt',
   input: {schema: ExtractSeoMetadataInputSchema},
   output: {schema: ExtractSeoMetadataOutputSchema},
-  prompt: `You are an SEO expert. Generate SEO keywords, a title, and a meta description for the image based on the following information:\n\nImage Caption: {{{imageCaption}}}\n\nSEO Keywords:`.trim(),
-  postProcess: async (res, ctx) => {
-    return res.output ? {
-      ...res.output,
-      seoKeywords: res.output.seoKeywords,
-      seoTitle: res.output.seoTitle,
-      seoDescription: res.output.seoDescription
-    } : null;
-  }
+  prompt: `You are an SEO expert. Generate SEO keywords, a title, and a meta description for an image based on the following caption and constraints.
+
+Image Caption: {{{imageCaption}}}
+
+Constraints:
+- SEO Title Length: Around {{{titleLength}}} characters.
+- SEO Description Length: Around {{{descriptionLength}}} characters.
+- Number of Keywords: Exactly {{{keywordCount}}}.
+- Keyword Format: {{{keywordFormat}}}.
+- Must Include Keywords: {{{includeKeywords}}}.
+- Must Exclude Keywords: {{{excludeKeywords}}}.
+
+Generate the SEO metadata based on these rules.
+`,
 });
 
 const extractSeoMetadataFlow = ai.defineFlow(

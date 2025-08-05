@@ -3,6 +3,7 @@
 import { generateImageCaption } from '@/ai/flows/generate-image-caption';
 import { extractSeoMetadata } from '@/ai/flows/extract-seo-metadata';
 import { configureGenkit } from '@/ai/genkit';
+import { type MetadataSettings } from '@/components/metadata-settings';
 
 
 export interface Metadata {
@@ -14,7 +15,8 @@ export interface Metadata {
 
 export async function processFile(
   apiKey: string,
-  fileDataUri: string
+  fileDataUri: string,
+  settings: MetadataSettings,
 ): Promise<Metadata> {
   try {
     configureGenkit(apiKey);
@@ -23,6 +25,7 @@ export async function processFile(
     const { seoKeywords, seoTitle, seoDescription } = await extractSeoMetadata({
       photoDataUri: fileDataUri,
       imageCaption: caption,
+      ...settings,
     });
 
     return {

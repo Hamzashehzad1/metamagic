@@ -12,6 +12,7 @@ import { Terminal, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { GeminiSettings } from '@/components/gemini-settings';
+import { MetadataSettings, type MetadataSettings as TMetadataSettings } from '@/components/metadata-settings';
 
 
 export default function Home() {
@@ -23,6 +24,14 @@ export default function Home() {
   const [loadingStatus, setLoadingStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const [metadataSettings, setMetadataSettings] = useState<TMetadataSettings>({
+    titleLength: 60,
+    keywordFormat: 'Mixed',
+    keywordCount: 10,
+    descriptionLength: 155,
+    includeKeywords: '',
+    excludeKeywords: '',
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -69,7 +78,7 @@ export default function Home() {
             const fileDataUri = reader.result as string;
 
             setLoadingStatus('Generating caption & SEO data...');
-            const result = await processFile(apiKey, fileDataUri);
+            const result = await processFile(apiKey, fileDataUri, metadataSettings);
             
             setMetadata(result);
           } catch (e) {
@@ -104,7 +113,7 @@ export default function Home() {
 
     process();
 
-  }, [file, apiKey, toast]);
+  }, [file, apiKey, toast, metadataSettings]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -122,6 +131,7 @@ export default function Home() {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mb-16">
           <div className="lg:col-span-2 self-start sticky top-24 z-10 space-y-6">
             <GeminiSettings apiKey={apiKey} setApiKey={setApiKey} />
+             <MetadataSettings settings={metadataSettings} onSettingsChange={setMetadataSettings} />
             <FileUploader 
               onFileUpload={handleFileUpload}
               fileUrl={fileUrl}
