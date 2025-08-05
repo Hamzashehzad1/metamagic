@@ -15,6 +15,7 @@ interface FileUploaderProps {
   loadingStatus: string;
   accept?: Record<string, string[]>;
   dropzoneText?: string;
+  disabled?: boolean;
 }
 
 export function FileUploader({ 
@@ -27,7 +28,8 @@ export function FileUploader({
         'image/*': ['.jpeg', '.png', '.gif', '.webp', '.svg+xml'],
         'video/*': ['.mp4', '.webm'],
     },
-    dropzoneText = "Images, Videos, and SVGs supported"
+    dropzoneText = "Images, Videos, and SVGs supported",
+    disabled = false
 }: FileUploaderProps) {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -39,6 +41,7 @@ export function FileUploader({
     onDrop,
     accept,
     multiple: false,
+    disabled,
   });
 
   const renderPreview = () => {
@@ -73,13 +76,14 @@ export function FileUploader({
   }
 
   return (
-    <Card className="h-full">
+    <Card className={cn(disabled && "bg-muted/50")}>
       <CardContent className="p-4 h-full">
         <div
           {...getRootProps()}
           className={cn(
-            "relative flex flex-col items-center justify-center w-full h-full min-h-[300px] border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors",
-            isDragActive ? "border-primary bg-primary/10" : "border-border"
+            "relative flex flex-col items-center justify-center w-full h-full min-h-[300px] border-2 border-dashed rounded-lg transition-colors",
+            isDragActive ? "border-primary bg-primary/10" : "border-border",
+            disabled ? "cursor-not-allowed border-muted-foreground/50" : "cursor-pointer hover:border-primary"
           )}
         >
           <input {...getInputProps()} />
@@ -96,15 +100,20 @@ export function FileUploader({
           ) : (
             !isLoading && <div className="text-center p-4">
               <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-              <p className="mt-4 font-semibold">Drag & drop a file here</p>
-              <p className="text-sm text-muted-foreground">or click to select a file</p>
-              <p className="text-xs text-muted-foreground mt-2">{dropzoneText}</p>
+              {disabled ? (
+                <>
+                    <p className="mt-4 font-semibold">Uploader Disabled</p>
+                    <p className="text-sm text-muted-foreground">Please enter your API key to enable file uploads.</p>
+                </>
+              ) : (
+                <>
+                    <p className="mt-4 font-semibold">Drag & drop a file here</p>
+                    <p className="text-sm text-muted-foreground">or click to select a file</p>
+                    <p className="text-xs text-muted-foreground mt-2">{dropzoneText}</p>
+                </>
+              )}
             </div>
           )}
         </div>
       </CardContent>
-    </Card>
-  );
-}
-
-    
+    </

@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { GeminiSettings } from '@/components/gemini-settings';
 
 
 export default function Home() {
@@ -21,7 +22,15 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const storedApiKey = localStorage.getItem('gemini-api-key');
+    if (storedApiKey) {
+      setApiKey(storedApiKey);
+    }
+  }, []);
 
   const handleFileUpload = useCallback((uploadedFile: File) => {
     if (fileUrl) {
@@ -35,7 +44,17 @@ export default function Home() {
   }, [fileUrl]);
 
   useEffect(() => {
-    if (!file) return;
+    if (!file || !apiKey) return;
+
+    if (!apiKey) {
+      setError("Please enter your Gemini API key to proceed.");
+      toast({
+        variant: 'destructive',
+        title: 'API Key Missing',
+        description: "Please enter your Gemini API key to proceed.",
+      });
+      return;
+    }
 
     const process = async () => {
       setIsLoading(true);
@@ -50,7 +69,7 @@ export default function Home() {
             const fileDataUri = reader.result as string;
 
             setLoadingStatus('Generating caption & SEO data...');
-            const result = await processFile(fileDataUri);
+            const result = await processFile(apiKey, fileDataUri);
             
             setMetadata(result);
           } catch (e) {
@@ -85,7 +104,7 @@ export default function Home() {
 
     process();
 
-  }, [file, toast]);
+  }, [file, apiKey, toast]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -101,13 +120,15 @@ export default function Home() {
         </section>
 
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mb-16">
-          <div className="lg:col-span-2 self-start sticky top-24 z-10">
+          <div className="lg:col-span-2 self-start sticky top-24 z-10 space-y-6">
+            <GeminiSettings apiKey={apiKey} setApiKey={setApiKey} />
             <FileUploader 
               onFileUpload={handleFileUpload}
               fileUrl={fileUrl}
               fileType={fileType}
               isLoading={isLoading}
               loadingStatus={loadingStatus}
+              disabled={!apiKey}
             />
           </div>
           <div className="lg:col-span-3">
@@ -141,9 +162,10 @@ export default function Home() {
                 <CardTitle className="text-center text-3xl font-bold font-headline">The 3-Step "Lazy" Way to Perfect Media SEO</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 text-center">
-                  <p className="text-lg"><strong>Step 1:</strong> Drag and drop your image, video, or SVG into the tool above.</p>
-                  <p className="text-lg"><strong>Step 2:</strong> Watch as our AI instantly generates your SEO metadata.</p>
-                  <p className="text-lg"><strong>Step 3:</strong> Copy, paste, and watch your rankings climb.</p>
+                  <p className="text-lg"><strong>Step 1:</strong> Enter your Gemini API Key.</p>
+                  <p className="text-lg"><strong>Step 2:</strong> Drag and drop your image, video, or SVG into the tool above.</p>
+                  <p className="text-lg"><strong>Step 3:</strong> Watch as our AI instantly generates your SEO metadata.</p>
+                  <p className="text-lg"><strong>Step 4:</strong> Copy, paste, and watch your rankings climb.</p>
               </CardContent>
             </Card>
 
@@ -176,16 +198,22 @@ export default function Home() {
             <div>
                  <h2 className="text-3xl font-bold text-center mb-8 font-headline">Your Burning Questions, Answered</h2>
                 <Accordion type="single" collapsible className="w-full">
+                   <AccordionItem value="item-0">
+                    <AccordionTrigger className="text-lg font-semibold">Do I need an API Key?</AccordionTrigger>
+                    <AccordionContent className="text-base text-muted-foreground">
+                      Yes. This tool uses the Google Gemini family of AI models. You need to provide your own API key to use the service. You can get a free key from Google AI Studio. Your key is saved in your browser's local storage and is never stored on our servers.
+                    </AccordionContent>
+                  </AccordionItem>
                   <AccordionItem value="item-1">
                     <AccordionTrigger className="text-lg font-semibold">Is this really free?</AccordionTrigger>
                     <AccordionContent className="text-base text-muted-foreground">
-                      Yes, 100%. MetaMagic is a free tool designed to help you improve your SEO. No hidden fees, no credit card required. Just pure value.
+                      Yes, 100%. The tool itself is free to use. Google also provides a generous free tier for the Gemini API, so for most users, it won't cost anything.
                     </AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="item-2">
                     <AccordionTrigger className="text-lg font-semibold">How does the AI work?</AccordionTrigger>
                     <AccordionContent className="text-base text-muted-foreground">
-                      We use a state-of-the-art multimodal AI model (Google's Gemini) that can understand the content and context of images, videos and SVGs. It then uses this understanding to generate human-like text optimized for search engines.
+                      We use Google's state-of-the-art multimodal AI model, Gemini, which can understand the content and context of images, videos and SVGs. It then uses this understanding to generate human-like text optimized for search engines.
                     </AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="item-3">
@@ -205,7 +233,7 @@ export default function Home() {
             
              <div className="text-center pt-8">
                 <h2 className="text-3xl font-bold font-headline mb-4">Ready to Stop Ignoring Your Easiest SEO Wins?</h2>
-                <p className="text-xl text-muted-foreground mb-6">Upload a file now and see the magic for yourself.</p>
+                <p className="text-xl text-muted-foreground mb-6">Enter your API key and upload a file to see the magic for yourself.</p>
                 <p className="text-sm text-muted-foreground">It takes less than a minute. The traffic is waiting.</p>
             </div>
 
@@ -213,9 +241,4 @@ export default function Home() {
       </main>
       <footer className="py-4 px-4 md:px-6 border-t mt-16">
         <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>Powered by MetaMagic. All rights reserved.</p>
-        </div>
-      </footer>
-    </div>
-  );
-}
+          <
