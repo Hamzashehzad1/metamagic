@@ -241,4 +241,8 @@ export default function Home() {
       </main>
       <footer className="py-4 px-4 md:px-6 border-t mt-16">
         <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <
+          </div>
+      </footer>
+    </div>
+  );
+}

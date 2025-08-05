@@ -116,4 +116,6 @@ export function FileUploader({
           )}
         </div>
       </CardContent>
-    </
+    </Card>
+  );
+}
