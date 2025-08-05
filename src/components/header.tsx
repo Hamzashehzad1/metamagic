@@ -19,7 +19,7 @@ export function Header() {
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
-               <Link href="/" legacyBehavior passHref>
+              <Link href="/" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   Metadata Generator
                 </NavigationMenuLink>
