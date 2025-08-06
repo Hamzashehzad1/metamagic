@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview A flow for upscaling an image using the GFPGAN model via a Hugging Face Space API.
+ * @fileOverview A flow for upscaling an image using the Gradio client to connect to a Hugging Face Space.
  *
  * - upscaleImage - A function that handles the image upscaling process.
  * - UpscaleImageInput - The input type for the upscaleImage function.
@@ -11,6 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { client } from "@gradio/client";
 
 const UpscaleImageInputSchema = z.object({
   photoDataUri: z
@@ -35,6 +36,13 @@ export async function upscaleImage(input: UpscaleImageInput): Promise<UpscaleIma
   return upscaleImageFlow(input);
 }
 
+// Helper function to convert data URI to Blob
+async function dataUriToBlob(dataUri: string): Promise<Blob> {
+    const response = await fetch(dataUri);
+    const blob = await response.blob();
+    return blob;
+}
+
 const upscaleImageFlow = ai.defineFlow(
   {
     name: 'upscaleImageFlow',
@@ -44,36 +52,43 @@ const upscaleImageFlow = ai.defineFlow(
   async (input) => {
     const { photoDataUri } = input;
     
-    const GFPGAN_API_URL = "https://stanislavmichalov-image-face-upscale-restoration-gfpgan.hf.space/api/predict";
+    const GRADIO_API_URL = "https://bookbot-image-upscaling-playground.hf.space/";
 
     try {
-        const response = await fetch(GFPGAN_API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              // The API expects the data in an array.
-              data: [photoDataUri]
-            }),
-        });
+        const imageBlob = await dataUriToBlob(photoDataUri);
 
-        if (!response.ok) {
-            const errorBody = await response.text();
-            console.error('GFPGAN API Error:', errorBody);
-            throw new Error(`GFPGAN API request failed with status ${response.status}`);
+        const app = await client(GRADIO_API_URL);
+        const result = await app.predict("/predict", [
+            imageBlob, 	// blob in 'Input Image' Image component		
+            "modelx2",  // string in 'Choose Upscaler' Radio component
+        ]);
+
+        if (!result || typeof result !== 'object' || !('data' in result) || !Array.isArray(result.data) || result.data.length === 0) {
+          throw new Error('Invalid response format from Gradio API');
         }
-
-        const result = await response.json();
         
-        if (!result.data || !Array.isArray(result.data) || result.data.length === 0) {
-          throw new Error('Invalid response format from GFPGAN API');
+        // The result from this specific Gradio app is a URL to the processed file.
+        // We need to fetch it and convert it back to a data URI to send to the client.
+        const upscaledImageUrl = result.data[0];
+
+        if (typeof upscaledImageUrl !== 'string' || !upscaledImageUrl.startsWith('http')) {
+             throw new Error('Gradio API did not return a valid image URL.');
         }
 
-        const upscaledPhotoDataUri = result.data[0];
+        const imageResponse = await fetch(upscaledImageUrl);
+        const imageBlobResult = await imageResponse.blob();
+        
+        const reader = new FileReader();
+        const upscaledPhotoDataUri = await new Promise<string>((resolve, reject) => {
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(imageBlobResult);
+        });
 
         return { upscaledPhotoDataUri };
 
     } catch(error) {
-        console.error("Error calling GFPGAN API:", error);
+        console.error("Error calling Gradio client:", error);
         throw new Error("Failed to upscale image via external service.");
     }
   }
