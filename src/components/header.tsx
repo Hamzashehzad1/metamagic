@@ -26,18 +26,18 @@ export function Header({ isConnected, onConnectClick }: HeaderProps) {
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
-              <Link href="/" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Metadata Generator
-                </NavigationMenuLink>
-              </Link>
+                <Link href="/" passHref>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    Metadata Generator
+                    </NavigationMenuLink>
+                </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <Link href="/upscaler" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Image Upscaler
-                </NavigationMenuLink>
-              </Link>
+                <Link href="/upscaler" passHref>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    Image Upscaler
+                    </NavigationMenuLink>
+                </Link>
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
