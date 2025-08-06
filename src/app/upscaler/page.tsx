@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Header } from '@/components/header';
 import { FileUploader } from '@/components/file-uploader';
@@ -19,14 +19,17 @@ export default function UpscalerPage() {
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   const [originalFileUrl, setOriginalFileUrl] = useState<string | null>(null);
   const [upscaledImageUrl, setUpscaledImageUrl] = useState<string | null>(null);
+  const [isImageReady, setIsImageReady] = useState(false);
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  // We still need the API key state for the header, even if this page doesn't use it.
+  
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [isApiKeySet, setIsApiKeySet] = useState(false);
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
+  
+  const imageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     const storedApiKey = localStorage.getItem('gemini-api-key');
@@ -58,14 +61,15 @@ export default function UpscalerPage() {
     setOriginalFileUrl(URL.createObjectURL(uploadedFile));
     setUpscaledImageUrl(null);
     setError(null);
+    setIsImageReady(false);
   }, [originalFileUrl, upscaledImageUrl]);
 
   const handleProcessing = async () => {
-    if (!originalFile) {
+    if (!originalFile || !imageRef.current) {
         toast({
             variant: 'destructive',
             title: 'No Image Uploaded',
-            description: 'Please upload an image before processing.',
+            description: 'Please upload an image and wait for it to be ready.',
         });
         return;
     }
@@ -76,7 +80,7 @@ export default function UpscalerPage() {
 
     try {
         const upscaler = new Upscaler({ model: esrganSlim });
-        const resultUrl = await upscaler.upscale(originalFile, {
+        const resultUrl = await upscaler.upscale(imageRef.current, {
             patchSize: 64,
             padding: 2,
         });
@@ -101,7 +105,7 @@ export default function UpscalerPage() {
       a.href = upscaledImageUrl;
       a.download = `upscaled-${originalFile?.name || 'image.png'}`;
       document.body.appendChild(a);
-      a.click();
+a.click();
       document.body.removeChild(a);
     }
   };
@@ -124,6 +128,20 @@ export default function UpscalerPage() {
             </p>
         </section>
 
+        {/* Hidden image element to provide a source for the upscaler */}
+        {originalFileUrl && (
+            <Image
+                ref={imageRef}
+                src={originalFileUrl}
+                alt="Hidden source for upscaling"
+                className="hidden"
+                width={0}
+                height={0}
+                onLoad={() => setIsImageReady(true)}
+            />
+        )}
+
+
         <div className="grid gap-8 md:grid-cols-2">
             <div className="space-y-6">
                  <FileUploader 
@@ -143,9 +161,9 @@ export default function UpscalerPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Button onClick={handleProcessing} disabled={isLoading || !originalFile} className="w-full">
+                        <Button onClick={handleProcessing} disabled={isLoading || !originalFile || !isImageReady} className="w-full">
                             {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
-                            {isLoading ? `Upscaling...` : 'Upscale with AI'}
+                            {isLoading ? `Upscaling...` : !isImageReady && originalFile ? 'Processing image...' : 'Upscale with AI'}
                         </Button>
                     </CardContent>
                 </Card>
