@@ -37,11 +37,9 @@ export async function upscaleImage(input: UpscaleImageInput): Promise<UpscaleIma
     
     try {
         // Upload the image to Cloudinary and apply a generative enhancement.
-        // The 'e_gen_recolor' effect with a prompt can be used for enhancement.
+        // The 'e_improve' effect is designed for AI-based enhancement and upscaling.
         const result = await cloudinary.uploader.upload(photoDataUri, {
-            // "improve" is a generic effect for enhancement and upscaling
-            // "e_upscale" can also be used.
-             effect: "e_improve:mode=outdoor:blend=50",
+            effect: "e_improve:mode=outdoor:blend=50",
         });
 
         if (!result || !result.secure_url) {
