@@ -3,7 +3,7 @@
 
 import { generateImageCaption } from '@/ai/flows/generate-image-caption';
 import { extractSeoMetadata } from '@/ai/flows/extract-seo-metadata';
-import { upscaleImage } from '@/ai/flows/upscale-image';
+import { upscaleImage } from '@/ai/flows/upscale-image-genkit';
 import { type MetadataSettings } from '@/components/metadata-settings';
 
 export interface Metadata {
@@ -47,13 +47,16 @@ export async function processFile(
   }
 }
 
-export async function upscaleImageAction(fileDataUri: string): Promise<{ upscaledPhotoDataUri: string }> {
+export async function upscaleImageAction(apiKey: string, fileDataUri: string): Promise<{ upscaledPhotoDataUri: string }> {
     try {
-        const result = await upscaleImage({ photoDataUri: fileDataUri });
+        const result = await upscaleImage({ apiKey, photoDataUri: fileDataUri });
         return result;
     } catch (error) {
         console.error('Error upscaling file:', error);
         if (error instanceof Error) {
+            if (error.message.includes('API key not valid')) {
+                throw new Error('Invalid Gemini API Key. Please check your key and try again.');
+            }
             throw new Error(error.message);
         }
         throw new Error('An unknown error occurred while upscaling the image.');

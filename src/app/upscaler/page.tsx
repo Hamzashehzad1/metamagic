@@ -47,6 +47,15 @@ export default function UpscalerPage() {
   };
 
   const handleFileUpload = useCallback((uploadedFile: File) => {
+    if (!apiKey) {
+      setIsApiKeyDialogOpen(true);
+      toast({
+        variant: 'destructive',
+        title: 'Not Connected',
+        description: 'Please connect your Gemini API key to upload files.'
+      });
+      return;
+    }
     if (originalFileUrl) {
       URL.revokeObjectURL(originalFileUrl);
     }
@@ -57,7 +66,7 @@ export default function UpscalerPage() {
     setOriginalFileUrl(URL.createObjectURL(uploadedFile));
     setUpscaledImageUrl(null);
     setError(null);
-  }, [originalFileUrl, upscaledImageUrl]);
+  }, [apiKey, originalFileUrl, upscaledImageUrl, toast]);
 
   const handleProcessing = async () => {
     if (!originalFile) {
@@ -67,6 +76,15 @@ export default function UpscalerPage() {
             description: 'Please upload an image to start upscaling.',
         });
         return;
+    }
+    if (!apiKey) {
+      setIsApiKeyDialogOpen(true);
+      toast({
+        variant: 'destructive',
+        title: 'Not Connected',
+        description: 'Please connect your Gemini API key to upscale images.'
+      });
+      return;
     }
 
     setIsLoading(true);
@@ -79,7 +97,7 @@ export default function UpscalerPage() {
         reader.onload = async () => {
             try {
                 const fileDataUri = reader.result as string;
-                const { upscaledPhotoDataUri } = await upscaleImageAction(fileDataUri);
+                const { upscaledPhotoDataUri } = await upscaleImageAction(apiKey, fileDataUri);
                 setUpscaledImageUrl(upscaledPhotoDataUri);
             } catch (e) {
                  const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred during upscaling.';
@@ -130,10 +148,10 @@ export default function UpscalerPage() {
       <main className="flex-1 container mx-auto p-4 md:p-6">
         <section className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter">
-                AI Face Restoration & Image Upscaling
+                AI Image Upscaling & Enhancement
             </h1>
             <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
-                Enhance your photos with GFPGAN, an advanced AI for realistic face restoration and beautiful, high-quality upscaling.
+                Enhance your photos with Google's generative AI. Improve resolution, clarity, and restore details in faces and scenes.
             </p>
         </section>
 
@@ -147,16 +165,17 @@ export default function UpscalerPage() {
                     loadingStatus="Upscaling with AI..."
                     accept={{'image/*': ['.jpeg', '.png', '.gif', '.webp']}}
                     dropzoneText="Only images are supported for upscaling"
+                    disabled={!isApiKeySet}
                 />
                  <Card>
                     <CardHeader>
                         <CardTitle>Upscale Image</CardTitle>
                         <CardDescription>
-                           Click the button below to upscale your image using the GFPGAN model.
+                           Click the button below to upscale your image using Google's generative AI.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Button onClick={handleProcessing} disabled={isLoading || !originalFile} className="w-full">
+                        <Button onClick={handleProcessing} disabled={isLoading || !originalFile || !isApiKeySet} className="w-full">
                             {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
                             {isLoading ? `Upscaling...` : 'Upscale with AI'}
                         </Button>
@@ -195,7 +214,7 @@ export default function UpscalerPage() {
                             ) : (
                                 <div className="text-center text-muted-foreground p-4">
                                     <ImageIcon className="mx-auto h-12 w-12" />
-                                    <p className="mt-2">Upload an image and click "Upscale Image" to see the magic.</p>
+                                    <p className="mt-2">Upload an image and click "Upscale with AI" to see the magic.</p>
                                 </div>
                             )}
                         </div>
