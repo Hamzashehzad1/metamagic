@@ -1,6 +1,12 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
+  webpack: (config) => {
+    config.externals.push({
+      '@tensorflow/tfjs-node': 'commonjs @tensorflow/tfjs-node',
+    });
+    return config;
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: '4.5mb',
