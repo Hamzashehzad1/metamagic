@@ -105,7 +105,7 @@ export default function UpscalerPage() {
       a.href = upscaledImageUrl;
       a.download = `upscaled-${originalFile?.name || 'image.png'}`;
       document.body.appendChild(a);
-a.click();
+      a.click();
       document.body.removeChild(a);
     }
   };
@@ -130,15 +130,15 @@ a.click();
 
         {/* Hidden image element to provide a source for the upscaler */}
         {originalFileUrl && (
-            <Image
-                ref={imageRef}
-                src={originalFileUrl}
-                alt="Hidden source for upscaling"
-                className="hidden"
-                width={0}
-                height={0}
-                onLoad={() => setIsImageReady(true)}
-            />
+            <div className="hidden relative w-96 h-96">
+                <Image
+                    ref={imageRef}
+                    src={originalFileUrl}
+                    alt="Hidden source for upscaling"
+                    fill
+                    onLoad={() => setIsImageReady(true)}
+                />
+            </div>
         )}
 
 
