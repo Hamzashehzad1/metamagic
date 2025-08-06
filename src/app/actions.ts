@@ -1,3 +1,4 @@
+
 'use server';
 
 import { generateImageCaption } from '@/ai/flows/generate-image-caption';
@@ -36,10 +37,14 @@ export async function processFile(
     };
   } catch (error) {
     console.error('Error processing file:', error);
-    if (error instanceof Error && error.message.includes('API key not valid')) {
-       throw new Error('Invalid Gemini API Key. Please check your key and try again.');
+    if (error instanceof Error) {
+        if (error.message.includes('API key not valid')) {
+            throw new Error('Invalid Gemini API Key. Please check your key and try again.');
+        }
+        // Re-throw the original error to get more specific feedback in the UI
+        throw new Error(error.message);
     }
-    throw new Error('Failed to generate metadata from AI. Please try again.');
+    throw new Error('An unknown error occurred while generating metadata.');
   }
 }
 
@@ -51,9 +56,13 @@ export async function upscaleImage(apiKey: string, fileDataUri: string): Promise
         return upscaledImageUri;
     } catch (error) {
         console.error('Error upscaling file:', error);
-        if (error instanceof Error && error.message.includes('API key not valid')) {
-            throw new Error('Invalid Gemini API Key. Please check your key and try again.');
+        if (error instanceof Error) {
+            if (error.message.includes('API key not valid')) {
+                throw new Error('Invalid Gemini API Key. Please check your key and try again.');
+            }
+             // Re-throw the original error to get more specific feedback in the UI
+            throw new Error(error.message);
         }
-        throw new Error('Failed to upscale image with AI. Please try again.');
+        throw new Error('An unknown error occurred while upscaling the image.');
     }
 }
