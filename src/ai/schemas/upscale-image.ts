@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const UpscaleImageInputSchema = z.object({
+  apiKey: z.string().describe('The user\'s Gemini API key.'),
   photoDataUri: z
     .string()
     .describe(

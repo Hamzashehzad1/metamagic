@@ -9,22 +9,13 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
 import { z } from 'zod';
 import { UpscaleImageInputSchema, UpscaleImageOutputSchema } from '@/ai/schemas/upscale-image';
 
 export type UpscaleImageInput = z.infer<typeof UpscaleImageInputSchema>;
 export type UpscaleImageOutput = z.infer<typeof UpscaleImageOutputSchema>;
-
-const prompt = ai.definePrompt(
-  {
-    name: 'upscaleImagePrompt',
-    input: { schema: UpscaleImageInputSchema },
-    output: { schema: UpscaleImageOutputSchema },
-    prompt: `Upscale this image to improve its resolution and detail, while maintaining the original subject and style. Do not change the content of the image.
-
-Image: {{media url=photoDataUri}}`
-  }
-)
 
 const upscaleImageFlow = ai.defineFlow(
   {
@@ -33,7 +24,24 @@ const upscaleImageFlow = ai.defineFlow(
     outputSchema: UpscaleImageOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
+    const { apiKey, ...promptData } = input;
+
+    const client = genkit({
+      plugins: [googleAI({ apiKey })],
+    });
+    
+    const prompt = client.definePrompt(
+      {
+        name: 'upscaleImagePrompt',
+        input: { schema: UpscaleImageInputSchema.omit({apiKey: true}) },
+        output: { schema: UpscaleImageOutputSchema },
+        prompt: `Upscale this image to improve its resolution and detail, while maintaining the original subject and style. Do not change the content of the image.
+
+Image: {{media url=photoDataUri}}`
+      }
+    )
+    
+    const { output } = await prompt(promptData);
     if (!output?.upscaledImageUri) {
       throw new Error('Image upscaling failed to produce a result.');
     }

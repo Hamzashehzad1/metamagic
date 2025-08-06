@@ -5,9 +5,6 @@ import { generateImageCaption } from '@/ai/flows/generate-image-caption';
 import { extractSeoMetadata } from '@/ai/flows/extract-seo-metadata';
 import { upscaleImage as upscaleImageFlow } from '@/ai/flows/upscale-image';
 import { type MetadataSettings } from '@/components/metadata-settings';
-import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/googleai';
-
 
 export interface Metadata {
   caption: string;
@@ -16,26 +13,16 @@ export interface Metadata {
   seoDescription: string;
 }
 
-function getClient(apiKey: string) {
-    return genkit({
-        plugins: [
-            googleAI({
-                apiKey
-            })
-        ]
-    });
-}
-
 export async function processFile(
   apiKey: string,
   fileDataUri: string,
   settings: MetadataSettings,
 ): Promise<Metadata> {
   try {
-    const client = getClient(apiKey);
-    const { caption } = await client.run(generateImageCaption, { photoDataUri: fileDataUri });
+    const { caption } = await generateImageCaption({ apiKey, photoDataUri: fileDataUri });
 
-    const { seoKeywords, seoTitle, seoDescription } = await client.run(extractSeoMetadata, {
+    const { seoKeywords, seoTitle, seoDescription } = await extractSeoMetadata({
+      apiKey,
       photoDataUri: fileDataUri,
       imageCaption: caption,
       ...settings,
@@ -62,8 +49,7 @@ export async function processFile(
 
 export async function upscaleImage(apiKey: string, fileDataUri: string): Promise<string> {
     try {
-        const client = getClient(apiKey);
-        const { upscaledImageUri } = await client.run(upscaleImageFlow, { photoDataUri: fileDataUri });
+        const { upscaledImageUri } = await upscaleImageFlow({ apiKey, photoDataUri: fileDataUri });
         return upscaledImageUri;
     } catch (error) {
         console.error('Error upscaling file:', error);

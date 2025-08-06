@@ -9,9 +9,12 @@
  */
 
 import {ai} from '@/ai/genkit';
+import {genkit} from 'genkit';
+import {googleAI} from '@genkit-ai/googleai';
 import {z} from 'genkit';
 
 const GenerateImageCaptionInputSchema = z.object({
+  apiKey: z.string().describe('The user\'s Gemini API key.'),
   photoDataUri: z
     .string()
     .describe(
@@ -29,14 +32,6 @@ export async function generateImageCaption(input: GenerateImageCaptionInput): Pr
   return generateImageCaptionFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateImageCaptionPrompt',
-  input: {schema: GenerateImageCaptionInputSchema},
-  output: {schema: GenerateImageCaptionOutputSchema},
-  prompt: `You are an AI image captioning expert. Generate a concise and descriptive caption for the image.
-
-Image: {{media url=photoDataUri}}`,
-});
 
 const generateImageCaptionFlow = ai.defineFlow(
   {
@@ -44,8 +39,23 @@ const generateImageCaptionFlow = ai.defineFlow(
     inputSchema: GenerateImageCaptionInputSchema,
     outputSchema: GenerateImageCaptionOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+  async (input) => {
+    const { apiKey, ...promptData } = input;
+
+    const client = genkit({
+      plugins: [googleAI({ apiKey })],
+    });
+
+    const prompt = client.definePrompt({
+      name: 'generateImageCaptionPrompt',
+      input: {schema: GenerateImageCaptionInputSchema.omit({apiKey: true})},
+      output: {schema: GenerateImageCaptionOutputSchema},
+      prompt: `You are an AI image captioning expert. Generate a concise and descriptive caption for the image.
+
+Image: {{media url=photoDataUri}}`,
+    });
+
+    const {output} = await prompt(promptData);
     return output!;
   }
 );

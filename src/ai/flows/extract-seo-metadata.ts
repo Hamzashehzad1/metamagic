@@ -9,9 +9,12 @@
  */
 
 import {ai} from '@/ai/genkit';
+import {genkit} from 'genkit';
+import {googleAI} from '@genkit-ai/googleai';
 import {z} from 'genkit';
 
 const ExtractSeoMetadataInputSchema = z.object({
+  apiKey: z.string().describe('The user\'s Gemini API key.'),
   photoDataUri: z
     .string()
     .describe(
@@ -38,11 +41,23 @@ export async function extractSeoMetadata(input: ExtractSeoMetadataInput): Promis
   return extractSeoMetadataFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'extractSeoMetadataPrompt',
-  input: {schema: ExtractSeoMetadataInputSchema},
-  output: {schema: ExtractSeoMetadataOutputSchema},
-  prompt: `You are an SEO expert. Generate SEO keywords, a title, and a meta description for an image based on the following caption and constraints.
+const extractSeoMetadataFlow = ai.defineFlow(
+  {
+    name: 'extractSeoMetadataFlow',
+    inputSchema: ExtractSeoMetadataInputSchema,
+    outputSchema: ExtractSeoMetadataOutputSchema,
+  },
+  async (input) => {
+    const { apiKey, ...promptData } = input;
+    const client = genkit({
+      plugins: [googleAI({ apiKey })],
+    });
+
+    const prompt = client.definePrompt({
+      name: 'extractSeoMetadataPrompt',
+      input: {schema: ExtractSeoMetadataInputSchema.omit({apiKey: true})},
+      output: {schema: ExtractSeoMetadataOutputSchema},
+      prompt: `You are an SEO expert. Generate SEO keywords, a title, and a meta description for an image based on the following caption and constraints.
 
 Image Caption: {{{imageCaption}}}
 
@@ -56,16 +71,9 @@ Constraints:
 
 Generate the SEO metadata based on these rules.
 `,
-});
+    });
 
-const extractSeoMetadataFlow = ai.defineFlow(
-  {
-    name: 'extractSeoMetadataFlow',
-    inputSchema: ExtractSeoMetadataInputSchema,
-    outputSchema: ExtractSeoMetadataOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
+    const {output} = await prompt(promptData);
     return output!;
   }
 );
