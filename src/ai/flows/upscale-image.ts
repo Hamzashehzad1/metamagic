@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview A flow for upscaling an image.
+ * @fileOverview A flow for upscaling an image using the GFPGAN model via a Hugging Face Space API.
  *
  * - upscaleImage - A function that handles the image upscaling process.
  * - UpscaleImageInput - The input type for the upscaleImage function.
@@ -10,12 +10,9 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/googleai';
 import {z} from 'genkit';
 
 const UpscaleImageInputSchema = z.object({
-  apiKey: z.string().describe("The user's Gemini API key."),
   photoDataUri: z
     .string()
     .describe(
@@ -45,27 +42,39 @@ const upscaleImageFlow = ai.defineFlow(
     outputSchema: UpscaleImageOutputSchema,
   },
   async (input) => {
-    const { apiKey, photoDataUri } = input;
-
-    const client = genkit({
-      plugins: [googleAI({ apiKey })],
-    });
-
-    // This is a placeholder. In a real scenario, you would use a dedicated image upscaling model or service.
-    // For this example, we'll just return the original image data URI.
-    // The prompt is used to simulate an AI operation but doesn't actually perform upscaling.
-    const prompt = client.definePrompt({
-      name: 'upscaleImagePrompt',
-      input: {schema: UpscaleImageInputSchema.omit({apiKey: true})},
-      output: {schema: UpscaleImageOutputSchema},
-      model: 'googleai/gemini-2.0-flash',
-      prompt: `You are an image processing expert. You have been given an image. Your task is to upscale it. For the purpose of this demo, you will just return the original image data URI as the upscaled image URI.
-
-Image: {{media url=photoDataUri}}`,
-    });
+    const { photoDataUri } = input;
     
-    // In a real implementation, you would call an image upscaling service.
-    // Here we just return the original URI for demonstration.
-    return { upscaledPhotoDataUri: photoDataUri };
+    const GFPGAN_API_URL = "https://stanislavmichalov-image-face-upscale-restoration-gfpgan.hf.space/api/predict";
+
+    try {
+        const response = await fetch(GFPGAN_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              // The API expects the data in an array.
+              data: [photoDataUri]
+            }),
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.text();
+            console.error('GFPGAN API Error:', errorBody);
+            throw new Error(`GFPGAN API request failed with status ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (!result.data || !Array.isArray(result.data) || result.data.length === 0) {
+          throw new Error('Invalid response format from GFPGAN API');
+        }
+
+        const upscaledPhotoDataUri = result.data[0];
+
+        return { upscaledPhotoDataUri };
+
+    } catch(error) {
+        console.error("Error calling GFPGAN API:", error);
+        throw new Error("Failed to upscale image via external service.");
+    }
   }
 );

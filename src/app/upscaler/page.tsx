@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { Header } from '@/components/header';
 import { FileUploader } from '@/components/file-uploader';
@@ -12,14 +12,12 @@ import { Wand2, Download, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { GeminiKeyDialog } from '@/components/gemini-key-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
-import Upscaler from 'upscaler';
-import esrganSlim from '@upscalerjs/esrgan-slim';
+import { upscaleImageAction } from '@/app/actions';
 
 export default function UpscalerPage() {
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   const [originalFileUrl, setOriginalFileUrl] = useState<string | null>(null);
   const [upscaledImageUrl, setUpscaledImageUrl] = useState<string | null>(null);
-  const [isImageReady, setIsImageReady] = useState(false);
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,8 +27,6 @@ export default function UpscalerPage() {
   const [isApiKeySet, setIsApiKeySet] = useState(false);
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
   
-  const imageRef = useRef<HTMLImageElement>(null);
-
   useEffect(() => {
     const storedApiKey = localStorage.getItem('gemini-api-key');
     if (storedApiKey) {
@@ -61,15 +57,14 @@ export default function UpscalerPage() {
     setOriginalFileUrl(URL.createObjectURL(uploadedFile));
     setUpscaledImageUrl(null);
     setError(null);
-    setIsImageReady(false);
   }, [originalFileUrl, upscaledImageUrl]);
 
   const handleProcessing = async () => {
-    if (!originalFile || !imageRef.current) {
+    if (!originalFile) {
         toast({
             variant: 'destructive',
             title: 'No Image Uploaded',
-            description: 'Please upload an image and wait for it to be ready.',
+            description: 'Please upload an image to start upscaling.',
         });
         return;
     }
@@ -79,22 +74,36 @@ export default function UpscalerPage() {
     setUpscaledImageUrl(null);
 
     try {
-        const upscaler = new Upscaler({ model: esrganSlim });
-        const resultUrl = await upscaler.upscale(imageRef.current, {
-            patchSize: 64,
-            padding: 2,
-        });
-        setUpscaledImageUrl(resultUrl);
+        const reader = new FileReader();
+        reader.readAsDataURL(originalFile);
+        reader.onload = async () => {
+            try {
+                const fileDataUri = reader.result as string;
+                const { upscaledPhotoDataUri } = await upscaleImageAction(fileDataUri);
+                setUpscaledImageUrl(upscaledPhotoDataUri);
+            } catch (e) {
+                 const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred during upscaling.';
+                setError(errorMessage);
+                toast({
+                    variant: 'destructive',
+                    title: 'Upscaling Error',
+                    description: errorMessage,
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        reader.onerror = () => {
+            throw new Error('Failed to read file.');
+        };
     } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred during upscaling.';
-        console.error("Upscaler Error:", e);
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
         setError(errorMessage);
         toast({
             variant: 'destructive',
-            title: 'Upscaling Error',
-            description: "Failed to upscale image. Please try a different image.",
+            title: 'Error',
+            description: errorMessage,
         });
-    } finally {
         setIsLoading(false);
     }
   };
@@ -124,23 +133,9 @@ export default function UpscalerPage() {
                 Transform Your Images with AI Upscaling
             </h1>
             <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
-                Stop using blurry, low-resolution images. Our tool instantly upscales your photos with Real-ESRGAN, revealing stunning detail.
+                Enhance your photos with GFPGAN, an advanced AI for realistic face restoration and beautiful upscaling.
             </p>
         </section>
-
-        {/* Hidden image element to provide a source for the upscaler */}
-        {originalFileUrl && (
-            <div className="hidden relative w-96 h-96">
-                <Image
-                    ref={imageRef}
-                    src={originalFileUrl}
-                    alt="Hidden source for upscaling"
-                    fill
-                    onLoad={() => setIsImageReady(true)}
-                />
-            </div>
-        )}
-
 
         <div className="grid gap-8 md:grid-cols-2">
             <div className="space-y-6">
@@ -157,13 +152,13 @@ export default function UpscalerPage() {
                     <CardHeader>
                         <CardTitle>Upscale Image</CardTitle>
                         <CardDescription>
-                           Click the button below to upscale your image using the Real-ESRGAN model.
+                           Click the button below to upscale your image using the GFPGAN model.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Button onClick={handleProcessing} disabled={isLoading || !originalFile || !isImageReady} className="w-full">
+                        <Button onClick={handleProcessing} disabled={isLoading || !originalFile} className="w-full">
                             {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
-                            {isLoading ? `Upscaling...` : !isImageReady && originalFile ? 'Processing image...' : 'Upscale with AI'}
+                            {isLoading ? `Upscaling...` : 'Upscale with AI'}
                         </Button>
                     </CardContent>
                 </Card>
