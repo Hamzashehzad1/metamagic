@@ -47,16 +47,13 @@ export async function processFile(
   }
 }
 
-export async function upscaleImageAction(apiKey: string, fileDataUri: string): Promise<{ upscaledPhotoDataUri: string }> {
+export async function upscaleImageAction(fileDataUri: string): Promise<{ upscaledPhotoDataUri: string }> {
     try {
-        const result = await upscaleImage({ apiKey, photoDataUri: fileDataUri });
+        const result = await upscaleImage({ photoDataUri: fileDataUri });
         return result;
     } catch (error) {
         console.error('Error upscaling file:', error);
         if (error instanceof Error) {
-            if (error.message.includes('API key not valid')) {
-                throw new Error('Invalid Gemini API Key. Please check your key and try again.');
-            }
             throw new Error(error.message);
         }
         throw new Error('An unknown error occurred while upscaling the image.');
