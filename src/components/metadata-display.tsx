@@ -1,3 +1,4 @@
+
 "use client";
 
 import { type Metadata } from '@/app/actions';
@@ -26,8 +27,8 @@ export function MetadataDisplay({ metadata, isLoading }: MetadataDisplayProps) {
       filename = 'metadata.json';
       mimeType = 'application/json';
     } else {
-      const { caption, seoKeywords, seoTitle, seoDescription } = metadata;
-      content = `Image Caption:\n${caption}\n\nSEO Keywords:\n${seoKeywords}\n\nSEO Title:\n${seoTitle}\n\nSEO Description:\n${seoDescription}`;
+      const { caption, stockKeywords, stockTitle, stockDescription } = metadata;
+      content = `Image Caption:\n${caption}\n\nStock Keywords:\n${stockKeywords}\n\nStock Title:\n${stockTitle}\n\nStock Description:\n${stockDescription}`;
       filename = 'metadata.txt';
       mimeType = 'text/plain';
     }
@@ -82,9 +83,9 @@ export function MetadataDisplay({ metadata, isLoading }: MetadataDisplayProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <MetadataCard title="AI Generated Caption" content={metadata.caption} />
-        <MetadataCard title="SEO Keywords" content={metadata.seoKeywords} />
-        <MetadataCard title="SEO Title" content={metadata.seoTitle} />
-        <MetadataCard title="SEO Description" content={metadata.seoDescription} />
+        <MetadataCard title="Stock Keywords" content={metadata.stockKeywords} />
+        <MetadataCard title="Stock Title" content={metadata.stockTitle} />
+        <MetadataCard title="Stock Description" content={metadata.stockDescription} />
       </CardContent>
     </Card>
   );

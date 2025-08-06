@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -31,9 +32,9 @@ const ExtractSeoMetadataInputSchema = z.object({
 export type ExtractSeoMetadataInput = z.infer<typeof ExtractSeoMetadataInputSchema>;
 
 const ExtractSeoMetadataOutputSchema = z.object({
-  seoKeywords: z.string().describe('SEO keywords for the image.'),
-  seoTitle: z.string().describe('SEO title for the image.'),
-  seoDescription: z.string().describe('SEO description for the image.'),
+  stockKeywords: z.string().describe('Comma-separated keywords for the stock photo website.'),
+  stockTitle: z.string().describe('A short, impactful title for the stock photo.'),
+  stockDescription: z.string().describe('A detailed description for the stock photo.'),
 });
 export type ExtractSeoMetadataOutput = z.infer<typeof ExtractSeoMetadataOutputSchema>;
 
@@ -58,20 +59,21 @@ const extractSeoMetadataFlow = ai.defineFlow(
       input: {schema: ExtractSeoMetadataInputSchema.omit({apiKey: true})},
       output: {schema: ExtractSeoMetadataOutputSchema},
       model: 'googleai/gemini-2.0-flash',
-      prompt: `You are an SEO expert. Generate SEO keywords, a title, and a meta description for an image based on the following caption and constraints.
+      prompt: `You are an expert at creating metadata for stock photography websites like Adobe Stock and Getty Images. Your goal is to maximize the visibility and saleability of the image.
 
 Image Caption: {{{imageCaption}}}
 
+Analyze the image and generate a title, description, and keywords optimized for stock photo sites.
+
 Constraints:
-- SEO Title Length: Around {{{titleLength}}} characters.
-- SEO Description Length: Around {{{descriptionLength}}} characters.
+- Title Length: Around {{{titleLength}}} characters. Make it concise and impactful.
+- Description Length: Around {{{descriptionLength}}} characters. Describe the scene, subjects, and potential concepts.
 - Number of Keywords: Exactly {{{keywordCount}}}.
 - Keyword Format: {{{keywordFormat}}}.
 - Must Include Keywords: {{{includeKeywords}}}.
 - Must Exclude Keywords: {{{excludeKeywords}}}.
 
-Generate the SEO metadata based on these rules.
-`,
+Generate the metadata based on these rules, focusing on commercial value and searchability.`,
     });
 
     const {output} = await prompt(promptData);

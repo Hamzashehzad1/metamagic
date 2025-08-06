@@ -8,9 +8,9 @@ import { type MetadataSettings } from '@/components/metadata-settings';
 
 export interface Metadata {
   caption: string;
-  seoKeywords: string;
-  seoTitle: string;
-  seoDescription: string;
+  stockKeywords: string;
+  stockTitle: string;
+  stockDescription: string;
 }
 
 export async function processFile(
@@ -21,7 +21,7 @@ export async function processFile(
   try {
     const { caption } = await generateImageCaption({ apiKey, photoDataUri: fileDataUri });
 
-    const { seoKeywords, seoTitle, seoDescription } = await extractSeoMetadata({
+    const { stockKeywords, stockTitle, stockDescription } = await extractSeoMetadata({
       apiKey,
       photoDataUri: fileDataUri,
       imageCaption: caption,
@@ -30,9 +30,9 @@ export async function processFile(
 
     return {
       caption,
-      seoKeywords,
-      seoTitle,
-      seoDescription,
+      stockKeywords,
+      stockTitle,
+      stockDescription,
     };
   } catch (error) {
     console.error('Error processing file:', error);
