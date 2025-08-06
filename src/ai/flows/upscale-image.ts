@@ -35,7 +35,7 @@ const upscaleImageFlow = ai.defineFlow(
         name: 'upscaleImagePrompt',
         input: { schema: UpscaleImageInputSchema.omit({apiKey: true}) },
         output: { schema: UpscaleImageOutputSchema },
-        model: 'googleai/gemini-pro-vision',
+        model: 'googleai/gemini-1.5-pro-preview',
         prompt: `Upscale this image to improve its resolution and detail, while maintaining the original subject and style. Do not change the content of the image.
 
 Image: {{media url=photoDataUri}}`
