@@ -130,10 +130,10 @@ export default function UpscalerPage() {
       <main className="flex-1 container mx-auto p-4 md:p-6">
         <section className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter">
-                Transform Your Images with AI Upscaling
+                AI Face Restoration & Image Upscaling
             </h1>
             <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
-                Enhance your photos with GFPGAN, an advanced AI for realistic face restoration and beautiful upscaling.
+                Enhance your photos with GFPGAN, an advanced AI for realistic face restoration and beautiful, high-quality upscaling.
             </p>
         </section>
 

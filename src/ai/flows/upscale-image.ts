@@ -52,7 +52,7 @@ const upscaleImageFlow = ai.defineFlow(
   async (input) => {
     const { photoDataUri } = input;
     
-    const GRADIO_API_URL = "https://bookbot-image-upscaling-playground.hf.space/";
+    const GRADIO_API_URL = "https://anil-ch-gfpgan.hf.space/";
 
     try {
         const imageBlob = await dataUriToBlob(photoDataUri);
@@ -60,7 +60,6 @@ const upscaleImageFlow = ai.defineFlow(
         const app = await client(GRADIO_API_URL);
         const result = await app.predict("/predict", [
             imageBlob, 	// blob in 'Input Image' Image component		
-            "modelx2",  // string in 'Choose Upscaler' Radio component
         ]);
 
         if (!result || typeof result !== 'object' || !('data' in result) || !Array.isArray(result.data) || result.data.length === 0) {
