@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { Header } from '@/components/header';
 import { FileUploader } from '@/components/file-uploader';
@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wand2, Download, Image as ImageIcon, Loader2, PartyPopper } from 'lucide-react';
-import { GeminiKeyDialog } from '@/components/gemini-key-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
 import { upscaleImageAction } from '@/app/actions';
@@ -22,13 +21,7 @@ export default function UpscalerPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  
-  // We no longer need a dedicated API key for this feature as it uses Cloudinary
-  // But we'll keep the plumbing in case other features need it.
-  const [apiKey, setApiKey] = useState<string | null>('not-needed');
-  const [isApiKeySet, setIsApiKeySet] = useState(true);
-  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
-  
+
   const handleFileUpload = useCallback((uploadedFile: File) => {
     if (originalFileUrl) {
       URL.revokeObjectURL(originalFileUrl);
@@ -40,11 +33,11 @@ export default function UpscalerPage() {
   }, [originalFileUrl]);
 
   const handleProcessing = async () => {
-    if (!originalFile) {
+    if (!originalFileUrl) {
         toast({
             variant: 'destructive',
-            title: 'No Image Uploaded',
-            description: 'Please upload an image to start upscaling.',
+            title: 'No Image Selected',
+            description: 'Please upload an image to upscale.',
         });
         return;
     }
@@ -55,15 +48,15 @@ export default function UpscalerPage() {
 
     try {
         const reader = new FileReader();
-        reader.readAsDataURL(originalFile);
+        reader.readAsDataURL(originalFile!);
         reader.onload = async () => {
+            const fileDataUri = reader.result as string;
             try {
-                const fileDataUri = reader.result as string;
-                const { upscaledPhotoDataUri } = await upscaleImageAction(fileDataUri);
-                setUpscaledImageUrl(upscaledPhotoDataUri);
+                const result = await upscaleImageAction(fileDataUri);
+                setUpscaledImageUrl(result.upscaledPhotoDataUri);
                  toast({
                     title: 'Success!',
-                    description: 'Your image has been magically enhanced by Cloudinary.',
+                    description: 'Your image has been magically upscaled.',
                     action: <PartyPopper/>
                 });
             } catch (e) {
@@ -77,16 +70,13 @@ export default function UpscalerPage() {
             } finally {
                 setIsLoading(false);
             }
-        };
-        reader.onerror = () => {
-            throw new Error('Failed to read file.');
-        };
+        }
     } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred during upscaling.';
         setError(errorMessage);
         toast({
             variant: 'destructive',
-            title: 'Error',
+            title: 'Upscaling Error',
             description: errorMessage,
         });
         setIsLoading(false);
@@ -98,8 +88,6 @@ export default function UpscalerPage() {
       const a = document.createElement('a');
       a.href = upscaledImageUrl;
       a.download = `upscaled-${originalFile?.name || 'image.png'}`;
-      // Required for cross-origin downloads
-      a.target = '_blank';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -108,19 +96,14 @@ export default function UpscalerPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <GeminiKeyDialog
-        isOpen={isApiKeyDialogOpen}
-        setIsOpen={setIsApiKeyDialogOpen}
-        onSave={() => {}}
-      />
-      <Header isConnected={isApiKeySet} onConnectClick={() => {}} />
+      <Header isConnected={true} onConnectClick={() => {}} />
       <main className="flex-1 container mx-auto p-4 md:p-6">
         <section className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter">
-                AI Image Upscaling with Cloudinary
+                Free AI Image Upscaler & Face Restoration
             </h1>
             <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
-                Enhance your photos with Cloudinary's AI. Improve resolution, clarity, and restore details in any scene.
+               Enhance your images and restore faces with the powerful GFPGAN AI model. No cost, completely free to use.
             </p>
         </section>
 
@@ -131,7 +114,7 @@ export default function UpscalerPage() {
                     fileUrl={originalFileUrl}
                     fileType={originalFile ? originalFile.type : null}
                     isLoading={isLoading}
-                    loadingStatus="Upscaling with Cloudinary..."
+                    loadingStatus="Upscaling with GFPGAN..."
                     accept={{'image/*': ['.jpeg', '.png', '.gif', '.webp']}}
                     dropzoneText="Only images are supported for upscaling"
                 />
@@ -139,7 +122,7 @@ export default function UpscalerPage() {
                     <CardHeader>
                         <CardTitle>Upscale Image</CardTitle>
                         <CardDescription>
-                           Click the button below to upscale your image using Cloudinary's AI.
+                           Click the button below to enhance your image using a powerful, free AI model.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -173,7 +156,7 @@ export default function UpscalerPage() {
                             {isLoading && (
                                 <div className="absolute inset-0 bg-background/90 flex flex-col items-center justify-center z-10 rounded-lg">
                                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                                    <p className="mt-4 text-center font-medium">Upscaling with Cloudinary</p>
+                                    <p className="mt-4 text-center font-medium">Upscaling with AI</p>
                                     <p className="text-sm text-muted-foreground">This may take a moment...</p>
                                 </div>
                             )}

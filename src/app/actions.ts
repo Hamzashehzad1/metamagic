@@ -3,8 +3,8 @@
 
 import { generateImageCaption } from '@/ai/flows/generate-image-caption';
 import { extractSeoMetadata } from '@/ai/flows/extract-seo-metadata';
-import { upscaleImage } from '@/ai/flows/upscale-image-genkit';
 import { type MetadataSettings } from '@/components/metadata-settings';
+import { upscaleImage } from '@/ai/flows/upscale-image';
 
 export interface Metadata {
   caption: string;
@@ -47,15 +47,13 @@ export async function processFile(
   }
 }
 
-export async function upscaleImageAction(fileDataUri: string): Promise<{ upscaledPhotoDataUri: string }> {
-    try {
-        const result = await upscaleImage({ photoDataUri: fileDataUri });
-        return result;
-    } catch (error) {
-        console.error('Error upscaling file:', error);
-        if (error instanceof Error) {
-            throw new Error(error.message);
-        }
-        throw new Error('An unknown error occurred while upscaling the image.');
-    }
+export async function upscaleImageAction(photoDataUri: string) {
+  try {
+    const result = await upscaleImage({ photoDataUri });
+    return result;
+  } catch (error) {
+    console.error('Error in upscaleImageAction:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during upscaling.';
+    throw new Error(errorMessage);
+  }
 }
