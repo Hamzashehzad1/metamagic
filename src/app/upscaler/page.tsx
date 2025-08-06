@@ -13,7 +13,7 @@ import { GeminiKeyDialog } from '@/components/gemini-key-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
 import Upscaler from 'upscaler';
-import esrganMedium from '@upscalerjs/esrgan-medium';
+import esrganSlim from '@upscalerjs/esrgan-slim';
 
 export default function UpscalerPage() {
   const [originalFile, setOriginalFile] = useState<File | null>(null);
@@ -75,7 +75,7 @@ export default function UpscalerPage() {
     setUpscaledImageUrl(null);
 
     try {
-        const upscaler = new Upscaler({ model: esrganMedium });
+        const upscaler = new Upscaler({ model: esrganSlim });
         const resultUrl = await upscaler.upscale(originalFile, {
             patchSize: 64,
             padding: 2,
