@@ -57,7 +57,7 @@ const extractSeoMetadataFlow = ai.defineFlow(
       name: 'extractSeoMetadataPrompt',
       input: {schema: ExtractSeoMetadataInputSchema.omit({apiKey: true})},
       output: {schema: ExtractSeoMetadataOutputSchema},
-      model: 'googleai/gemini-1.5-pro-preview',
+      model: 'googleai/gemini-2.0-flash',
       prompt: `You are an SEO expert. Generate SEO keywords, a title, and a meta description for an image based on the following caption and constraints.
 
 Image Caption: {{{imageCaption}}}
