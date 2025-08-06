@@ -40,8 +40,6 @@ export default function Home() {
     if (storedApiKey) {
       setApiKey(storedApiKey);
       setIsApiKeySet(true);
-    } else {
-      setIsApiKeyDialogOpen(true);
     }
   }, []);
 
@@ -59,6 +57,11 @@ export default function Home() {
   const handleFileUpload = useCallback((uploadedFile: File) => {
     if (!apiKey) {
       setIsApiKeyDialogOpen(true);
+      toast({
+        variant: 'destructive',
+        title: 'Not Connected',
+        description: 'Please connect your Gemini API key to upload files.'
+      });
       return;
     }
     if (fileUrl) {
@@ -69,7 +72,7 @@ export default function Home() {
     setFileType(uploadedFile.type);
     setMetadata(null);
     setError(null);
-  }, [apiKey, fileUrl]);
+  }, [apiKey, fileUrl, toast]);
 
 
   const handleGenerate = async () => {
@@ -79,6 +82,11 @@ export default function Home() {
     }
     if (!apiKey) {
       setIsApiKeyDialogOpen(true);
+      toast({
+        variant: 'destructive',
+        title: 'Not Connected',
+        description: 'Please connect your Gemini API key to generate metadata.'
+      });
       return;
     }
 
@@ -135,7 +143,7 @@ export default function Home() {
         setIsOpen={setIsApiKeyDialogOpen}
         onSave={handleSaveApiKey}
       />
-      <Header isConnected={isApiKeySet} />
+      <Header isConnected={isApiKeySet} onConnectClick={() => setIsApiKeyDialogOpen(true)} />
       <main className="flex-1 container mx-auto p-4 md:p-6">
         <section className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter">

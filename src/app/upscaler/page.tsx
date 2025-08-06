@@ -32,8 +32,6 @@ export default function UpscalerPage() {
     if (storedApiKey) {
       setApiKey(storedApiKey);
       setIsApiKeySet(true);
-    } else {
-        setIsApiKeyDialogOpen(true);
     }
   }, []);
 
@@ -51,6 +49,11 @@ export default function UpscalerPage() {
   const handleFileUpload = useCallback((uploadedFile: File) => {
      if (!apiKey) {
       setIsApiKeyDialogOpen(true);
+      toast({
+        variant: 'destructive',
+        title: 'Not Connected',
+        description: 'Please connect your Gemini API key to upload files.'
+      });
       return;
     }
     if (originalFileUrl) {
@@ -63,7 +66,7 @@ export default function UpscalerPage() {
     setOriginalFileUrl(URL.createObjectURL(uploadedFile));
     setUpscaledImageUrl(null);
     setError(null);
-  }, [apiKey, originalFileUrl, upscaledImageUrl]);
+  }, [apiKey, originalFileUrl, upscaledImageUrl, toast]);
 
   const handleProcessing = async () => {
     if (!originalFileUrl || !originalFile) {
@@ -77,6 +80,11 @@ export default function UpscalerPage() {
 
      if (!apiKey) {
       setIsApiKeyDialogOpen(true);
+      toast({
+        variant: 'destructive',
+        title: 'Not Connected',
+        description: 'Please connect your Gemini API key to upscale images.'
+      });
       return;
     }
 
@@ -128,7 +136,7 @@ export default function UpscalerPage() {
       a.href = upscaledImageUrl;
       a.download = `upscaled-image.png`;
       document.body.appendChild(a);
-      a.click();
+a.click();
       document.body.removeChild(a);
     }
   };
@@ -140,7 +148,7 @@ export default function UpscalerPage() {
         setIsOpen={setIsApiKeyDialogOpen}
         onSave={handleSaveApiKey}
       />
-      <Header isConnected={isApiKeySet} />
+      <Header isConnected={isApiKeySet} onConnectClick={() => setIsApiKeyDialogOpen(true)} />
       <main className="flex-1 container mx-auto p-4 md:p-6">
         <section className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter">
