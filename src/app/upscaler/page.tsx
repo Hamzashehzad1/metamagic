@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wand2, Download, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { upscaleImage } from '@/app/actions';
-import { GeminiSettings } from '@/components/gemini-settings';
+import { GeminiKeyDialog } from '@/components/gemini-key-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
 
@@ -24,15 +24,35 @@ export default function UpscalerPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const [isApiKeySet, setIsApiKeySet] = useState(false);
+  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
 
   useEffect(() => {
     const storedApiKey = localStorage.getItem('gemini-api-key');
     if (storedApiKey) {
       setApiKey(storedApiKey);
+      setIsApiKeySet(true);
+    } else {
+        setIsApiKeyDialogOpen(true);
     }
   }, []);
 
+  const handleSaveApiKey = (newKey: string) => {
+    setApiKey(newKey);
+    setIsApiKeySet(true);
+    localStorage.setItem('gemini-api-key', newKey);
+    setIsApiKeyDialogOpen(false);
+    toast({
+      title: 'API Key Saved',
+      description: 'You are now connected to Gemini.',
+    });
+  };
+
   const handleFileUpload = useCallback((uploadedFile: File) => {
+     if (!apiKey) {
+      setIsApiKeyDialogOpen(true);
+      return;
+    }
     if (originalFileUrl) {
       URL.revokeObjectURL(originalFileUrl);
     }
@@ -43,7 +63,7 @@ export default function UpscalerPage() {
     setOriginalFileUrl(URL.createObjectURL(uploadedFile));
     setUpscaledImageUrl(null);
     setError(null);
-  }, [originalFileUrl, upscaledImageUrl]);
+  }, [apiKey, originalFileUrl, upscaledImageUrl]);
 
   const handleProcessing = async () => {
     if (!originalFileUrl || !originalFile) {
@@ -56,12 +76,7 @@ export default function UpscalerPage() {
     }
 
      if (!apiKey) {
-      setError("Please enter your Gemini API key to proceed.");
-      toast({
-        variant: 'destructive',
-        title: 'API Key Missing',
-        description: "Please enter your Gemini API key to proceed.",
-      });
+      setIsApiKeyDialogOpen(true);
       return;
     }
 
@@ -120,7 +135,12 @@ export default function UpscalerPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <Header />
+      <GeminiKeyDialog
+        isOpen={isApiKeyDialogOpen}
+        setIsOpen={setIsApiKeyDialogOpen}
+        onSave={handleSaveApiKey}
+      />
+      <Header isConnected={isApiKeySet} />
       <main className="flex-1 container mx-auto p-4 md:p-6">
         <section className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter">
@@ -133,7 +153,6 @@ export default function UpscalerPage() {
 
         <div className="grid gap-8 md:grid-cols-2">
             <div className="space-y-6">
-                 <GeminiSettings apiKey={apiKey} setApiKey={setApiKey} />
                  <FileUploader 
                     onFileUpload={handleFileUpload}
                     fileUrl={originalFileUrl}
@@ -142,7 +161,7 @@ export default function UpscalerPage() {
                     loadingStatus="Upscaling with AI..."
                     accept={{'image/*': ['.jpeg', '.png', '.gif', '.webp']}}
                     dropzoneText="Only images are supported for upscaling"
-                    disabled={!apiKey}
+                    disabled={!isApiKeySet}
                 />
                  <Card>
                     <CardHeader>
@@ -152,7 +171,7 @@ export default function UpscalerPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Button onClick={handleProcessing} disabled={isLoading || !originalFile || !apiKey} className="w-full">
+                        <Button onClick={handleProcessing} disabled={isLoading || !originalFile || !isApiKeySet} className="w-full">
                             {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
                             {isLoading ? `Upscaling...` : 'Upscale with AI'}
                         </Button>
@@ -201,3 +220,16 @@ export default function UpscalerPage() {
                                 Download Upscaled Image
                             </Button>
                         )}
+                    </CardContent>
+                </Card>
+             </div>
+        </div>
+      </main>
+       <footer className="py-4 px-4 md:px-6 border-t mt-16">
+        <div className="container mx-auto text-center text-sm text-muted-foreground">
+            <p>&copy; {new Date().getFullYear()} MetaMagic. All Rights Reserved.</p>
+        </div>
+      </footer>
+    </div>
+  );
+}

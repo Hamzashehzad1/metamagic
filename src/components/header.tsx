@@ -8,9 +8,14 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
+import { Badge } from "./ui/badge";
+import { CheckCircle2 } from "lucide-react";
 
+interface HeaderProps {
+    isConnected: boolean;
+}
 
-export function Header() {
+export function Header({ isConnected }: HeaderProps) {
   return (
     <header className="py-4 px-4 md:px-6 border-b sticky top-0 bg-background/95 backdrop-blur-sm z-20">
       <div className="container mx-auto flex justify-between items-center">
@@ -36,6 +41,12 @@ export function Header() {
         </NavigationMenu>
 
         <div className="flex items-center gap-2">
+            {isConnected && (
+                <Badge variant="secondary" className="border-green-500/50 text-green-700 dark:text-green-400">
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    Connected
+                </Badge>
+            )}
             <ThemeToggle />
         </div>
       </div>
