@@ -50,6 +50,7 @@ const generateImageCaptionFlow = ai.defineFlow(
       name: 'generateImageCaptionPrompt',
       input: {schema: GenerateImageCaptionInputSchema.omit({apiKey: true})},
       output: {schema: GenerateImageCaptionOutputSchema},
+      model: 'gemini-1.5-flash-latest',
       prompt: `You are an AI image captioning expert. Generate a concise and descriptive caption for the image.
 
 Image: {{media url=photoDataUri}}`,
