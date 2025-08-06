@@ -15,34 +15,32 @@ import { UpscaleImageInputSchema, UpscaleImageOutputSchema } from '@/ai/schemas/
 export type UpscaleImageInput = z.infer<typeof UpscaleImageInputSchema>;
 export type UpscaleImageOutput = z.infer<typeof UpscaleImageOutputSchema>;
 
-export const upscaleImage = ai.defineFlow(
+const prompt = ai.definePrompt(
   {
-    name: 'upscaleImage',
+    name: 'upscaleImagePrompt',
+    input: { schema: UpscaleImageInputSchema },
+    output: { schema: UpscaleImageOutputSchema },
+    prompt: `Upscale this image to improve its resolution and detail, while maintaining the original subject and style. Do not change the content of the image.
+
+Image: {{media url=photoDataUri}}`
+  }
+)
+
+const upscaleImageFlow = ai.defineFlow(
+  {
+    name: 'upscaleImageFlow',
     inputSchema: UpscaleImageInputSchema,
     outputSchema: UpscaleImageOutputSchema,
   },
   async (input) => {
-    
-    const { media } = await ai.generate({
-      model: 'googleai/gemini-pro-vision',
-      prompt: [
-        { text: "Upscale this image to improve its resolution and detail, while maintaining the original subject and style. Do not change the content of the image." },
-        { media: { url: input.photoDataUri } },
-      ],
-      config: {
-        // High temperature can sometimes help with creative generation for upscaling
-        temperature: 0.8,
-      },
-       output: {
-        format: 'image',
-      },
-    });
-
-    const upscaledImage = media.url;
-    if (!upscaledImage) {
-        throw new Error('Image upscaling failed to produce a result.');
+    const { output } = await prompt(input);
+    if (!output?.upscaledImageUri) {
+      throw new Error('Image upscaling failed to produce a result.');
     }
-
-    return { upscaledImageUri: upscaledImage };
+    return output;
   }
 );
+
+export async function upscaleImage(input: UpscaleImageInput): Promise<UpscaleImageOutput> {
+  return await upscaleImageFlow(input);
+}
