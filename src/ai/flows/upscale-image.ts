@@ -78,8 +78,8 @@ const upscaleImageFlow = ai.defineFlow(
         const imageResponse = await fetch(upscaledImageUrl);
         const imageBlobResult = await imageResponse.blob();
         
-        const reader = new FileReader();
         const upscaledPhotoDataUri = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result as string);
             reader.onerror = reject;
             reader.readAsDataURL(imageBlobResult);
