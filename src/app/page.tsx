@@ -28,8 +28,8 @@ export default function Home() {
   const [metadataSettings, setMetadataSettings] = useState<TMetadataSettings>({
     titleLength: 125,
     keywordFormat: 'Mixed',
-    keywordCount: 10,
-    descriptionLength: 155,
+    keywordCount: 50,
+    descriptionLength: 250,
     includeKeywords: '',
     excludeKeywords: '',
   });
@@ -180,7 +180,7 @@ export default function Home() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <MetadataDisplay metadata={metadata} isLoading={isLoading} />
+            <MetadataDisplay metadata={metadata} isLoading={isLoading} filename={file?.name ?? null} />
           </div>
         </div>
 
