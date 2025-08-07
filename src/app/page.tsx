@@ -26,7 +26,7 @@ export default function Home() {
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
 
   const [metadataSettings, setMetadataSettings] = useState<TMetadataSettings>({
-    titleLength: 60,
+    titleLength: 125,
     keywordFormat: 'Mixed',
     keywordCount: 10,
     descriptionLength: 155,

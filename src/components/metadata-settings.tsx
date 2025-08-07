@@ -49,7 +49,7 @@ export function MetadataSettings({ settings, onSettingsChange }: MetadataSetting
                     <Slider
                         id="title-length"
                         min={30}
-                        max={90}
+                        max={150}
                         step={1}
                         value={[settings.titleLength]}
                         onValueChange={(value) => handleSliderChange('titleLength', value)}
@@ -63,7 +63,7 @@ export function MetadataSettings({ settings, onSettingsChange }: MetadataSetting
                     <Slider
                         id="description-length"
                         min={50}
-                        max={200}
+                        max={250}
                         step={1}
                         value={[settings.descriptionLength]}
                         onValueChange={(value) => handleSliderChange('descriptionLength', value)}
@@ -77,7 +77,7 @@ export function MetadataSettings({ settings, onSettingsChange }: MetadataSetting
                     <Slider
                         id="keyword-count"
                         min={1}
-                        max={20}
+                        max={50}
                         step={1}
                         value={[settings.keywordCount]}
                         onValueChange={(value) => handleSliderChange('keywordCount', value)}
