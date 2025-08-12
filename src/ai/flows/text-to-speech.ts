@@ -30,7 +30,7 @@ export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpee
     throw new Error('TTS API key is not configured.');
   }
 
-  const endpointUrl = 'https://voicerss-text-to-speech.p.rapidapi.com/?key=_API_KEY_';
+  const endpointUrl = 'https://voicerss-text-to-speech.p.rapidapi.com/?key=963457e51amsh5850b153b610c31p1655e9jsn115e5c7f849b';
   
   const options = {
     method: 'POST',
