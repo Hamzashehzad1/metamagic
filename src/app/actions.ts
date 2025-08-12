@@ -5,6 +5,8 @@ import { generateImageCaption } from '@/ai/flows/generate-image-caption';
 import { extractSeoMetadata } from '@/ai/flows/extract-seo-metadata';
 import { type MetadataSettings } from '@/components/metadata-settings';
 import { upscaleImage } from '@/ai/flows/upscale-image';
+import { removeBackground } from '@/ai/flows/remove-background';
+import { textToSpeech } from '@/ai/flows/text-to-speech';
 
 export interface Metadata {
   caption: string;
@@ -54,6 +56,28 @@ export async function upscaleImageAction(photoDataUri: string) {
   } catch (error) {
     console.error('Error in upscaleImageAction:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during upscaling.';
+    throw new Error(errorMessage);
+  }
+}
+
+export async function removeBackgroundAction(photoDataUri: string) {
+  try {
+    const result = await removeBackground({ photoDataUri });
+    return result;
+  } catch (error) {
+    console.error('Error in removeBackgroundAction:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during background removal.';
+    throw new Error(errorMessage);
+  }
+}
+
+export async function textToSpeechAction(text: string) {
+  try {
+    const result = await textToSpeech({ text });
+    return result;
+  } catch (error) {
+    console.error('Error in textToSpeechAction:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during text-to-speech conversion.';
     throw new Error(errorMessage);
   }
 }

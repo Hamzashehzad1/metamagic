@@ -39,6 +39,20 @@ export function Header({ isConnected, onConnectClick }: HeaderProps) {
                     </NavigationMenuLink>
                 </Link>
             </NavigationMenuItem>
+            <NavigationMenuItem>
+                <Link href="/background-remover" legacyBehavior passHref>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    Background Remover
+                    </NavigationMenuLink>
+                </Link>
+            </NavigationMenuItem>
+             <NavigationMenuItem>
+                <Link href="/text-to-speech" legacyBehavior passHref>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    Text to Speech
+                    </NavigationMenuLink>
+                </Link>
+            </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
 

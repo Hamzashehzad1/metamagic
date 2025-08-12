@@ -2,14 +2,16 @@
 'use server';
 
 /**
- * @fileOverview A flow for upscaling an image using a free, public API.
- * This flow uses GFPGAN for face restoration and general upscaling.
+ * @fileOverview A flow for upscaling an image using image-upscaling.net
  * - upscaleImage - A function that handles the image upscaling process.
  * - UpscaleImageInput - The input type for the upscaleImage function.
  * - UpscaleImageOutput - The return type for the upscaleImage function.
  */
 
 import { z } from 'zod';
+import fetch from 'node-fetch';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import FormData from 'form-data';
 
 const UpscaleImageInputSchema = z.object({
   photoDataUri: z
@@ -27,32 +29,49 @@ const UpscaleImageOutputSchema = z.object({
 });
 export type UpscaleImageOutput = z.infer<typeof UpscaleImageOutputSchema>;
 
+function dataUriToBuffer(dataUri: string) {
+    const base64 = dataUri.split(',')[1];
+    return Buffer.from(base64, 'base64');
+}
+
 export async function upscaleImage(input: UpscaleImageInput): Promise<UpscaleImageOutput> {
   const { photoDataUri } = input;
-  const endpointUrl =
-    'https://stanislavmichalov-image-face-upscale-restoration-gfpgan.hf.space/api/predict';
+  const endpointUrl = 'https://api.image-upscaling.net/v1/upscale';
+  const apiKey = process.env.UPSCALE_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('Upscaler API key is not configured.');
+  }
 
   try {
-    const response = await fetch(endpointUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        data: [photoDataUri],
-      }),
+    const imageBuffer = dataUriToBuffer(photoDataUri);
+    const mimeType = photoDataUri.substring(photoDataUri.indexOf(':') + 1, photoDataUri.indexOf(';'));
+
+    const formData = new FormData();
+    formData.append('image', imageBuffer, {
+        contentType: mimeType,
+        filename: 'image.png'
     });
 
+    const response = await fetch(endpointUrl, {
+      method: 'POST',
+      headers: { 
+        ...formData.getHeaders(),
+        'X-Api-Key': apiKey,
+      },
+      body: formData,
+      agent: new HttpsProxyAgent('https://proxy.dev.internal:3128')
+    });
+    
     if (!response.ok) {
       const errorBody = await response.text();
       throw new Error(`External API Error: ${response.status} ${response.statusText} - ${errorBody}`);
     }
+    
+    const resultBuffer = await response.buffer();
+    const upscaledPhotoDataUri = `data:${mimeType};base64,${resultBuffer.toString('base64')}`;
 
-    const result = await response.json();
-
-    if (result && result.data && result.data.length > 0 && result.data[0]) {
-      return { upscaledPhotoDataUri: result.data[0] };
-    } else {
-      throw new Error('Invalid response structure from upscaling service.');
-    }
+    return { upscaledPhotoDataUri };
   } catch (error) {
     console.error('Error in upscaleImage flow:', error);
     throw new Error('Failed to upscale image via external service.');
