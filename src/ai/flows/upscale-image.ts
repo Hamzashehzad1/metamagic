@@ -10,7 +10,6 @@
 
 import { z } from 'zod';
 import fetch from 'node-fetch';
-import { HttpsProxyAgent } from 'https-proxy-agent';
 import FormData from 'form-data';
 
 const UpscaleImageInputSchema = z.object({
@@ -50,9 +49,9 @@ export async function upscaleImage(input: UpscaleImageInput): Promise<UpscaleIma
     const formData = new FormData();
     formData.append('image', imageBuffer, {
         contentType: mimeType,
-        filename: 'image.png'
+        filename: 'image.png' // filename is required by the API
     });
-
+    
     const response = await fetch(endpointUrl, {
       method: 'POST',
       headers: { 
@@ -60,7 +59,6 @@ export async function upscaleImage(input: UpscaleImageInput): Promise<UpscaleIma
         'X-Api-Key': apiKey,
       },
       body: formData,
-      agent: new HttpsProxyAgent('https://proxy.dev.internal:3128')
     });
     
     if (!response.ok) {
@@ -68,12 +66,15 @@ export async function upscaleImage(input: UpscaleImageInput): Promise<UpscaleIma
       throw new Error(`External API Error: ${response.status} ${response.statusText} - ${errorBody}`);
     }
     
-    const resultBuffer = await response.buffer();
-    const upscaledPhotoDataUri = `data:${mimeType};base64,${resultBuffer.toString('base64')}`;
+    const resultBuffer = await response.arrayBuffer();
+    const upscaledPhotoDataUri = `data:${mimeType};base64,${Buffer.from(resultBuffer).toString('base64')}`;
 
     return { upscaledPhotoDataUri };
   } catch (error) {
     console.error('Error in upscaleImage flow:', error);
+    if (error instanceof Error) {
+        throw new Error(error.message);
+    }
     throw new Error('Failed to upscale image via external service.');
   }
 }

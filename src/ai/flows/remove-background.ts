@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview A flow for removing the background from an image.
+ * @fileOverview A flow for removing the background from an image using remove.bg.
  * - removeBackground - A function that handles the background removal process.
  * - RemoveBackgroundInput - The input type for the removeBackground function.
  * - RemoveBackgroundOutput - The return type for the removeBackground function.
@@ -10,7 +10,6 @@
 
 import { z } from 'zod';
 import fetch from 'node-fetch';
-import { HttpsProxyAgent } from 'https-proxy-agent';
 import FormData from 'form-data';
 
 const RemoveBackgroundInputSchema = z.object({
@@ -36,37 +35,47 @@ function dataUriToBuffer(dataUri: string) {
 
 export async function removeBackground(input: RemoveBackgroundInput): Promise<RemoveBackgroundOutput> {
   const { photoDataUri } = input;
-  const endpointUrl = 'https://bg.remove.pics/api/v1/remove';
+  const endpointUrl = 'https://api.remove.bg/v1/removebg';
+  const apiKey = process.env.REMOVE_BG_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('Remove.bg API key is not configured.');
+  }
 
   try {
     const imageBuffer = dataUriToBuffer(photoDataUri);
-    const mimeType = photoDataUri.substring(photoDataUri.indexOf(':') + 1, photoDataUri.indexOf(';'));
 
     const formData = new FormData();
-    formData.append('image', imageBuffer, {
-        contentType: mimeType,
+    formData.append('image_file', imageBuffer, {
         filename: 'image.png'
     });
+    formData.append('size', 'auto');
     
     const response = await fetch(endpointUrl, {
       method: 'POST',
-      headers: formData.getHeaders(),
+      headers: {
+        ...formData.getHeaders(),
+        'X-Api-Key': apiKey,
+      },
       body: formData,
-      agent: new HttpsProxyAgent('https://proxy.dev.internal:3128')
     });
 
     if (!response.ok) {
-      const errorBody = await response.text();
-      throw new Error(`External API Error: ${response.status} ${response.statusText} - ${errorBody}`);
+      const errorBody = await response.json();
+      const errorMessage = errorBody.errors?.[0]?.title || 'Unknown error from remove.bg';
+      throw new Error(`External API Error: ${errorMessage}`);
     }
 
-    const resultBuffer = await response.buffer();
-    const processedPhotoDataUri = `data:image/png;base64,${resultBuffer.toString('base64')}`;
+    const resultBuffer = await response.arrayBuffer();
+    const processedPhotoDataUri = `data:image/png;base64,${Buffer.from(resultBuffer).toString('base64')}`;
     
     return { processedPhotoDataUri };
 
   } catch (error) {
     console.error('Error in removeBackground flow:', error);
+    if (error instanceof Error) {
+        throw new Error(error.message);
+    }
     throw new Error('Failed to remove background via external service.');
   }
 }
