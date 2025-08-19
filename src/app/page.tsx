@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -62,8 +63,7 @@ export default function Home() {
       });
       return;
     }
-    setFiles(uploadedFiles);
-    setProcessedFiles([]);
+    setFiles(prevFiles => [...prevFiles, ...uploadedFiles]);
     setError(null);
   }, [apiKey, toast]);
 
@@ -123,6 +123,10 @@ export default function Home() {
     setProcessedFiles([]);
     setError(null);
   }
+  
+  const handleRemoveFile = (index: number) => {
+    setFiles(files => files.filter((_, i) => i !== index));
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -153,15 +157,16 @@ export default function Home() {
               isLoading={isLoading}
               loadingStatus={loadingStatus}
               disabled={!isApiKeySet}
+              onRemoveFile={handleRemoveFile}
             />
 
             <div className="flex gap-4">
               <Button onClick={handleGenerate} disabled={isLoading || files.length === 0 || !isApiKeySet} size="lg" className="w-full">
                   {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
-                  {isLoading ? `Generating... (${loadingStatus})` : `Generate Metadata for ${files.length} file(s)`}
+                  {isLoading ? `Generating...` : `Generate Metadata for ${files.length} file(s)`}
               </Button>
               <Button onClick={handleClear} variant="outline" size="lg" disabled={isLoading || files.length === 0}>
-                Clear
+                Clear All
               </Button>
             </div>
             

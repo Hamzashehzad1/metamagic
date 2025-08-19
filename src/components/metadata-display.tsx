@@ -62,7 +62,7 @@ export function MetadataDisplay({ processedFiles, isLoading }: MetadataDisplayPr
     );
   }
 
-  if (processedFiles.length === 0) {
+  if (processedFiles.length === 0 && !isLoading) {
     return (
       <div className="flex items-center justify-center h-full rounded-lg border border-dashed p-8 text-center min-h-[400px]">
         <p className="text-muted-foreground">Upload one or more images to magically generate metadata.</p>
@@ -78,13 +78,13 @@ export function MetadataDisplay({ processedFiles, isLoading }: MetadataDisplayPr
           <CardDescription>Generated for {processedFiles.length} image(s).</CardDescription>
         </div>
         <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={exportAllAsCsv}>
+            <Button variant="outline" size="sm" onClick={exportAllAsCsv} disabled={processedFiles.length === 0}>
                 <Download className="mr-2 h-4 w-4" /> Export All for Adobe Stock
             </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible className="w-full" defaultValue="item-0">
             {processedFiles.map((file, index) => (
               <AccordionItem value={`item-${index}`} key={index}>
                 <AccordionTrigger className="font-semibold text-left">{file.name}</AccordionTrigger>
@@ -101,3 +101,4 @@ export function MetadataDisplay({ processedFiles, isLoading }: MetadataDisplayPr
     </Card>
   );
 }
+
