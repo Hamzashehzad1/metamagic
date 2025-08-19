@@ -10,8 +10,6 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/googleai';
 import {z} from 'genkit';
 
 const GenerateImageCaptionInputSchema = z.object({
@@ -30,33 +28,27 @@ const GenerateImageCaptionOutputSchema = z.object({
 export type GenerateImageCaptionOutput = z.infer<typeof GenerateImageCaptionOutputSchema>;
 
 export async function generateImageCaption(input: GenerateImageCaptionInput): Promise<GenerateImageCaptionOutput> {
-  return generateImageCaptionFlow(input);
+  const { apiKey, ...rest } = input;
+  return generateImageCaptionFlow(rest, { auth: apiKey });
 }
 
+const prompt = ai.definePrompt({
+  name: 'generateImageCaptionPrompt',
+  input: {schema: GenerateImageCaptionInputSchema.omit({apiKey: true})},
+  output: {schema: GenerateImageCaptionOutputSchema},
+  model: 'googleai/gemini-2.0-flash',
+  prompt: `You are an AI image captioning expert for stock photography. Generate a concise, factual, and descriptive caption for the image. The caption should be suitable for use as a description on a stock photo website.
+
+Image: {{media url=photoDataUri}}`,
+});
 
 const generateImageCaptionFlow = ai.defineFlow(
   {
     name: 'generateImageCaptionFlow',
-    inputSchema: GenerateImageCaptionInputSchema,
+    inputSchema: GenerateImageCaptionInputSchema.omit({apiKey: true}),
     outputSchema: GenerateImageCaptionOutputSchema,
   },
-  async (input) => {
-    const { apiKey, ...promptData } = input;
-
-    const client = genkit({
-      plugins: [googleAI({ apiKey })],
-    });
-
-    const prompt = client.definePrompt({
-      name: 'generateImageCaptionPrompt',
-      input: {schema: GenerateImageCaptionInputSchema.omit({apiKey: true})},
-      output: {schema: GenerateImageCaptionOutputSchema},
-      model: 'googleai/gemini-2.0-flash',
-      prompt: `You are an AI image captioning expert for stock photography. Generate a concise, factual, and descriptive caption for the image. The caption should be suitable for use as a description on a stock photo website.
-
-Image: {{media url=photoDataUri}}`,
-    });
-
+  async (promptData) => {
     const {output} = await prompt(promptData);
     return output!;
   }
