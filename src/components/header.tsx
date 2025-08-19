@@ -23,18 +23,6 @@ export function Header({ isConnected, onConnectClick }: HeaderProps) {
       <div className="container mx-auto flex justify-between items-center">
         <Link href="/" className="text-2xl md:text-3xl font-bold font-headline text-primary">MetaMagic</Link>
         
-        <NavigationMenu>
-          <NavigationMenuList>
-            <NavigationMenuItem>
-                <Link href="/" legacyBehavior passHref>
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Metadata Generator
-                    </NavigationMenuLink>
-                </Link>
-            </NavigationMenuItem>
-          </NavigationMenuList>
-        </NavigationMenu>
-
         <div className="flex items-center gap-2">
             {isConnected ? (
                 <Badge variant="secondary" className="border-green-500/50 text-green-700 dark:text-green-400">
