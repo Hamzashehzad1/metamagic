@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Header } from '@/components/header';
 import { FileUploader } from '@/components/file-uploader';
 import { MetadataDisplay } from '@/components/metadata-display';
-import { type Metadata, processFile } from '@/app/actions';
+import { type ProcessedFile, processFiles } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal, Wand2, Loader2 } from 'lucide-react';
@@ -14,10 +14,8 @@ import { GeminiKeyDialog } from '@/components/gemini-key-dialog';
 import { Button } from '@/components/ui/button';
 
 export default function Home() {
-  const [file, setFile] = useState<File | null>(null);
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
-  const [fileType, setFileType] = useState<string | null>(null);
-  const [metadata, setMetadata] = useState<Metadata | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [processedFiles, setProcessedFiles] = useState<ProcessedFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +52,7 @@ export default function Home() {
     });
   };
 
-  const handleFileUpload = useCallback((uploadedFile: File) => {
+  const handleFileUpload = useCallback((uploadedFiles: File[]) => {
     if (!apiKey) {
       setIsApiKeyDialogOpen(true);
       toast({
@@ -64,20 +62,15 @@ export default function Home() {
       });
       return;
     }
-    if (fileUrl) {
-      URL.revokeObjectURL(fileUrl);
-    }
-    setFile(uploadedFile);
-    setFileUrl(URL.createObjectURL(uploadedFile));
-    setFileType(uploadedFile.type);
-    setMetadata(null);
+    setFiles(uploadedFiles);
+    setProcessedFiles([]);
     setError(null);
-  }, [apiKey, fileUrl, toast]);
+  }, [apiKey, toast]);
 
 
   const handleGenerate = async () => {
-    if (!file) {
-      toast({ variant: 'destructive', title: 'No file uploaded', description: 'Please upload a file to generate metadata.' });
+    if (files.length === 0) {
+      toast({ variant: 'destructive', title: 'No files uploaded', description: 'Please upload one or more files to generate metadata.' });
       return;
     }
     if (!apiKey) {
@@ -92,49 +85,44 @@ export default function Home() {
 
     setIsLoading(true);
     setError(null);
+    setProcessedFiles([]);
     
     try {
-      setLoadingStatus('Converting file...');
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
+      setLoadingStatus('Reading files...');
+      const fileDataPromises = files.map(file => {
+        return new Promise<{name: string, dataUri: string}>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve({ name: file.name, dataUri: reader.result as string });
+            reader.onerror = (error) => reject(error);
+        });
+      });
 
-      reader.onload = async () => {
-        try {
-          const fileDataUri = reader.result as string;
+      const fileData = await Promise.all(fileDataPromises);
 
-          setLoadingStatus('Generating caption & SEO data...');
-          const result = await processFile(apiKey, fileDataUri, metadataSettings);
-          
-          setMetadata(result);
-        } catch (e) {
-          const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred during processing.';
-          setError(errorMessage);
-          toast({
-            variant: 'destructive',
-            title: 'Processing Error',
-            description: errorMessage,
-          });
-        } finally {
-          setIsLoading(false);
-          setLoadingStatus('');
-        }
-      };
-
-      reader.onerror = () => {
-        throw new Error('Failed to read file.');
-      };
+      setLoadingStatus(`Generating metadata for ${files.length} file(s)...`);
+      const results = await processFiles(apiKey, fileData, metadataSettings);
+      
+      setProcessedFiles(results);
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred during processing.';
       setError(errorMessage);
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: 'Processing Error',
         description: errorMessage,
       });
-      setIsLoading(false);
-      setLoadingStatus('');
+    } finally {
+        setIsLoading(false);
+        setLoadingStatus('');
     }
   };
+
+  const handleClear = () => {
+    setFiles([]);
+    setProcessedFiles([]);
+    setError(null);
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -161,17 +149,21 @@ export default function Home() {
           <div className="lg:col-span-8 grid gap-8">
              <FileUploader 
               onFileUpload={handleFileUpload}
-              fileUrl={fileUrl}
-              fileType={fileType}
+              files={files}
               isLoading={isLoading}
               loadingStatus={loadingStatus}
               disabled={!isApiKeySet}
             />
 
-            <Button onClick={handleGenerate} disabled={isLoading || !file || !isApiKeySet} size="lg" className="w-full">
-                {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
-                {isLoading ? 'Generating...' : 'Generate Metadata'}
-            </Button>
+            <div className="flex gap-4">
+              <Button onClick={handleGenerate} disabled={isLoading || files.length === 0 || !isApiKeySet} size="lg" className="w-full">
+                  {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
+                  {isLoading ? `Generating... (${loadingStatus})` : `Generate Metadata for ${files.length} file(s)`}
+              </Button>
+              <Button onClick={handleClear} variant="outline" size="lg" disabled={isLoading || files.length === 0}>
+                Clear
+              </Button>
+            </div>
             
             {error && (
               <Alert variant="destructive">
@@ -180,7 +172,7 @@ export default function Home() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <MetadataDisplay metadata={metadata} isLoading={isLoading} filename={file?.name ?? null} />
+            <MetadataDisplay processedFiles={processedFiles} isLoading={isLoading} />
           </div>
         </div>
 

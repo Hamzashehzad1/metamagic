@@ -12,27 +12,46 @@ export interface Metadata {
   stockDescription: string;
 }
 
-export async function processFile(
+export interface ProcessedFile {
+    name: string;
+    metadata: Metadata;
+}
+
+async function processSingleFile(
   apiKey: string,
   fileDataUri: string,
   settings: MetadataSettings,
 ): Promise<Metadata> {
+  const { caption } = await generateImageCaption({ apiKey, photoDataUri: fileDataUri });
+
+  const { stockKeywords, stockTitle, stockDescription } = await extractSeoMetadata({
+    apiKey,
+    photoDataUri: fileDataUri,
+    imageCaption: caption,
+    ...settings,
+  });
+
+  return {
+    caption,
+    stockKeywords,
+    stockTitle,
+    stockDescription,
+  };
+}
+
+
+export async function processFiles(
+  apiKey: string,
+  files: {name: string, dataUri: string}[],
+  settings: MetadataSettings,
+): Promise<ProcessedFile[]> {
   try {
-    const { caption } = await generateImageCaption({ apiKey, photoDataUri: fileDataUri });
-
-    const { stockKeywords, stockTitle, stockDescription } = await extractSeoMetadata({
-      apiKey,
-      photoDataUri: fileDataUri,
-      imageCaption: caption,
-      ...settings,
-    });
-
-    return {
-      caption,
-      stockKeywords,
-      stockTitle,
-      stockDescription,
-    };
+    const results: ProcessedFile[] = [];
+    for (const file of files) {
+        const metadata = await processSingleFile(apiKey, file.dataUri, settings);
+        results.push({ name: file.name, metadata });
+    }
+    return results;
   } catch (error) {
     console.error('Error processing file:', error);
     if (error instanceof Error) {
@@ -45,3 +64,4 @@ export async function processFile(
     throw new Error('An unknown error occurred while generating metadata.');
   }
 }
+
