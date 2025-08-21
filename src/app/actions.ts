@@ -65,3 +65,34 @@ export async function processFiles(
   }
 }
 
+export async function processUrl(url: string): Promise<{name: string, dataUri: string} | {error: string}> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image. Status: ${response.status}`);
+    }
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.startsWith('image/')) {
+        return { error: 'The provided URL does not point to a valid image file.' };
+    }
+    
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const dataUri = `data:${contentType};base64,${buffer.toString('base64')}`;
+    
+    // Extract filename from URL
+    const urlParts = url.split('/');
+    const filename = urlParts[urlParts.length - 1].split('?')[0] || 'pasted-image';
+
+    return { name: filename, dataUri };
+  } catch (error) {
+    console.error('Error processing URL:', error);
+    if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch')) {
+            return { error: 'Could not fetch the image from the URL. Please check the link and CORS policy.'}
+        }
+        return { error: error.message };
+    }
+    return { error: 'An unknown error occurred while fetching the image.' };
+  }
+}

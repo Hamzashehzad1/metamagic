@@ -6,10 +6,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { Header } from '@/components/header';
 import { FileUploader } from '@/components/file-uploader';
 import { MetadataDisplay } from '@/components/metadata-display';
-import { type ProcessedFile, processFiles } from '@/app/actions';
+import { type ProcessedFile, processFiles, processUrl } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal, Wand2, Loader2 } from 'lucide-react';
+import { Terminal, Wand2, Loader2, Link } from 'lucide-react';
 import { MetadataSettings, type MetadataSettings as TMetadataSettings } from '@/components/metadata-settings';
 import { GeminiKeyDialog } from '@/components/gemini-key-dialog';
 import { Button } from '@/components/ui/button';
@@ -128,6 +128,64 @@ export default function Home() {
     setFiles(files => files.filter((_, i) => i !== index));
   }
 
+  // Handle pasted URL
+  useEffect(() => {
+    const handlePaste = async (event: ClipboardEvent) => {
+      if (!isApiKeySet) {
+        setIsApiKeyDialogOpen(true);
+        toast({
+            variant: 'destructive',
+            title: 'Not Connected',
+            description: 'Please connect your Gemini API key to paste an image URL.'
+        });
+        return;
+      }
+      
+      const items = event.clipboardData?.items;
+      if (!items) return;
+
+      for (const item of items) {
+        if (item.type.indexOf('text/plain') !== -1) {
+          item.getAsString(async (text) => {
+            const urlRegex = /^(https?:\/\/[^\s$.?#].[^\s]*)$/i;
+            if (urlRegex.test(text)) {
+              setIsLoading(true);
+              setLoadingStatus('Fetching image from URL...');
+              setError(null);
+              
+              const result = await processUrl(text);
+
+              if ('error' in result) {
+                setError(result.error);
+                toast({ variant: 'destructive', title: 'URL Paste Error', description: result.error });
+              } else {
+                try {
+                  const response = await fetch(result.dataUri);
+                  const blob = await response.blob();
+                  const newFile = new File([blob], result.name, { type: blob.type });
+                  handleFileUpload([newFile]);
+                  toast({ title: 'Image Pasted!', description: `Successfully loaded ${result.name} from URL.` });
+                } catch(e) {
+                  const err = e instanceof Error ? e.message : 'Could not process the fetched image.'
+                  setError(err);
+                  toast({ variant: 'destructive', title: 'Image Processing Error', description: err });
+                }
+              }
+              setIsLoading(false);
+              setLoadingStatus('');
+            }
+          });
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => {
+      window.removeEventListener('paste', handlePaste);
+    };
+  }, [isApiKeySet, toast, handleFileUpload]);
+
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <GeminiKeyDialog 
@@ -142,7 +200,7 @@ export default function Home() {
                 Generate Perfect Media Metadata
             </h1>
             <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
-                Upload any image or video, and our AI will instantly write SEO-optimized titles, descriptions, and keywords to drive free traffic.
+                Upload images or <span className="font-semibold text-primary/80">paste an image URL (Ctrl+V)</span>. Our AI will instantly write SEO-optimized titles, descriptions, and keywords.
             </p>
         </section>
 
