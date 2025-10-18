@@ -126,21 +126,22 @@ export async function connectWpSite(site: WpSite): Promise<{success: boolean, me
             },
         });
 
-        const contentType = response.headers.get('content-type');
-
-        if (response.ok && contentType && contentType.includes('application/json')) {
-            return { success: true, message: 'Successfully connected to your WordPress site.' };
+        if (response.ok) {
+             // Check if response is JSON, because a successful response might still not be what we expect
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return { success: true, message: 'Successfully connected to your WordPress site.' };
+            }
         }
-        
-        let errorMessage = `Connection failed with status ${response.status}.`;
-        if (contentType && contentType.includes('application/json')) {
-             try {
-                const errorBody = await response.json();
-                errorMessage = errorBody.message || 'An unknown error occurred.';
-             } catch (e) {
-                errorMessage = 'Received an invalid JSON error response from WordPress.';
-             }
-        } else {
+
+        // If not response.ok or not JSON, handle error
+        let errorMessage;
+        try {
+            // Try to parse the error response as JSON (WP often sends JSON errors)
+            const errorBody = await response.json();
+            errorMessage = errorBody.message || `Connection failed with status ${response.status}.`;
+        } catch (e) {
+            // If parsing fails, it's likely HTML or plain text
             errorMessage = 'WordPress did not return a valid JSON response. This can be caused by an incorrect URL, a firewall, or a security plugin. Please also check your site\'s permalink settings.';
         }
         
@@ -159,7 +160,6 @@ export async function connectWpSite(site: WpSite): Promise<{success: boolean, me
 export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: number = 20): Promise<{media: WpMedia[], error?: string}> {
     const { url, username, appPassword } = site;
     try {
-        // Correctly construct the URL with query parameters
         const mediaUrl = new URL(`${url}/wp-json/wp/v2/media`);
         mediaUrl.searchParams.append('page', page.toString());
         mediaUrl.searchParams.append('per_page', perPage.toString());
@@ -170,23 +170,28 @@ export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: numb
             headers: {
                 'Authorization': getAuthHeader(username, appPassword),
             },
-            cache: 'no-store', // Ensure we always get fresh data
+            cache: 'no-store',
         });
+
+        if (!response.ok) {
+            let errorBody;
+            try {
+                errorBody = await response.json();
+            } catch (e) {
+                // Not a JSON error, throw a generic one
+                 throw new Error(`Failed to fetch media with status ${response.status}. Check server logs or network tab for more details.`);
+            }
+            throw new Error(errorBody.message || 'Failed to fetch media.');
+        }
 
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             throw new Error(`WordPress did not return a valid JSON response. Check your site's permalink settings. Status: ${response.status}`);
         }
-
+        
         const media: WpMedia[] = await response.json();
-
-        // The json can contain an error object if the request is bad
-        if (!response.ok) {
-             const errorBody = media as any; // Cast to access potential error properties
-             throw new Error(errorBody.message || 'Failed to fetch media.');
-        }
-
         return { media };
+
     } catch (error) {
         console.error('WP Media Fetch Error:', error);
         const message = error instanceof Error ? error.message : 'An unknown error occurred while fetching media.';
