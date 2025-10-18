@@ -378,7 +378,7 @@ export default function WpAltText() {
                             </div>
                         )}
 
-                        {hasMoreMedia && filter === 'all' && (
+                        {hasMoreMedia && (
                             <div className="mt-8 text-center">
                                 <Button onClick={() => handleFetchMedia(connectedSite)} disabled={isFetchingMedia}>
                                     {isFetchingMedia ? <Loader2 className="mr-2 animate-spin" /> : null}
@@ -400,5 +400,3 @@ export default function WpAltText() {
     </div>
   );
 }
-
-    
