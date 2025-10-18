@@ -6,15 +6,22 @@ import { Clipboard, ClipboardCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "./ui/textarea";
 
 interface MetadataCardProps {
   title: string;
   content: string | null;
+  onContentChange: (newContent: string) => void;
 }
 
-export function MetadataCard({ title, content }: MetadataCardProps) {
+export function MetadataCard({ title, content, onContentChange }: MetadataCardProps) {
   const { toast } = useToast();
   const [isCopied, setIsCopied] = useState(false);
+  const [currentContent, setCurrentContent] = useState(content || '');
+
+  useEffect(() => {
+    setCurrentContent(content || '');
+  }, [content]);
 
   useEffect(() => {
     if(isCopied) {
@@ -26,8 +33,8 @@ export function MetadataCard({ title, content }: MetadataCardProps) {
   }, [isCopied]);
 
   const handleCopy = () => {
-    if (content) {
-      navigator.clipboard.writeText(content);
+    if (currentContent) {
+      navigator.clipboard.writeText(currentContent);
       toast({
         title: "Copied to clipboard!",
         description: `${title} has been copied.`,
@@ -35,37 +42,44 @@ export function MetadataCard({ title, content }: MetadataCardProps) {
       setIsCopied(true);
     }
   };
+
+  const handleBlur = () => {
+    onContentChange(currentContent);
+  }
   
   const renderContent = () => {
-    if (!content) {
+    if (content === null) {
       return <span className="text-muted-foreground">Nothing generated.</span>;
     }
 
-    if (title === 'SEO Keywords') {
-      const keywords = content.split(',').map(keyword => keyword.trim()).filter(Boolean);
-      return (
-        <div className="flex flex-wrap gap-2">
-          {keywords.map((keyword, index) => (
-            <Badge key={index} variant="secondary" className="rounded-md">
-              {keyword}
-            </Badge>
-          ))}
-        </div>
-      );
+    if (title === 'Stock Keywords') {
+        return (
+            <Textarea
+              value={currentContent}
+              onChange={(e) => setCurrentContent(e.target.value)}
+              onBlur={handleBlur}
+              className="text-sm text-foreground/80 whitespace-pre-wrap min-h-[120px] bg-background"
+              placeholder="Keywords, separated by commas"
+            />
+        )
     }
 
     return (
-      <p className="text-sm text-foreground/80 whitespace-pre-wrap min-h-[20px]">
-        {content}
-      </p>
+      <Textarea
+        value={currentContent}
+        onChange={(e) => setCurrentContent(e.target.value)}
+        onBlur={handleBlur}
+        className="text-sm text-foreground/80 whitespace-pre-wrap min-h-[120px] bg-background"
+        placeholder={`Enter ${title}`}
+      />
     );
   };
 
   return (
-    <Card className="bg-background/50 transition-shadow hover:shadow-md">
+    <Card className="bg-background/50 transition-shadow hover:shadow-md h-full">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-base font-semibold text-primary">{title}</CardTitle>
-        <Button variant="ghost" size="icon" onClick={handleCopy} disabled={!content} aria-label={`Copy ${title}`}>
+        <Button variant="ghost" size="icon" onClick={handleCopy} disabled={!currentContent} aria-label={`Copy ${title}`}>
           {isCopied ? (
             <ClipboardCheck className="h-4 w-4 text-green-500" />
           ) : (

@@ -1,15 +1,14 @@
 
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
 import { Header } from '@/components/header';
 import { FileUploader } from '@/components/file-uploader';
 import { MetadataDisplay } from '@/components/metadata-display';
-import { type ProcessedFile, processFiles, processUrl } from '@/app/actions';
+import { type ProcessedFile, processFiles, processUrl, type Metadata } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal, Wand2, Loader2, Link } from 'lucide-react';
+import { Terminal, Wand2, Loader2 } from 'lucide-react';
 import { MetadataSettings, type MetadataSettings as TMetadataSettings } from '@/components/metadata-settings';
 import { GeminiKeyDialog } from '@/components/gemini-key-dialog';
 import { Button } from '@/components/ui/button';
@@ -185,6 +184,14 @@ export default function Home() {
     };
   }, [isApiKeySet, toast, handleFileUpload]);
 
+  const handleUpdateMetadata = (fileIndex: number, newMetadata: Metadata) => {
+    setProcessedFiles(prevFiles => {
+      const newFiles = [...prevFiles];
+      newFiles[fileIndex] = { ...newFiles[fileIndex], metadata: newMetadata };
+      return newFiles;
+    });
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -223,7 +230,7 @@ export default function Home() {
                   {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
                   {isLoading ? `Generating...` : `Generate Metadata for ${files.length} file(s)`}
               </Button>
-              <Button onClick={handleClear} variant="outline" size="lg" disabled={isLoading || files.length === 0}>
+              <Button onClick={handleClear} variant="outline" size="lg" disabled={isLoading || (files.length === 0 && processedFiles.length === 0)}>
                 Clear All
               </Button>
             </div>
@@ -235,7 +242,11 @@ export default function Home() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <MetadataDisplay processedFiles={processedFiles} isLoading={isLoading} />
+            <MetadataDisplay 
+                processedFiles={processedFiles} 
+                isLoading={isLoading}
+                onUpdateMetadata={handleUpdateMetadata} 
+            />
           </div>
         </div>
 
