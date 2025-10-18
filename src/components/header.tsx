@@ -26,14 +26,14 @@ export function Header({ isConnected, onConnectClick }: HeaderProps) {
         <NavigationMenu>
             <NavigationMenuList>
                 <NavigationMenuItem>
-                    <Link href="/" legacyBehavior passHref>
+                    <Link href="/" passHref legacyBehavior>
                         <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                             Metadata Generator
                         </NavigationMenuLink>
                     </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                    <Link href="/wp-alt-text" legacyBehavior passHref>
+                    <Link href="/wp-alt-text" passHref legacyBehavior>
                         <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                             WP Alt Text
                         </NavigationMenuLink>
