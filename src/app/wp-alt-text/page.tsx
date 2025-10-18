@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { connectWpSite, fetchWpMedia, type WpSite, type WpMedia } from '@/app/actions';
-import { Loader2, CheckCircle2, AlertCircle, ImageOff } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle, ImageOff, Link } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 
@@ -57,6 +57,18 @@ export default function WpAltText() {
         setError("All fields are required.");
         return;
     }
+    // Basic URL validation
+    try {
+        const url = new URL(wpSite.url);
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+            throw new Error();
+        }
+    } catch (e) {
+        setError("Please enter a valid URL (e.g., https://example.com).");
+        return;
+    }
+
+
     setIsLoading(true);
     setError(null);
     const result = await connectWpSite(wpSite);
@@ -134,10 +146,10 @@ export default function WpAltText() {
                         <div className="space-y-2">
                             <Label htmlFor="app-password">Application Password</Label>
                             <Input id="app-password" type="password" placeholder="Enter your application password" value={wpSite.appPassword} onChange={e => setWpSite({...wpSite, appPassword: e.target.value.trim()})} disabled={isLoading} />
-                             <p className="text-xs text-muted-foreground pt-1">
+                             <p className="text-xs text-muted-foreground pt-1 flex items-center gap-1">
                                 Need an Application Password?
-                                <a href="https://wordpress.org/documentation/article/application-passwords/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary ml-1">
-                                    Learn how to create one.
+                                <a href="https://wordpress.org/documentation/article/application-passwords/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary inline-flex items-center">
+                                    Learn how to create one. <Link className="h-3 w-3 ml-1" />
                                 </a>
                             </p>
                         </div>

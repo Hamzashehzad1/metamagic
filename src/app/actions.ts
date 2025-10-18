@@ -124,35 +124,36 @@ export async function connectWpSite(site: WpSite): Promise<{success: boolean, me
             headers: {
                 'Authorization': getAuthHeader(username, appPassword),
             },
+            // Important for debugging: don't cache auth requests
+            cache: 'no-store',
         });
 
-        if (response.ok) {
-             // Check if response is JSON, because a successful response might still not be what we expect
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                return { success: true, message: 'Successfully connected to your WordPress site.' };
-            }
+        // First, check if the response is ok AND is JSON. This is the only success case.
+        const contentType = response.headers.get('content-type');
+        if (response.ok && contentType && contentType.includes('application/json')) {
+            return { success: true, message: 'Successfully connected to your WordPress site.' };
         }
 
-        // If not response.ok or not JSON, handle error
+        // If not, we have an error. Let's figure out what kind.
         let errorMessage;
-        try {
-            // Try to parse the error response as JSON (WP often sends JSON errors)
+        if (contentType && contentType.includes('application/json')) {
+            // It's a JSON error from WordPress (e.g., bad password).
             const errorBody = await response.json();
-            errorMessage = errorBody.message || `Connection failed with status ${response.status}.`;
-        } catch (e) {
-            // If parsing fails, it's likely HTML or plain text
-            errorMessage = 'WordPress did not return a valid JSON response. This can be caused by an incorrect URL, a firewall, or a security plugin. Please also check your site\'s permalink settings.';
+            errorMessage = errorBody.message || `API error with status ${response.status}.`;
+        } else {
+            // It's likely an HTML response (e.g., login page, 404, firewall).
+            errorMessage = 'WordPress did not return a valid JSON response. This can be caused by an incorrect URL, a firewall, or a security plugin (like iThemes Security). Please also ensure your permalink settings are set to "Post name" and not "Plain".';
         }
         
         return { success: false, message: `Connection failed: ${errorMessage}` };
 
     } catch (error) {
-        console.error('WP Connection Error:', error);
+        // This catches network errors (e.g., DNS, CORS, unreachable server).
+        console.error('WP Connection Fetch Error:', error);
         if (error instanceof TypeError && error.message.includes('fetch failed')) {
-            return { success: false, message: 'Network error. Check if the URL is correct and reachable, and ensure CORS is enabled for this domain.' };
+            return { success: false, message: 'Network error. Check if the URL is correct and reachable, and ensure your server has CORS enabled for this domain.' };
         }
-        return { success: false, message: 'An unknown error occurred. Check the console for more details.' };
+        return { success: false, message: 'An unknown error occurred during connection. Check the browser console for more details.' };
     }
 }
 
@@ -173,20 +174,17 @@ export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: numb
             cache: 'no-store',
         });
 
-        if (!response.ok) {
+        const contentType = response.headers.get('content-type');
+        if (!response.ok || !contentType || !contentType.includes('application/json')) {
             let errorBody;
             try {
+                // Try to get a specific JSON error message if possible
                 errorBody = await response.json();
             } catch (e) {
-                // Not a JSON error, throw a generic one
-                 throw new Error(`Failed to fetch media with status ${response.status}. Check server logs or network tab for more details.`);
+                // Otherwise, it's not a JSON error, so throw a generic one.
+                 throw new Error(`Failed to fetch media. WordPress returned a non-JSON response with status ${response.status}. Please check your site's permalink settings.`);
             }
             throw new Error(errorBody.message || 'Failed to fetch media.');
-        }
-
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error(`WordPress did not return a valid JSON response. Check your site's permalink settings. Status: ${response.status}`);
         }
         
         const media: WpMedia[] = await response.json();
