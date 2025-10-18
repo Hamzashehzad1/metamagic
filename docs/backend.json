@@ -1,0 +1,167 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user account in the system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        },
+        "lastLogin": {
+          "type": "string",
+          "description": "Timestamp indicating the last time the user logged in.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "createdAt"
+      ]
+    },
+    "GeminiApiKey": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GeminiApiKey",
+      "type": "object",
+      "description": "Stores the Gemini API key associated with a user account.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Gemini API Key entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N GeminiApiKey)"
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "The Gemini API key (encrypted).",
+          "format": "string"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the API key purpose."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "apiKey"
+      ]
+    },
+    "WordPressConnection": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "WordPressConnection",
+      "type": "object",
+      "description": "Stores WordPress connection details for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the WordPress Connection entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N WordPressConnection)"
+        },
+        "siteUrl": {
+          "type": "string",
+          "description": "The URL of the WordPress site."
+        },
+        "authToken": {
+          "type": "string",
+          "description": "Authentication token for the WordPress site (encrypted)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the Wordpress connection purpose."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "siteUrl",
+        "authToken"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "user",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information. Only the user can read/write their own profile. The 'userId' parameter corresponds to the Firebase Auth UID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, matching the Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/geminiApiKeys/{geminiApiKeyId}",
+        "definition": {
+          "entityName": "GeminiApiKey",
+          "schema": {
+            "$ref": "#/backend/entities/GeminiApiKey"
+          },
+          "description": "Stores Gemini API keys associated with a user. Only the user can manage their own keys. The 'userId' parameter corresponds to the Firebase Auth UID. The 'geminiApiKeyId' is the unique ID of the API key.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, matching the Firebase Auth UID."
+            },
+            {
+              "name": "geminiApiKeyId",
+              "description": "The unique identifier for the Gemini API key."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/wordpressConnections/{wordPressConnectionId}",
+        "definition": {
+          "entityName": "WordPressConnection",
+          "schema": {
+            "$ref": "#/backend/entities/WordPressConnection"
+          },
+          "description": "Stores WordPress connection details for a user. Only the user can manage their own connections. The 'userId' parameter corresponds to the Firebase Auth UID. The 'wordPressConnectionId' is the unique ID of the WordPress connection.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, matching the Firebase Auth UID."
+            },
+            {
+              "name": "wordPressConnectionId",
+              "description": "The unique identifier for the WordPress connection."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure data isolation and easy security rule implementation, adhering to the principles of Authorization Independence, Clarity of Intent, and DBAC (Database-Based Access Control). Each user's data (Gemini API keys and WordPress connections) is stored under their respective user ID, ensuring only they have access. This eliminates the need for complex security rules that traverse different collections or documents. Data is structured to easily support secure list operations (QAPs - Rules are not Filters). Authorization Independence is achieved by storing all data that belongs to a user under their specific user ID, enabling direct access without requiring `get()` calls to other documents or collections. This simplifies security rules and enhances atomicity."
+  }
+}

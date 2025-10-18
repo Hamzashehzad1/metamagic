@@ -1,0 +1,86 @@
+/**
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a strict user-ownership model, ensuring that users can only access their own data.
+ *
+ * Data Structure:
+ * All user data is nested under the `/users/{userId}` collection.
+ * - User profiles are stored directly at `/users/{userId}`.
+ * - Gemini API keys are stored in a subcollection at `/users/{userId}/geminiApiKeys/{geminiApiKeyId}`.
+ * - WordPress connections are stored in a subcollection at `/users/{userId}/wordpressConnections/{wordPressConnectionId}`.
+ *
+ * Key Security Decisions:
+ * - Users can only read and write their own user profile and associated data (API keys, WordPress connections).
+ * - Listing all users is disallowed.
+ * - All write operations are validated to ensure that the user ID in the path matches the authenticated user's ID,
+ *   preventing unauthorized data modification.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Enforces user-ownership for user profiles. Only the authenticated user can access their own profile.
+     * @path /users/{userId}
+     * @allow (create) - User with UID 'user_abc' can create their profile if request.auth.uid == 'user_abc' and request.resource.data.id == 'user_abc'.
+     * @allow (get, update, delete) - User with UID 'user_abc' can get, update, or delete their profile at /users/user_abc if authenticated.
+     * @deny (create) - User with UID 'user_def' cannot create a profile at /users/user_abc.
+     * @deny (get, update, delete) - User with UID 'user_def' cannot get, update, or delete the profile at /users/user_abc.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId} {
+      // Verify that the user is signed in
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == request.auth.uid;
+      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces user-ownership for Gemini API keys. Only the authenticated user can manage their own API keys.
+     * @path /users/{userId}/geminiApiKeys/{geminiApiKeyId}
+     * @allow (create) - User with UID 'user_abc' can create an API key under /users/user_abc/geminiApiKeys/key_123.
+     * @allow (get, list, update, delete) - User with UID 'user_abc' can get, list, update, or delete their own API keys under /users/user_abc/geminiApiKeys/.
+     * @deny (create) - User with UID 'user_def' cannot create an API key under /users/user_abc/geminiApiKeys/.
+     * @deny (get, list, update, delete) - User with UID 'user_def' cannot get, list, update, or delete API keys under /users/user_abc/geminiApiKeys/.
+     * @principle Enforces document ownership for writes, and restricts access to a user's own data tree.
+     */
+    match /users/{userId}/geminiApiKeys/{geminiApiKeyId} {
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces user-ownership for WordPress connections. Only the authenticated user can manage their own WordPress connections.
+     * @path /users/{userId}/wordpressConnections/{wordPressConnectionId}
+     * @allow (create) - User with UID 'user_abc' can create a WordPress connection under /users/user_abc/wordpressConnections/wp_123.
+     * @allow (get, list, update, delete) - User with UID 'user_abc' can get, list, update, or delete their own WordPress connections under /users/user_abc/wordpressConnections/.
+     * @deny (create) - User with UID 'user_def' cannot create a WordPress connection under /users/user_abc/wordpressConnections/.
+     * @deny (get, list, update, delete) - User with UID 'user_def' cannot get, list, update, or delete WordPress connections under /users/user_abc/wordpressConnections/.
+     * @principle Enforces document ownership for writes, and restricts access to a user's own data tree.
+     */
+    match /users/{userId}/wordpressConnections/{wordPressConnectionId} {
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+    }
+  }
+}
