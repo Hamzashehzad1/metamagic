@@ -28,7 +28,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import AuthGuard from '@/components/auth-guard';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { type ApiKey, type WpConnection } from '@/app/account/page';
-import { deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, setDoc } from 'firebase/firestore';
 
 type PostStatus = 'pending' | 'generating' | 'success' | 'failed';
 type WpPostWithStatus = WpPost & { status?: PostStatus, error?: string };
