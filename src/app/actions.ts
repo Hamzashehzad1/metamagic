@@ -4,6 +4,7 @@
 import { generateImageCaption } from '@/ai/flows/generate-image-caption';
 import { extractSeoMetadata } from '@/ai/flows/extract-seo-metadata';
 import { generateAltText } from '@/ai/flows/generate-alt-text';
+import { generateMetaDescription } from '@/ai/flows/generate-meta-description';
 import { type MetadataSettings } from '@/components/metadata-settings';
 
 export interface Metadata {
@@ -135,11 +136,12 @@ export async function connectWpSite(site: WpSite): Promise<{success: boolean, me
         }
         
         let errorMessage;
+        // If we get an error, we try to parse it as JSON, but if that fails, we show a generic message.
         if (contentType && contentType.includes('application/json')) {
             const errorBody = await response.json();
             errorMessage = errorBody.message || `API error with status ${response.status}.`;
         } else {
-             errorMessage = 'WordPress did not return a valid JSON response. This can be caused by an incorrect URL, a firewall, or a security plugin (like iThemes Security). Please also ensure your permalink settings are set to "Post name" and not "Plain".';
+             errorMessage = 'WordPress did not return a valid JSON response. This can be caused by an incorrect URL, a firewall, or a security plugin. Please also check your site\'s permalink settings.';
         }
         
         return { success: false, message: `Connection failed: ${errorMessage}` };
@@ -250,3 +252,38 @@ export async function generateAndSaveAltText(
         return { id: mediaItem.id, error: message };
     }
 }
+
+// Meta Description Actions
+
+export async function fetchPageContent(url: string): Promise<{content: string} | {error: string}> {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch page content. Status: ${response.status}`);
+        }
+        // Very basic text extraction. Might need a more robust solution like a headless browser for complex sites.
+        const text = await response.text();
+        return { content: text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { error: message };
+    }
+}
+
+export async function generateMetaDescriptionAction(
+    apiKey: string, 
+    pageContent: string
+): Promise<{metaDescription: string} | {error: string}> {
+    try {
+        if (!apiKey) {
+            throw new Error('Gemini API key is not provided.');
+        }
+        const { metaDescription } = await generateMetaDescription({ apiKey, pageContent });
+        return { metaDescription };
+    } catch(error) {
+        const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { error: message };
+    }
+}
+
+    
