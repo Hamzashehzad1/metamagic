@@ -4,7 +4,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/header';
-import { GeminiKeyDialog, type ApiKey } from '@/components/gemini-key-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +25,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import AuthGuard from '@/components/auth-guard';
+import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { type ApiKey, type WpConnection } from '@/app/account/page';
+import { deleteDoc, doc, setDoc } from 'firebase/firestore';
 
 type PostStatus = 'pending' | 'generating' | 'success' | 'failed';
 type WpPostWithStatus = WpPost & { status?: PostStatus, error?: string };
@@ -33,13 +36,22 @@ type FilterType = 'all' | 'missing';
 
 const POSTS_PER_PAGE = 20;
 
-export default function MetaDescriptionPage() {
-  // Common state for API keys
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
-  const [activeKeyId, setActiveKeyId] = useState<string | null>(null);
-  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
+function MetaDescriptionPage() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  // Firestore data
+  const apiKeysQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/geminiApiKeys`) : null, [firestore, user]);
+  const { data: apiKeys, isLoading: isLoadingKeys } = useCollection<ApiKey>(apiKeysQuery);
+
+  const wpConnectionsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/wordpressConnections`) : null, [firestore, user]);
+  const { data: wpConnections, isLoading: isLoadingConnections } = useCollection<WpConnection>(wpConnectionsQuery);
   
-  // State for Manual Entry tab
+  // Active key state
+  const [activeKey, setActiveKey] = useState<ApiKey | null>(null);
+  
+  // Manual Entry tab state
   const [url, setUrl] = useState('');
   const [pastedContent, setPastedContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -48,8 +60,7 @@ export default function MetaDescriptionPage() {
   const [metaDescription, setMetaDescription] = useState('');
   const [isCopied, setIsCopied] = useState(false);
 
-  // State for WordPress tab
-  const [wpSite, setWpSite] = useState<WpSite>({ url: '', username: '', appPassword: ''});
+  // WordPress tab state
   const [isWpLoading, setIsWpLoading] = useState(false);
   const [wpError, setWpError] = useState<string | null>(null);
   const [connectedSite, setConnectedSite] = useState<WpSite | null>(null);
@@ -61,53 +72,30 @@ export default function MetaDescriptionPage() {
   const [hasMoreContent, setHasMoreContent] = useState(true);
   const [wpFilter, setWpFilter] = useState<FilterType>('all');
 
-
-  const { toast } = useToast();
-
-  const activeKey = apiKeys.find(k => k.id === activeKeyId);
   const isConnected = !!activeKey;
 
-  // --- Common API Key Logic ---
+  // --- Common API Key & Connection Logic ---
   useEffect(() => {
-    try {
-      const storedKeys = localStorage.getItem('gemini-api-keys');
-      const storedActiveId = localStorage.getItem('gemini-active-key-id');
-      const keys = storedKeys ? JSON.parse(storedKeys) : [];
-      setApiKeys(keys);
-      if (storedActiveId) {
-        setActiveKeyId(storedActiveId);
-      } else if (keys.length > 0) {
-        setActiveKeyId(keys[0].id);
-      } else {
-        setIsApiKeyDialogOpen(true);
-      }
-    } catch (e) {
-      console.error("Failed to parse API keys from localStorage", e);
-      setIsApiKeyDialogOpen(true);
-    }
-  }, []);
-
-  const handleKeysUpdate = (updatedKeys: ApiKey[], updatedActiveKeyId: string | null) => {
-    const today = new Date().toISOString().split('T')[0];
-    const checkedKeys = updatedKeys.map(k => k.lastUsed === today ? k : { ...k, usage: 0, lastUsed: today });
-    
-    setApiKeys(checkedKeys);
-    setActiveKeyId(updatedActiveKeyId);
-    localStorage.setItem('gemini-api-keys', JSON.stringify(checkedKeys));
-    if (updatedActiveKeyId) {
-      localStorage.setItem('gemini-active-key-id', updatedActiveKeyId);
+    if (apiKeys && apiKeys.length > 0) {
+      setActiveKey(apiKeys[0]);
     } else {
-      localStorage.removeItem('gemini-active-key-id');
+      setActiveKey(null);
     }
-  };
+  }, [apiKeys]);
+  
+  useEffect(() => {
+    if (wpConnections && wpConnections.length > 0 && !connectedSite) {
+        handleWpConnect(wpConnections[0]);
+    }
+  }, [wpConnections, connectedSite]);
 
-  const incrementUsage = useCallback((count: number) => {
-    if (!activeKeyId) return;
-    const updatedKeys = apiKeys.map(k => 
-      k.id === activeKeyId ? { ...k, usage: (k.lastUsed === new Date().toISOString().split('T')[0] ? k.usage : 0) + count, lastUsed: new Date().toISOString().split('T')[0] } : k
-    );
-    handleKeysUpdate(updatedKeys, activeKeyId);
-  }, [apiKeys, activeKeyId]);
+  const incrementUsage = useCallback(async (key: ApiKey, count: number) => {
+    if (!user || !key) return;
+    const keyRef = doc(firestore, `users/${user.uid}/geminiApiKeys`, key.id);
+    const today = new Date().toISOString().split('T')[0];
+    const newUsage = key.lastUsed === today ? (key.usage || 0) + count : count;
+    await setDoc(keyRef, { usage: newUsage, lastUsed: today }, { merge: true });
+  }, [user, firestore]);
 
   // --- Manual Entry Logic ---
   useEffect(() => {
@@ -123,7 +111,7 @@ export default function MetaDescriptionPage() {
       return;
     }
     if (!activeKey) {
-      setIsApiKeyDialogOpen(true);
+      toast({ variant: 'destructive', title: 'API Key Required', description: 'Please add an API key in your account.' });
       return;
     }
     
@@ -152,7 +140,7 @@ export default function MetaDescriptionPage() {
         return;
     }
     if (!activeKey) {
-      setIsApiKeyDialogOpen(true);
+      toast({ variant: 'destructive', title: 'API Key Required', description: 'Please add an API key in your account.' });
       return;
     }
     await handleGenerate(pastedContent, false);
@@ -169,7 +157,7 @@ export default function MetaDescriptionPage() {
           }
           throw new Error(result.error);
       }
-      incrementUsage(result.apiCalls);
+      await incrementUsage(activeKey!, result.apiCalls);
       setMetaDescription(result.metaDescription);
       toast({ title: "Success!", description: "Meta description generated." });
     } catch(e) {
@@ -194,27 +182,16 @@ export default function MetaDescriptionPage() {
   const canGenerate = !!activeKey && !isLoading && !isGenerating;
 
   // --- WordPress Logic ---
-  const handleWpConnect = async () => {
-    if (!wpSite.url || !wpSite.username || !wpSite.appPassword) {
-        setWpError("All fields are required.");
-        return;
-    }
-    try {
-        new URL(wpSite.url);
-    } catch (e) {
-        setWpError("Please enter a valid URL (e.g., https://example.com).");
-        return;
-    }
-
+  const handleWpConnect = async (site: WpSite) => {
     setIsWpLoading(true);
     setWpError(null);
-    const result = await connectWpSite(wpSite);
+    const result = await connectWpSite(site);
     setIsWpLoading(false);
 
     if (result.success) {
-        setConnectedSite(wpSite);
+        setConnectedSite(site);
         toast({ title: 'Success!', description: result.message });
-        handleFetchContent(wpSite, true);
+        handleFetchContent(site, true);
     } else {
         setWpError(result.message);
     }
@@ -246,13 +223,16 @@ export default function MetaDescriptionPage() {
     setIsFetchingContent(false);
   }
 
-  const handleWpDisconnect = () => {
+  const handleWpDisconnect = async () => {
+    if (!user || !connectedSite || !wpConnections) return;
+    const connectionToDelete = wpConnections.find(c => c.url === connectedSite.url);
+    // Note: We are just disconnecting from the UI, not deleting the saved connection
     setConnectedSite(null);
     setContentItems([]);
     setTotalItems(null);
     setWpCurrentPage(1);
     setHasMoreContent(true);
-    setWpSite({ url: '', username: '', appPassword: '' });
+    setWpError(null);
   }
 
   const handleGenerateSingleDescription = async (item: WpPostWithStatus) => {
@@ -267,8 +247,13 @@ export default function MetaDescriptionPage() {
 
         // 2. Generate new meta description
         const generationResult = await generateMetaDescriptionAction(activeKey.key, contentResult.content, true);
-        if (generationResult.error) throw new Error(generationResult.error);
-        incrementUsage(generationResult.apiCalls);
+        if (generationResult.error) {
+            if ((generationResult as any).code === 'GEMINI_QUOTA_EXCEEDED') {
+              toast({ variant: 'destructive', title: 'Quota Exceeded', description: generationResult.error, duration: 5000 });
+            }
+            throw new Error(generationResult.error);
+        }
+        await incrementUsage(activeKey, generationResult.apiCalls);
         
         // 3. Update WordPress
         const updateResult = await updateWpPostMeta(connectedSite, item.id, generationResult.metaDescription);
@@ -280,7 +265,7 @@ export default function MetaDescriptionPage() {
     } catch (e) {
         const message = e instanceof Error ? e.message : "An unknown error occurred.";
         setContentItems(prev => prev.map(p => p.id === item.id ? { ...p, status: 'failed', error: message } : p));
-        toast({ variant: 'destructive', title: `Error for "${item.title.rendered}"`, description: message });
+        toast({ variant: 'destructive', title: `Error for "${item.title.rendered}"`, description: message, duration: 5000 });
     }
   };
 
@@ -293,17 +278,23 @@ export default function MetaDescriptionPage() {
     });
   }, [contentItems, wpFilter]);
 
+  const hasNoKeys = !isLoadingKeys && apiKeys && apiKeys.length === 0;
+  const hasNoConnections = !isLoadingConnections && wpConnections && wpConnections.length === 0;
+
+  if (isLoadingConnections || isLoadingKeys) {
+      return (
+          <div className="flex flex-col min-h-screen bg-background">
+              <Header />
+              <div className="flex-1 flex items-center justify-center">
+                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              </div>
+          </div>
+      )
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <GeminiKeyDialog 
-        isOpen={isApiKeyDialogOpen}
-        setIsOpen={setIsApiKeyDialogOpen}
-        onKeysUpdate={handleKeysUpdate}
-        apiKeys={apiKeys}
-        activeKeyId={activeKeyId}
-      />
-      <Header isConnected={isConnected} onConnectClick={() => setIsApiKeyDialogOpen(true)} />
+      <Header />
       <main className="flex-1 container mx-auto p-4 md:p-6">
         <section className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter">
@@ -320,6 +311,16 @@ export default function MetaDescriptionPage() {
                 <TabsTrigger value="wordpress">WordPress</TabsTrigger>
             </TabsList>
             <TabsContent value="manual" className="mt-8">
+                {hasNoKeys && (
+                    <Alert className="mb-8 max-w-2xl mx-auto">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>API Key Required</AlertTitle>
+                        <AlertDescription>
+                        To generate meta descriptions, please first go to your{' '}
+                        <Link href="/account" className="font-semibold underline">Account settings</Link> and add a Gemini API key.
+                        </AlertDescription>
+                    </Alert>
+                )}
                 <div className="grid gap-8 lg:grid-cols-2">
                     <Card>
                         <CardHeader>
@@ -424,7 +425,7 @@ export default function MetaDescriptionPage() {
                         <Card className="max-w-2xl mx-auto">
                             <CardHeader>
                                 <CardTitle>Connect to WordPress</CardTitle>
-                                <CardDescription>Enter your website URL, username, and an application password to fetch posts and pages.</CardDescription>
+                                <CardDescription>Select a saved connection to fetch your posts and pages.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 {wpError && (
@@ -434,28 +435,27 @@ export default function MetaDescriptionPage() {
                                         <AlertDescription>{wpError}</AlertDescription>
                                     </Alert>
                                 )}
-                                <div className="space-y-2">
-                                    <Label htmlFor="wp-url-meta">WordPress Site URL</Label>
-                                    <Input id="wp-url-meta" placeholder="https://example.com" value={wpSite.url} onChange={e => setWpSite({...wpSite, url: e.target.value.trim()})} disabled={isWpLoading} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="wp-username-meta">WordPress Username</Label>
-                                    <Input id="wp-username-meta" placeholder="Enter your WordPress username" value={wpSite.username} onChange={e => setWpSite({...wpSite, username: e.target.value.trim()})} disabled={isWpLoading} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="app-password-meta">Application Password</Label>
-                                    <Input id="app-password-meta" type="password" placeholder="Enter your application password" value={wpSite.appPassword} onChange={e => setWpSite({...wpSite, appPassword: e.target.value.trim()})} disabled={isWpLoading} />
-                                    <p className="text-xs text-muted-foreground pt-1 flex items-center gap-1">
-                                        Need an Application Password?
-                                        <a href="https://wordpress.org/documentation/article/application-passwords/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary inline-flex items-center">
-                                            Learn how to create one. <LinkIcon className="h-3 w-3 ml-1" />
-                                        </a>
-                                    </p>
+                                {(hasNoKeys || hasNoConnections) && (
+                                    <Alert>
+                                        <AlertCircle className="h-4 w-4" />
+                                        <AlertTitle>Configuration Needed</AlertTitle>
+                                        <AlertDescription>
+                                        To connect your WordPress site, please first go to your{' '}
+                                        <Link href="/account" className="font-semibold underline">Account settings</Link> and add at least one Gemini API key and one WordPress site connection.
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                                <div className="flex flex-col gap-4">
+                                    {wpConnections?.map(site => (
+                                        <Button key={site.id} variant="outline" onClick={() => handleWpConnect(site)} disabled={isWpLoading || hasNoKeys}>
+                                            Connect to {site.url}
+                                        </Button>
+                                    ))}
                                 </div>
                             </CardContent>
                             <CardFooter>
-                                <Button className="w-full" onClick={handleWpConnect} disabled={isWpLoading || !isConnected}>
-                                    {isWpLoading ? <Loader2 className="animate-spin" /> : 'Connect Site'}
+                                <Button className="w-full" asChild>
+                                    <Link href="/account">Manage Connections</Link>
                                 </Button>
                             </CardFooter>
                         </Card>
@@ -578,4 +578,10 @@ export default function MetaDescriptionPage() {
   );
 }
 
-    
+export default function MetaDescriptionPageWithAuth() {
+    return (
+        <AuthGuard>
+            <MetaDescriptionPage />
+        </AuthGuard>
+    )
+}

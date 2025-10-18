@@ -46,20 +46,28 @@
           "type": "string",
           "description": "Reference to User. (Relationship: User 1:N GeminiApiKey)"
         },
-        "apiKey": {
+        "key": {
           "type": "string",
-          "description": "The Gemini API key (encrypted).",
-          "format": "string"
+          "description": "The Gemini API key (encrypted)."
         },
-        "description": {
+        "name": {
           "type": "string",
-          "description": "Description of the API key purpose."
+          "description": "A user-friendly name for the API key."
+        },
+        "usage": {
+          "type": "number",
+          "description": "The number of times the key has been used."
+        },
+        "lastUsed": {
+          "type": "string",
+          "description": "The last date the key was used."
         }
       },
       "required": [
         "id",
         "userId",
-        "apiKey"
+        "key",
+        "name"
       ]
     },
     "WordPressConnection": {
@@ -76,31 +84,32 @@
           "type": "string",
           "description": "Reference to User. (Relationship: User 1:N WordPressConnection)"
         },
-        "siteUrl": {
+        "url": {
           "type": "string",
           "description": "The URL of the WordPress site."
         },
-        "authToken": {
+        "username": {
           "type": "string",
-          "description": "Authentication token for the WordPress site (encrypted)."
+          "description": "Username for the WordPress site."
         },
-        "description": {
+        "appPassword": {
           "type": "string",
-          "description": "Description of the Wordpress connection purpose."
+          "description": "Application password for the WordPress site (encrypted)."
         }
       },
       "required": [
         "id",
         "userId",
-        "siteUrl",
-        "authToken"
+        "url",
+        "username",
+        "appPassword"
       ]
     }
   },
   "auth": {
     "providers": [
       "password",
-      "anonymous"
+      "google.com"
     ]
   },
   "firestore": {
@@ -108,17 +117,11 @@
       {
         "path": "/users/{userId}",
         "definition": {
-          "entityName": "user",
+          "entityName": "User",
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profile information. Only the user can read/write their own profile. The 'userId' parameter corresponds to the Firebase Auth UID.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user, matching the Firebase Auth UID."
-            }
-          ]
+          "description": "Stores user profile information. Only the user can read/write their own profile. The 'userId' parameter corresponds to the Firebase Auth UID."
         }
       },
       {
@@ -128,17 +131,7 @@
           "schema": {
             "$ref": "#/backend/entities/GeminiApiKey"
           },
-          "description": "Stores Gemini API keys associated with a user. Only the user can manage their own keys. The 'userId' parameter corresponds to the Firebase Auth UID. The 'geminiApiKeyId' is the unique ID of the API key.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user, matching the Firebase Auth UID."
-            },
-            {
-              "name": "geminiApiKeyId",
-              "description": "The unique identifier for the Gemini API key."
-            }
-          ]
+          "description": "Stores Gemini API keys associated with a user. Only the user can manage their own keys."
         }
       },
       {
@@ -148,20 +141,9 @@
           "schema": {
             "$ref": "#/backend/entities/WordPressConnection"
           },
-          "description": "Stores WordPress connection details for a user. Only the user can manage their own connections. The 'userId' parameter corresponds to the Firebase Auth UID. The 'wordPressConnectionId' is the unique ID of the WordPress connection.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user, matching the Firebase Auth UID."
-            },
-            {
-              "name": "wordPressConnectionId",
-              "description": "The unique identifier for the WordPress connection."
-            }
-          ]
+          "description": "Stores WordPress connection details for a user. Only the user can manage their own connections."
         }
       }
-    ],
-    "reasoning": "The Firestore structure is designed to ensure data isolation and easy security rule implementation, adhering to the principles of Authorization Independence, Clarity of Intent, and DBAC (Database-Based Access Control). Each user's data (Gemini API keys and WordPress connections) is stored under their respective user ID, ensuring only they have access. This eliminates the need for complex security rules that traverse different collections or documents. Data is structured to easily support secure list operations (QAPs - Rules are not Filters). Authorization Independence is achieved by storing all data that belongs to a user under their specific user ID, enabling direct access without requiring `get()` calls to other documents or collections. This simplifies security rules and enhances atomicity."
+    ]
   }
 }

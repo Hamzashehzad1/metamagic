@@ -1,86 +1,109 @@
 /**
- * @file Firestore Security Rules
- * @description This ruleset enforces a strict user-ownership model, ensuring that users can only access their own data.
+ * @fileoverview Firestore Security Rules for the application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model. Users can only
+ * access their own data, stored under their respective user ID.
  *
  * Data Structure:
- * All user data is nested under the `/users/{userId}` collection.
- * - User profiles are stored directly at `/users/{userId}`.
- * - Gemini API keys are stored in a subcollection at `/users/{userId}/geminiApiKeys/{geminiApiKeyId}`.
- * - WordPress connections are stored in a subcollection at `/users/{userId}/wordpressConnections/{wordPressConnectionId}`.
+ * - /users/{userId}: Stores user profile information.
+ * - /users/{userId}/geminiApiKeys/{geminiApiKeyId}: Stores Gemini API keys.
+ * - /users/{userId}/wordpressConnections/{wordPressConnectionId}: Stores WordPress connections.
  *
  * Key Security Decisions:
- * - Users can only read and write their own user profile and associated data (API keys, WordPress connections).
- * - Listing all users is disallowed.
- * - All write operations are validated to ensure that the user ID in the path matches the authenticated user's ID,
- *   preventing unauthorized data modification.
+ * - Users can only create, read, update, and delete their own data.
+ * - Listing of user documents is allowed only for the owner.
+ * - Schema validation is relaxed in this prototyping phase to allow for rapid iteration. Only critical fields for authorization are validated.
+ *
+ * Denormalization for Authorization:
+ * The `userId` is used in the path to all subcollections, and documents within those subcollections contain a `userId` field. This enables simple, performant authorization checks.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Enforces user-ownership for user profiles. Only the authenticated user can access their own profile.
+     * @description Controls access to user profile information.
      * @path /users/{userId}
-     * @allow (create) - User with UID 'user_abc' can create their profile if request.auth.uid == 'user_abc' and request.resource.data.id == 'user_abc'.
-     * @allow (get, update, delete) - User with UID 'user_abc' can get, update, or delete their profile at /users/user_abc if authenticated.
-     * @deny (create) - User with UID 'user_def' cannot create a profile at /users/user_abc.
-     * @deny (get, update, delete) - User with UID 'user_def' cannot get, update, or delete the profile at /users/user_abc.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) Signed-in user creates their own profile with matching UID.
+     * @allow (get, list, update, delete) Signed-in user accesses their own profile.
+     * @deny (create) Signed-in user attempts to create a profile with a mismatched UID.
+     * @principle Enforces document ownership and relational integrity.
      */
     match /users/{userId} {
-      // Verify that the user is signed in
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == request.auth.uid;
-      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Enforces user-ownership for Gemini API keys. Only the authenticated user can manage their own API keys.
+     * @description Controls access to Gemini API keys for a user.
      * @path /users/{userId}/geminiApiKeys/{geminiApiKeyId}
-     * @allow (create) - User with UID 'user_abc' can create an API key under /users/user_abc/geminiApiKeys/key_123.
-     * @allow (get, list, update, delete) - User with UID 'user_abc' can get, list, update, or delete their own API keys under /users/user_abc/geminiApiKeys/.
-     * @deny (create) - User with UID 'user_def' cannot create an API key under /users/user_abc/geminiApiKeys/.
-     * @deny (get, list, update, delete) - User with UID 'user_def' cannot get, list, update, or delete API keys under /users/user_abc/geminiApiKeys/.
-     * @principle Enforces document ownership for writes, and restricts access to a user's own data tree.
+     * @allow (create) Signed-in user creates an API key under their own user ID.
+     * @allow (get, list, update, delete) Signed-in user manages their own API keys.
+     * @deny (create) Signed-in user attempts to create an API key under a different user ID.
+     * @principle Enforces document ownership and relational integrity.
      */
     match /users/{userId}/geminiApiKeys/{geminiApiKeyId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
       allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Enforces user-ownership for WordPress connections. Only the authenticated user can manage their own WordPress connections.
+     * @description Controls access to WordPress connections for a user.
      * @path /users/{userId}/wordpressConnections/{wordPressConnectionId}
-     * @allow (create) - User with UID 'user_abc' can create a WordPress connection under /users/user_abc/wordpressConnections/wp_123.
-     * @allow (get, list, update, delete) - User with UID 'user_abc' can get, list, update, or delete their own WordPress connections under /users/user_abc/wordpressConnections/.
-     * @deny (create) - User with UID 'user_def' cannot create a WordPress connection under /users/user_abc/wordpressConnections/.
-     * @deny (get, list, update, delete) - User with UID 'user_def' cannot get, list, update, or delete WordPress connections under /users/user_abc/wordpressConnections/.
-     * @principle Enforces document ownership for writes, and restricts access to a user's own data tree.
+     * @allow (create) Signed-in user creates a WordPress connection under their own user ID.
+     * @allow (get, list, update, delete) Signed-in user manages their own WordPress connections.
+     * @deny (create) Signed-in user attempts to create a WordPress connection under a different user ID.
+     * @principle Enforces document ownership and relational integrity.
      */
     match /users/{userId}/wordpressConnections/{wordPressConnectionId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isSignedIn() && isExistingOwner(userId);
-    }
+      function isSignedIn() {
+        return request.auth != null;
+      }
 
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
 
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    function isExistingOwner(userId) {
+      function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
     }
   }
 }

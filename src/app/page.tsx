@@ -10,19 +10,31 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal, Wand2, Loader2 } from 'lucide-react';
 import { MetadataSettings, type MetadataSettings as TMetadataSettings } from '@/components/metadata-settings';
-import { GeminiKeyDialog, type ApiKey } from '@/components/gemini-key-dialog';
 import { Button } from '@/components/ui/button';
+import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { addDoc, collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { type ApiKey } from '@/app/account/page';
+import AuthGuard from '@/components/auth-guard';
+import Link from 'next/link';
 
-export default function Home() {
+function Home() {
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+
+  const apiKeysQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return collection(firestore, `users/${user.uid}/geminiApiKeys`);
+  }, [firestore, user]);
+
+  const { data: apiKeys, isLoading: isLoadingKeys } = useCollection<ApiKey>(apiKeysQuery);
+
+  const [activeKey, setActiveKey] = useState<ApiKey | null>(null);
+
   const [files, setFiles] = useState<File[]>([]);
   const [processedFiles, setProcessedFiles] = useState<ProcessedFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
-  
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
-  const [activeKeyId, setActiveKeyId] = useState<string | null>(null);
-  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
 
   const [metadataSettings, setMetadataSettings] = useState<TMetadataSettings>({
     titleLength: 125,
@@ -34,66 +46,33 @@ export default function Home() {
   });
   const { toast } = useToast();
 
-  const activeKey = apiKeys.find(k => k.id === activeKeyId);
   const isConnected = !!activeKey;
 
   useEffect(() => {
-    try {
-      const storedKeys = localStorage.getItem('gemini-api-keys');
-      const storedActiveId = localStorage.getItem('gemini-active-key-id');
-      const keys = storedKeys ? JSON.parse(storedKeys) : [];
-      setApiKeys(keys);
-      if (storedActiveId) {
-        setActiveKeyId(storedActiveId);
-      } else if (keys.length > 0) {
-        setActiveKeyId(keys[0].id);
-      } else {
-        // If no keys, open the dialog
-        setIsApiKeyDialogOpen(true);
-      }
-    } catch (e) {
-      console.error("Failed to parse API keys from localStorage", e);
-      setIsApiKeyDialogOpen(true);
-    }
-  }, []);
-
-  const handleKeysUpdate = (updatedKeys: ApiKey[], updatedActiveKeyId: string | null) => {
-    const today = new Date().toISOString().split('T')[0];
-    // When updating keys, also check if any usage counters need resetting
-    const checkedKeys = updatedKeys.map(k => k.lastUsed === today ? k : { ...k, usage: 0, lastUsed: today });
-    
-    setApiKeys(checkedKeys);
-    setActiveKeyId(updatedActiveKeyId);
-    localStorage.setItem('gemini-api-keys', JSON.stringify(checkedKeys));
-    if (updatedActiveKeyId) {
-      localStorage.setItem('gemini-active-key-id', updatedActiveKeyId);
+    if (apiKeys && apiKeys.length > 0) {
+      // Logic to determine the active key, e.g., the first one, or one stored in localStorage
+      setActiveKey(apiKeys[0]);
     } else {
-      localStorage.removeItem('gemini-active-key-id');
+      setActiveKey(null);
     }
-  };
+  }, [apiKeys]);
 
-  const incrementUsage = useCallback((count: number) => {
-    if (!activeKeyId) return;
+
+  const incrementUsage = useCallback(async (key: ApiKey, count: number) => {
+    if (!user) return;
+    const keyRef = doc(firestore, `users/${user.uid}/geminiApiKeys`, key.id);
     const today = new Date().toISOString().split('T')[0];
-    const updatedKeys = apiKeys.map(k => {
-      if (k.id === activeKeyId) {
-        const usageToday = k.lastUsed === today ? k.usage : 0;
-        return { ...k, usage: usageToday + count, lastUsed: today };
-      }
-      return k;
-    });
-    // This will re-trigger the handleKeysUpdate logic
-    handleKeysUpdate(updatedKeys, activeKeyId);
-  }, [apiKeys, activeKeyId]);
+    const newUsage = key.lastUsed === today ? (key.usage || 0) + count : count;
+    await setDoc(keyRef, { usage: newUsage, lastUsed: today }, { merge: true });
+  }, [user, firestore]);
 
 
   const handleFileUpload = useCallback((uploadedFiles: File[]) => {
     if (!isConnected) {
-      setIsApiKeyDialogOpen(true);
-      toast({
+       toast({
         variant: 'destructive',
         title: 'Not Connected',
-        description: 'Please connect your Gemini API key to upload files.'
+        description: 'Please add a Gemini API key in your account page to upload files.'
       });
       return;
     }
@@ -108,11 +87,10 @@ export default function Home() {
       return;
     }
     if (!activeKey) {
-      setIsApiKeyDialogOpen(true);
-      toast({
+       toast({
         variant: 'destructive',
         title: 'Not Connected',
-        description: 'Please connect your Gemini API key to generate metadata.'
+        description: 'Please add and select a Gemini API key in your account page.'
       });
       return;
     }
@@ -144,7 +122,7 @@ export default function Home() {
         throw new Error(result.error);
       }
       
-      incrementUsage(result.apiCalls);
+      await incrementUsage(activeKey, result.apiCalls);
       setProcessedFiles(result.results);
 
     } catch (e) {
@@ -177,11 +155,10 @@ export default function Home() {
   useEffect(() => {
     const handlePaste = async (event: ClipboardEvent) => {
       if (!isConnected) {
-        setIsApiKeyDialogOpen(true);
         toast({
             variant: 'destructive',
             title: 'Not Connected',
-            description: 'Please connect your Gemini API key to paste an image URL.'
+            description: 'Please add a Gemini API key to paste an image URL.'
         });
         return;
       }
@@ -238,17 +215,11 @@ export default function Home() {
     });
   };
 
+  const hasNoKeys = !isLoadingKeys && apiKeys && apiKeys.length === 0;
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <GeminiKeyDialog 
-        isOpen={isApiKeyDialogOpen}
-        setIsOpen={setIsApiKeyDialogOpen}
-        onKeysUpdate={handleKeysUpdate}
-        apiKeys={apiKeys}
-        activeKeyId={activeKeyId}
-      />
-      <Header isConnected={isConnected} onConnectClick={() => setIsApiKeyDialogOpen(true)} />
+      <Header />
       <main className="flex-1 container mx-auto p-4 md:p-6">
         <section className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter">
@@ -258,6 +229,17 @@ export default function Home() {
                 Upload images or <span className="font-semibold text-primary/80">paste an image URL (Ctrl+V)</span>. Our AI will instantly write SEO-optimized titles, descriptions, and keywords.
             </p>
         </section>
+
+        {hasNoKeys && (
+          <Alert className="mb-8 max-w-2xl mx-auto">
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>Welcome to MetaMagic!</AlertTitle>
+            <AlertDescription>
+              To get started, please add a Gemini API key in your{' '}
+              <Link href="/account" className="font-semibold underline">Account settings</Link>.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="grid gap-8 lg:grid-cols-12">
           <div className="lg:col-span-4 space-y-6">
@@ -269,12 +251,12 @@ export default function Home() {
               files={files}
               isLoading={isLoading}
               loadingStatus={loadingStatus}
-              disabled={!isConnected}
+              disabled={!isConnected || hasNoKeys}
               onRemoveFile={handleRemoveFile}
             />
 
             <div className="flex gap-4">
-              <Button onClick={handleGenerate} disabled={isLoading || files.length === 0 || !isConnected} size="lg" className="w-full">
+              <Button onClick={handleGenerate} disabled={isLoading || files.length === 0 || !isConnected || hasNoKeys} size="lg" className="w-full">
                   {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
                   {isLoading ? `Generating...` : `Generate Metadata for ${files.length} file(s)`}
               </Button>
@@ -306,4 +288,12 @@ export default function Home() {
       </footer>
     </div>
   );
+}
+
+export default function HomePage() {
+    return (
+        <AuthGuard>
+            <Home />
+        </AuthGuard>
+    )
 }

@@ -3,20 +3,23 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Header } from '@/components/header';
-import { GeminiKeyDialog, type ApiKey } from '@/components/gemini-key-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { connectWpSite, fetchWpMedia, generateAndSaveAltText, type WpSite, type WpMedia } from '@/app/actions';
-import { Loader2, CheckCircle2, AlertCircle, ImageOff, Link, Wand2, Sparkles, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle, ImageOff, Link as LinkIcon, Wand2, Sparkles, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-
+import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { addDoc, collection, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { type ApiKey, type WpConnection } from '@/app/account/page';
+import AuthGuard from '@/components/auth-guard';
 
 type MediaStatus = 'pending' | 'generating' | 'success' | 'failed';
 type WpMediaWithStatus = WpMedia & { status?: MediaStatus, error?: string };
@@ -24,12 +27,21 @@ type FilterType = 'all' | 'missing' | 'added';
 
 const MEDIA_PER_PAGE = 20;
 
-export default function WpAltText() {
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
-  const [activeKeyId, setActiveKeyId] = useState<string | null>(null);
-  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
+function WpAltText() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  // Firestore data
+  const apiKeysQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/geminiApiKeys`) : null, [firestore, user]);
+  const { data: apiKeys, isLoading: isLoadingKeys } = useCollection<ApiKey>(apiKeysQuery);
   
-  const [wpSite, setWpSite] = useState<WpSite>({ url: '', username: '', appPassword: ''});
+  const wpConnectionsQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/wordpressConnections`) : null, [firestore, user]);
+  const { data: wpConnections, isLoading: isLoadingConnections } = useCollection<WpConnection>(wpConnectionsQuery);
+
+  const [activeKey, setActiveKey] = useState<ApiKey | null>(null);
+  
+  // Component state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connectedSite, setConnectedSite] = useState<WpSite | null>(null);
@@ -45,80 +57,47 @@ export default function WpAltText() {
   const [progress, setProgress] = useState(0);
   
   const [filter, setFilter] = useState<FilterType>('all');
-
-  const { toast } = useToast();
   
-  const activeKey = apiKeys.find(k => k.id === activeKeyId);
   const isConnected = !!activeKey;
 
   useEffect(() => {
-    try {
-      const storedKeys = localStorage.getItem('gemini-api-keys');
-      const storedActiveId = localStorage.getItem('gemini-active-key-id');
-      const keys = storedKeys ? JSON.parse(storedKeys) : [];
-      setApiKeys(keys);
-      if (storedActiveId) {
-        setActiveKeyId(storedActiveId);
-      } else if (keys.length > 0) {
-        setActiveKeyId(keys[0].id);
-      } else {
-        setIsApiKeyDialogOpen(true);
-      }
-    } catch (e) {
-      console.error("Failed to parse API keys from localStorage", e);
-      setIsApiKeyDialogOpen(true);
-    }
-  }, []);
-
-  const handleKeysUpdate = (updatedKeys: ApiKey[], updatedActiveKeyId: string | null) => {
-    const today = new Date().toISOString().split('T')[0];
-    const checkedKeys = updatedKeys.map(k => k.lastUsed === today ? k : { ...k, usage: 0, lastUsed: today });
-    
-    setApiKeys(checkedKeys);
-    setActiveKeyId(updatedActiveKeyId);
-    localStorage.setItem('gemini-api-keys', JSON.stringify(checkedKeys));
-    if (updatedActiveKeyId) {
-      localStorage.setItem('gemini-active-key-id', updatedActiveKeyId);
+    if (apiKeys && apiKeys.length > 0) {
+      setActiveKey(apiKeys[0]);
     } else {
-      localStorage.removeItem('gemini-active-key-id');
+      setActiveKey(null);
     }
-  };
+  }, [apiKeys]);
+  
+  useEffect(() => {
+    // Auto-connect if there's a saved connection
+    if (wpConnections && wpConnections.length > 0 && !connectedSite) {
+        const lastUsedConnection = wpConnections[0];
+        handleConnect(lastUsedConnection);
+    }
+  }, [wpConnections, connectedSite]);
 
-  const incrementUsage = useCallback((count: number) => {
-    if (!activeKeyId) return;
+
+  const incrementUsage = useCallback(async (key: ApiKey, count: number) => {
+    if (!user) return;
+    const keyRef = doc(firestore, `users/${user.uid}/geminiApiKeys`, key.id);
     const today = new Date().toISOString().split('T')[0];
-    const updatedKeys = apiKeys.map(k => {
-      if (k.id === activeKeyId) {
-        const usageToday = k.lastUsed === today ? k.usage : 0;
-        return { ...k, usage: usageToday + count, lastUsed: today };
-      }
-      return k;
-    });
-    handleKeysUpdate(updatedKeys, activeKeyId);
-  }, [apiKeys, activeKeyId]);
+    const newUsage = key.lastUsed === today ? (key.usage || 0) + count : count;
+    await setDoc(keyRef, { usage: newUsage, lastUsed: today }, { merge: true });
+  }, [user, firestore]);
 
 
-  const handleConnect = async () => {
-    if (!wpSite.url || !wpSite.username || !wpSite.appPassword) {
-        setError("All fields are required.");
-        return;
-    }
-    try {
-        new URL(wpSite.url);
-    } catch (e) {
-        setError("Please enter a valid URL (e.g., https://example.com).");
-        return;
-    }
-
-    setIsLoading(true);
+  const handleConnect = async (site: WpSite) => {
     setError(null);
-    const result = await connectWpSite(wpSite);
+    setMediaError(null);
+    setIsLoading(true);
+
+    const result = await connectWpSite(site);
     setIsLoading(false);
 
     if (result.success) {
-        setConnectedSite(wpSite);
+        setConnectedSite(site);
         toast({ title: 'Success!', description: result.message });
-        handleFetchMedia(wpSite, true);
+        handleFetchMedia(site, true);
     } else {
         setError(result.message);
     }
@@ -150,13 +129,19 @@ export default function WpAltText() {
     setIsFetchingMedia(false);
   }
 
-  const handleDisconnect = () => {
+  const handleDisconnect = async () => {
+    if (!user || !connectedSite || !wpConnections) return;
+    const connectionToDelete = wpConnections.find(c => c.url === connectedSite.url);
+    if (connectionToDelete) {
+        await deleteDoc(doc(firestore, `users/${user.uid}/wordpressConnections`, connectionToDelete.id));
+    }
     setConnectedSite(null);
     setMedia([]);
     setTotalMedia(null);
     setCurrentPage(1);
     setHasMoreMedia(true);
-    setWpSite({ url: '', username: '', appPassword: '' });
+    setError(null);
+    setMediaError(null);
   }
 
   const handleGenerateAll = async () => {
@@ -184,10 +169,9 @@ export default function WpAltText() {
             setMedia(prev => prev.map(m => m.id === result.id ? { ...m, alt_text: result.newAltText, status: 'success' } : m));
         } else {
             if (result.code === 'GEMINI_QUOTA_EXCEEDED') {
-                 toast({ variant: 'destructive', title: 'Quota Exceeded', description: result.error });
-                 // Stop the process if quota is exceeded
+                 toast({ variant: 'destructive', title: 'Quota Exceeded', description: result.error, duration: 5000 });
                  setIsGenerating(false);
-                 incrementUsage(totalApiCalls);
+                 if (totalApiCalls > 0) await incrementUsage(activeKey, totalApiCalls);
                  return;
             }
             setMedia(prev => prev.map(m => m.id === result.id ? { ...m, status: 'failed', error: result.error } : m));
@@ -197,7 +181,7 @@ export default function WpAltText() {
         setProgress((processedCount / mediaToProcess.length) * 100);
     }
     
-    incrementUsage(totalApiCalls);
+    if (totalApiCalls > 0) await incrementUsage(activeKey, totalApiCalls);
     setIsGenerating(false);
     toast({ title: "Processing Complete!", description: `Alt text generated for ${processedCount} images.` });
   }
@@ -213,7 +197,21 @@ export default function WpAltText() {
     }
   }, [media, filter]);
 
-  const mediaWithoutAltText = media.filter(m => !m.alt_text).length;
+  const mediaWithoutAltText = useMemo(() => media.filter(m => !m.alt_text).length, [media]);
+
+  const hasNoKeys = !isLoadingKeys && apiKeys && apiKeys.length === 0;
+  const hasNoConnections = !isLoadingConnections && wpConnections && wpConnections.length === 0;
+
+  if (isLoadingConnections || isLoadingKeys) {
+      return (
+          <div className="flex flex-col min-h-screen bg-background">
+              <Header />
+              <div className="flex-1 flex items-center justify-center">
+                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              </div>
+          </div>
+      )
+  }
 
   const renderMediaItemContent = (item: WpMediaWithStatus) => {
         let statusBadge = null;
@@ -254,14 +252,7 @@ export default function WpAltText() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-       <GeminiKeyDialog 
-        isOpen={isApiKeyDialogOpen}
-        setIsOpen={setIsApiKeyDialogOpen}
-        onKeysUpdate={handleKeysUpdate}
-        apiKeys={apiKeys}
-        activeKeyId={activeKeyId}
-      />
-      <Header isConnected={isConnected} onConnectClick={() => setIsApiKeyDialogOpen(true)} />
+      <Header />
       <main className="flex-1 container mx-auto p-4 md:p-6">
         <section className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter">
@@ -272,12 +263,16 @@ export default function WpAltText() {
             </p>
         </section>
 
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-4xl mx-auto">
             {!connectedSite ? (
-                <Card>
+                <Card className="max-w-2xl mx-auto">
                     <CardHeader>
                         <CardTitle>Connect to WordPress</CardTitle>
-                        <CardDescription>Enter your website URL, username, and an application password to get started.</CardDescription>
+                        <CardDescription>
+                            {hasNoConnections
+                                ? 'Add a new connection to get started.'
+                                : 'Select a saved connection or add a new one.'}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {error && (
@@ -287,28 +282,28 @@ export default function WpAltText() {
                                 <AlertDescription>{error}</AlertDescription>
                             </Alert>
                         )}
-                        <div className="space-y-2">
-                            <Label htmlFor="wp-url">WordPress Site URL</Label>
-                            <Input id="wp-url" placeholder="https://example.com" value={wpSite.url} onChange={e => setWpSite({...wpSite, url: e.target.value.trim()})} disabled={isLoading} />
+                        {(hasNoKeys || hasNoConnections) && (
+                             <Alert>
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertTitle>Configuration Needed</AlertTitle>
+                                <AlertDescription>
+                                To connect your WordPress site, please first go to your{' '}
+                                <Link href="/account" className="font-semibold underline">Account settings</Link> and add at least one Gemini API key and one WordPress site connection.
+                                </AlertDescription>
+                            </Alert>
+                        )}
+                        <div className="flex flex-col gap-4">
+                            {wpConnections?.map(site => (
+                                <Button key={site.id} variant="outline" onClick={() => handleConnect(site)} disabled={isLoading || hasNoKeys}>
+                                    Connect to {site.url}
+                                </Button>
+                            ))}
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="wp-username">WordPress Username</Label>
-                            <Input id="wp-username" placeholder="Enter your WordPress username" value={wpSite.username} onChange={e => setWpSite({...wpSite, username: e.target.value.trim()})} disabled={isLoading} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="app-password">Application Password</Label>
-                            <Input id="app-password" type="password" placeholder="Enter your application password" value={wpSite.appPassword} onChange={e => setWpSite({...wpSite, appPassword: e.target.value.trim()})} disabled={isLoading} />
-                             <p className="text-xs text-muted-foreground pt-1 flex items-center gap-1">
-                                Need an Application Password?
-                                <a href="https://wordpress.org/documentation/article/application-passwords/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary inline-flex items-center">
-                                    Learn how to create one. <Link className="h-3 w-3 ml-1" />
-                                </a>
-                            </p>
-                        </div>
+
                     </CardContent>
                     <CardFooter>
-                         <Button className="w-full" onClick={handleConnect} disabled={isLoading || !isConnected}>
-                            {isLoading ? <Loader2 className="animate-spin" /> : 'Connect Site'}
+                         <Button className="w-full" asChild>
+                            <Link href="/account">Manage Connections</Link>
                         </Button>
                     </CardFooter>
                 </Card>
@@ -418,7 +413,7 @@ export default function WpAltText() {
 
                         {hasMoreMedia && (
                             <div className="mt-8 text-center">
-                                <Button onClick={() => handleFetchMedia(connectedSite)} disabled={isFetchingMedia}>
+                                <Button onClick={() => handleFetchMedia(connectedSite!)} disabled={isFetchingMedia}>
                                     {isFetchingMedia ? <Loader2 className="mr-2 animate-spin" /> : null}
                                     Load More
                                 </Button>
@@ -437,4 +432,12 @@ export default function WpAltText() {
       </footer>
     </div>
   );
+}
+
+export default function WpAltTextPage() {
+    return (
+        <AuthGuard>
+            <WpAltText />
+        </AuthGuard>
+    )
 }
