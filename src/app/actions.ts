@@ -127,23 +127,24 @@ export async function connectWpSite(site: WpSite): Promise<{success: boolean, me
         });
 
         const contentType = response.headers.get('content-type');
-        
-        if (!response.ok) {
-            if (contentType && contentType.includes('application/json')) {
-                const errorBody = await response.json();
-                return { success: false, message: `Connection failed: ${errorBody.message || 'Check credentials and URL.'}` };
-            } else {
-                 return { success: false, message: `Connection failed with status ${response.status}. WordPress did not return a valid JSON response. Check the URL and permalink settings.` };
-            }
-        }
-        
-        // Even if response.ok is true, we must verify the content type.
-        if (!contentType || !contentType.includes('application/json')) {
-             return { success: false, message: `Connection test succeeded, but WordPress did not return a valid JSON response. Please check your site's permalink settings.` };
-        }
 
-        // If we reach here, the response is OK and it's JSON.
-        return { success: true, message: 'Successfully connected to your WordPress site.' };
+        if (response.ok && contentType && contentType.includes('application/json')) {
+            return { success: true, message: 'Successfully connected to your WordPress site.' };
+        }
+        
+        let errorMessage = `Connection failed with status ${response.status}.`;
+        if (contentType && contentType.includes('application/json')) {
+             try {
+                const errorBody = await response.json();
+                errorMessage = errorBody.message || 'An unknown error occurred.';
+             } catch (e) {
+                errorMessage = 'Received an invalid JSON error response from WordPress.';
+             }
+        } else {
+            errorMessage = 'WordPress did not return a valid JSON response. This can be caused by an incorrect URL, a firewall, or a security plugin. Please also check your site\'s permalink settings.';
+        }
+        
+        return { success: false, message: `Connection failed: ${errorMessage}` };
 
     } catch (error) {
         console.error('WP Connection Error:', error);
