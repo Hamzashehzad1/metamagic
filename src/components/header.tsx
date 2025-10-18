@@ -44,21 +44,21 @@ export function Header() {
           <NavigationMenu>
               <NavigationMenuList>
                   <NavigationMenuItem>
-                      <Link href="/dashboard" legacyBehavior passHref>
+                      <Link href="/dashboard" passHref>
                           <NavigationMenuLink active={pathname.startsWith('/dashboard')} className={navigationMenuTriggerStyle()}>
                               Metadata Generator
                           </NavigationMenuLink>
                       </Link>
                   </NavigationMenuItem>
                   <NavigationMenuItem>
-                      <Link href="/wp-alt-text" legacyBehavior passHref>
+                      <Link href="/wp-alt-text" passHref>
                           <NavigationMenuLink active={pathname.startsWith('/wp-alt-text')} className={navigationMenuTriggerStyle()}>
                               WP Alt Text
                           </NavigationMenuLink>
                       </Link>
                   </NavigationMenuItem>
                   <NavigationMenuItem>
-                      <Link href="/meta-description" legacyBehavior passHref>
+                      <Link href="/meta-description" passHref>
                           <NavigationMenuLink active={pathname.startsWith('/meta-description')} className={navigationMenuTriggerStyle()}>
                               Meta Description
                           </NavigationMenuLink>
@@ -70,14 +70,14 @@ export function Header() {
           <NavigationMenu>
             <NavigationMenuList>
                 <NavigationMenuItem>
-                    <Link href="/#features" legacyBehavior passHref>
+                    <Link href="/#features" passHref>
                         <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                             Features
                         </NavigationMenuLink>
                     </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                    <Link href="/pricing" legacyBehavior passHref>
+                    <Link href="/pricing" passHref>
                         <NavigationMenuLink active={pathname.startsWith('/pricing')} className={navigationMenuTriggerStyle()}>
                             Pricing
                         </NavigationMenuLink>
