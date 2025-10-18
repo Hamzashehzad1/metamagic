@@ -5,6 +5,7 @@ import { generateImageCaption } from '@/ai/flows/generate-image-caption';
 import { extractSeoMetadata } from '@/ai/flows/extract-seo-metadata';
 import { generateAltText } from '@/ai/flows/generate-alt-text';
 import { generateMetaDescription } from '@/ai/flows/generate-meta-description';
+import { summarizeContentForMeta } from '@/ai/flows/summarize-content-for-meta';
 import { type MetadataSettings } from '@/components/metadata-settings';
 
 export interface Metadata {
@@ -127,6 +128,19 @@ export interface WpMedia {
     title: {
         rendered: string;
     };
+}
+
+export interface WpPost {
+    id: number;
+    title: {
+        rendered: string;
+    };
+    link: string;
+    type: 'post' | 'page';
+    meta: {
+        _aioseo_description?: string;
+        [key: string]: any;
+    }
 }
 
 function getAuthHeader(username: string, appPassword: string) {
@@ -269,25 +283,130 @@ export async function fetchPageContent(url: string): Promise<{content: string} |
         if (!response.ok) {
             throw new Error(`Failed to fetch page content. Status: ${response.status}`);
         }
-        // Very basic text extraction. Might need a more robust solution like a headless browser for complex sites.
         const text = await response.text();
-        return { content: text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() };
+        // Basic stripping of HTML tags. A more robust solution might be needed for complex sites.
+        const plainText = text.replace(/<style[^>]*>.*<\/style>/gs, ' ')
+                              .replace(/<script[^>]*>.*<\/script>/gs, ' ')
+                              .replace(/<[^>]+>/g, ' ')
+                              .replace(/\s+/g, ' ')
+                              .trim();
+        return { content: plainText };
     } catch (error) {
         const message = error instanceof Error ? error.message : 'An unknown error occurred.';
         return { error: message };
     }
 }
 
+export async function fetchWpPostsAndPages(site: WpSite, page: number = 1, perPage: number = 20): Promise<{items: WpPost[], totalItems?: number, error?: string}> {
+    const { url, username, appPassword } = site;
+    try {
+        // Fetch both posts and pages in parallel
+        const [postsResponse, pagesResponse] = await Promise.all([
+            fetch(`${url}/wp-json/wp/v2/posts?page=${page}&per_page=${perPage}&_fields=id,title,link,type,meta&status=publish`, { 
+                headers: { 'Authorization': getAuthHeader(username, appPassword) },
+                cache: 'no-store',
+            }),
+            fetch(`${url}/wp-json/wp/v2/pages?page=${page}&per_page=${perPage}&_fields=id,title,link,type,meta&status=publish`, { 
+                headers: { 'Authorization': getAuthHeader(username, appPassword) },
+                cache: 'no-store',
+            }),
+        ]);
+
+        if (!postsResponse.ok || !pagesResponse.ok) {
+            // A simple error handling, can be improved to show which one failed
+            throw new Error(`Failed to fetch content. Status - Posts: ${postsResponse.status}, Pages: ${pagesResponse.status}`);
+        }
+
+        const posts: WpPost[] = await postsResponse.json();
+        const pages: WpPost[] = await pagesResponse.json();
+
+        const totalPosts = parseInt(postsResponse.headers.get('X-WP-Total') || '0', 10);
+        const totalPages = parseInt(pagesResponse.headers.get('X-WP-Total') || '0', 10);
+        
+        return { items: [...posts, ...pages], totalItems: totalPosts + totalPages };
+
+    } catch (error) {
+        console.error('WP Posts/Pages Fetch Error:', error);
+        const message = error instanceof Error ? error.message : 'An unknown error occurred while fetching content.';
+        return { items: [], error: message };
+    }
+}
+
+export async function updateWpPostMeta(site: WpSite, postId: number, metaDescription: string): Promise<{success: boolean, error?: string}> {
+    const { url, username, appPassword } = site;
+    try {
+        // This targets the meta field used by the "All in One SEO" plugin.
+        // If a different SEO plugin is used, this key might need to change.
+        const response = await fetch(`${url}/wp-json/wp/v2/posts/${postId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': getAuthHeader(username, appPassword),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                meta: {
+                    _aioseo_description: metaDescription
+                }
+            }),
+            cache: 'no-store',
+        });
+        
+        if (!response.ok) {
+             const errorBody = await response.json();
+             // Handle cases where the post is a 'page'
+             if (errorBody.code === 'rest_post_invalid_id') {
+                 const pageResponse = await fetch(`${url}/wp-json/wp/v2/pages/${postId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': getAuthHeader(username, appPassword),
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        meta: {
+                            _aioseo_description: metaDescription
+                        }
+                    }),
+                    cache: 'no-store',
+                });
+                if (!pageResponse.ok) {
+                    const pageErrorBody = await pageResponse.json();
+                    throw new Error(pageErrorBody.message || `Failed to update page item ${postId}.`);
+                }
+                return { success: true };
+             }
+            throw new Error(errorBody.message || `Failed to update post item ${postId}.`);
+        }
+
+        return { success: true };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'An unknown error occurred while updating meta description.';
+        return { success: false, error: message };
+    }
+}
+
+
 export async function generateMetaDescriptionAction(
     apiKey: string, 
-    pageContent: string
+    pageContent: string,
+    isWpContent: boolean = false
 ): Promise<{metaDescription: string, apiCalls: number} | {error: string, code?: string}> {
     try {
         if (!apiKey) {
             throw new Error('Gemini API key is not provided.');
         }
-        const { metaDescription } = await generateMetaDescription({ apiKey, pageContent });
-        return { metaDescription, apiCalls: 1 };
+
+        let contentToProcess = pageContent;
+        let apiCalls = 1;
+
+        // If it's WordPress content, summarize it first to be more efficient
+        if (isWpContent) {
+            const summaryResult = await summarizeContentForMeta({apiKey, pageContent});
+            contentToProcess = summaryResult.summary;
+            apiCalls++; // Account for the summarization call
+        }
+
+        const { metaDescription } = await generateMetaDescription({ apiKey, pageContent: contentToProcess });
+        return { metaDescription, apiCalls };
     } catch(error) {
         const handledError = handleGenerativeAiError(error);
         return { error: handledError.message, ...('code' in handledError && { code: (handledError as any).code }) };
