@@ -154,7 +154,7 @@ export async function connectWpSite(site: WpSite): Promise<{success: boolean, me
 }
 
 
-export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: number = 20): Promise<{media: WpMedia[], error?: string}> {
+export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: number = 20): Promise<{media: WpMedia[], totalMedia?: number, error?: string}> {
     const { url, username, appPassword } = site;
     try {
         const mediaUrl = new URL(`${url}/wp-json/wp/v2/media`);
@@ -174,7 +174,12 @@ export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: numb
         if (!response.ok) {
             let errorBody;
             try {
-                errorBody = await response.json();
+                if (contentType && contentType.includes('application/json')) {
+                    errorBody = await response.json();
+                } else {
+                    const text = await response.text();
+                    throw new Error(`Failed to fetch media. WordPress returned a non-JSON response with status ${response.status}. Body: ${text.substring(0, 200)}...`);
+                }
             } catch (e) {
                  throw new Error(`Failed to fetch media. WordPress returned a non-JSON response with status ${response.status}. Please check your site's permalink settings.`);
             }
@@ -182,7 +187,9 @@ export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: numb
         }
         
         const media: WpMedia[] = await response.json();
-        return { media };
+        const totalMedia = response.headers.get('X-WP-Total');
+
+        return { media, totalMedia: totalMedia ? parseInt(totalMedia, 10) : undefined };
 
     } catch (error) {
         console.error('WP Media Fetch Error:', error);
@@ -225,6 +232,9 @@ export async function generateAndSaveAltText(
     mediaItem: WpMedia
 ): Promise<{id: number, newAltText: string} | {id: number, error: string}> {
     try {
+        if (!apiKey) {
+            throw new Error('Gemini API key is not provided.');
+        }
         const { altText } = await generateAltText({ apiKey, imageUrl: mediaItem.source_url });
         
         const updateResult = await updateWpMediaItem(site, mediaItem.id, altText);

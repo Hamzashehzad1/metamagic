@@ -20,6 +20,8 @@ import { Progress } from '@/components/ui/progress';
 type MediaStatus = 'pending' | 'generating' | 'success' | 'failed';
 type WpMediaWithStatus = WpMedia & { status?: MediaStatus, error?: string };
 
+const MEDIA_PER_PAGE = 20;
+
 export default function WpAltText() {
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [isApiKeySet, setIsApiKeySet] = useState(false);
@@ -31,8 +33,11 @@ export default function WpAltText() {
   const [connectedSite, setConnectedSite] = useState<WpSite | null>(null);
 
   const [media, setMedia] = useState<WpMediaWithStatus[]>([]);
+  const [totalMedia, setTotalMedia] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isFetchingMedia, setIsFetchingMedia] = useState(false);
   const [mediaError, setMediaError] = useState<string | null>(null);
+  const [hasMoreMedia, setHasMoreMedia] = useState(true);
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -50,6 +55,7 @@ export default function WpAltText() {
   }, []);
 
    const handleSaveApiKey = (newKey: string) => {
+    if (!newKey) return;
     setApiKey(newKey);
     setIsApiKeySet(true);
     localStorage.setItem('gemini-api-key', newKey);
@@ -80,21 +86,33 @@ export default function WpAltText() {
     if (result.success) {
         setConnectedSite(wpSite);
         toast({ title: 'Success!', description: result.message });
-        handleFetchMedia(wpSite);
+        handleFetchMedia(wpSite, true);
     } else {
         setError(result.message);
     }
   };
 
-  const handleFetchMedia = async (site: WpSite) => {
+  const handleFetchMedia = async (site: WpSite, reset: boolean = false) => {
     setIsFetchingMedia(true);
     setMediaError(null);
-    setMedia([]);
-    const result = await fetchWpMedia(site);
+    const pageToFetch = reset ? 1 : currentPage;
+    if (reset) {
+        setMedia([]);
+        setCurrentPage(1);
+    }
+    const result = await fetchWpMedia(site, pageToFetch, MEDIA_PER_PAGE);
+    
     if (result.error) {
         setMediaError(result.error);
     } else {
-        setMedia(result.media.map(m => ({...m, status: 'pending'})));
+        setMedia(prev => reset ? result.media.map(m => ({...m, status: 'pending'})) : [...prev, ...result.media.map(m => ({...m, status: 'pending'}))]);
+        if(result.totalMedia !== undefined) setTotalMedia(result.totalMedia);
+        if (result.media.length < MEDIA_PER_PAGE) {
+            setHasMoreMedia(false);
+        } else {
+            setHasMoreMedia(true);
+        }
+        setCurrentPage(page => page + 1);
     }
     setIsFetchingMedia(false);
   }
@@ -102,6 +120,9 @@ export default function WpAltText() {
   const handleDisconnect = () => {
     setConnectedSite(null);
     setMedia([]);
+    setTotalMedia(null);
+    setCurrentPage(1);
+    setHasMoreMedia(true);
     setWpSite({ url: '', username: '', appPassword: '' });
   }
 
@@ -110,7 +131,7 @@ export default function WpAltText() {
 
     const mediaToProcess = media.filter(item => !item.alt_text);
     if (mediaToProcess.length === 0) {
-        toast({ title: "No Action Needed", description: "All images already have alt text."});
+        toast({ title: "No Action Needed", description: "All visible images already have alt text."});
         return;
     }
 
@@ -248,7 +269,7 @@ export default function WpAltText() {
                         </CardDescription>
                     </CardHeader>
                     <CardFooter className="flex justify-between">
-                         <Button variant="outline" onClick={() => handleFetchMedia(connectedSite)}>Refresh Media</Button>
+                         <Button variant="outline" onClick={() => handleFetchMedia(connectedSite, true)}>Refresh Media</Button>
                         <Button variant="outline" onClick={handleDisconnect}>Disconnect</Button>
                     </CardFooter>
                 </Card>
@@ -258,10 +279,12 @@ export default function WpAltText() {
         {connectedSite && (
             <div className="mt-12">
                 <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                    <h2 className="text-2xl font-bold font-headline text-center">Media Library</h2>
-                    <Button onClick={handleGenerateAll} disabled={isGenerating || mediaWithoutAltText === 0}>
+                    <h2 className="text-2xl font-bold font-headline text-center">
+                        Media Library {totalMedia !== null && `(${media.length} of ${totalMedia})`}
+                    </h2>
+                    <Button onClick={handleGenerateAll} disabled={isGenerating || mediaWithoutAltText === 0 || !isApiKeySet}>
                         <Sparkles className="mr-2 h-4 w-4" />
-                        {isGenerating ? 'Generating...' : `Generate Alt Text for ${mediaWithoutAltText} image(s)`}
+                        {isGenerating ? 'Generating...' : `Generate for ${mediaWithoutAltText} missing`}
                     </Button>
                 </div>
                  {isGenerating && (
@@ -271,7 +294,7 @@ export default function WpAltText() {
                         <p className="text-sm text-muted-foreground text-center">{Math.round(progress)}% complete</p>
                     </div>
                 )}
-                {isFetchingMedia ? (
+                {isFetchingMedia && media.length === 0 ? (
                     <div className="flex justify-center items-center h-64">
                         <Loader2 className="h-12 w-12 animate-spin text-primary" />
                     </div>
@@ -281,27 +304,37 @@ export default function WpAltText() {
                         <AlertTitle>Failed to load media</AlertTitle>
                         <AlertDescription>{mediaError}</AlertDescription>
                     </Alert>
-                ) : media.length === 0 ? (
+                ) : media.length === 0 && !isFetchingMedia ? (
                     <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
                         <ImageOff className="h-16 w-16 text-muted-foreground" />
                         <p className="text-muted-foreground mt-4">No images found in your media library.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        {media.map(item => (
-                            <Card key={item.id} className="overflow-hidden group">
-                                <div className="aspect-square relative">
-                                    <Image src={item.source_url} alt={item.alt_text || item.title.rendered} fill className="object-cover" data-ai-hint="wordpress library image" />
-                                     <div className="absolute inset-0 bg-black/70 flex items-center justify-center p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <p className="text-white text-xs text-center">{item.title.rendered}</p>
+                    <>
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            {media.map(item => (
+                                <Card key={item.id} className="overflow-hidden group">
+                                    <div className="aspect-square relative">
+                                        <Image src={item.source_url} alt={item.alt_text || item.title.rendered} fill className="object-cover" data-ai-hint="wordpress library image" />
+                                        <div className="absolute inset-0 bg-black/70 flex items-center justify-center p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <p className="text-white text-xs text-center">{item.title.rendered}</p>
+                                        </div>
                                     </div>
-                                </div>
-                                <CardContent className="p-2 text-xs space-y-1">
-                                    {renderMediaItemContent(item)}
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
+                                    <CardContent className="p-2 text-xs space-y-1">
+                                        {renderMediaItemContent(item)}
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                        {hasMoreMedia && (
+                            <div className="mt-8 text-center">
+                                <Button onClick={() => handleFetchMedia(connectedSite)} disabled={isFetchingMedia}>
+                                    {isFetchingMedia ? <Loader2 className="mr-2 animate-spin" /> : null}
+                                    Load More
+                                </Button>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         )}
