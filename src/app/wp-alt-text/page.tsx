@@ -10,10 +10,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { connectWpSite, fetchWpMedia, type WpSite, type WpMedia } from '@/app/actions';
-import { Loader2, CheckCircle2, AlertCircle, ImageOff, Link } from 'lucide-react';
+import { connectWpSite, fetchWpMedia, generateAndSaveAltText, type WpSite, type WpMedia } from '@/app/actions';
+import { Loader2, CheckCircle2, AlertCircle, ImageOff, Link, Wand2, Sparkles, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+
+
+type MediaStatus = 'pending' | 'generating' | 'success' | 'failed';
+type WpMediaWithStatus = WpMedia & { status?: MediaStatus, error?: string };
 
 export default function WpAltText() {
   const [apiKey, setApiKey] = useState<string | null>(null);
@@ -25,9 +30,12 @@ export default function WpAltText() {
   const [error, setError] = useState<string | null>(null);
   const [connectedSite, setConnectedSite] = useState<WpSite | null>(null);
 
-  const [media, setMedia] = useState<WpMedia[]>([]);
+  const [media, setMedia] = useState<WpMediaWithStatus[]>([]);
   const [isFetchingMedia, setIsFetchingMedia] = useState(false);
   const [mediaError, setMediaError] = useState<string | null>(null);
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const { toast } = useToast();
 
@@ -57,17 +65,12 @@ export default function WpAltText() {
         setError("All fields are required.");
         return;
     }
-    // Basic URL validation
     try {
-        const url = new URL(wpSite.url);
-        if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-            throw new Error();
-        }
+        new URL(wpSite.url);
     } catch (e) {
         setError("Please enter a valid URL (e.g., https://example.com).");
         return;
     }
-
 
     setIsLoading(true);
     setError(null);
@@ -91,7 +94,7 @@ export default function WpAltText() {
     if (result.error) {
         setMediaError(result.error);
     } else {
-        setMedia(result.media);
+        setMedia(result.media.map(m => ({...m, status: 'pending'})));
     }
     setIsFetchingMedia(false);
   }
@@ -101,6 +104,79 @@ export default function WpAltText() {
     setMedia([]);
     setWpSite({ url: '', username: '', appPassword: '' });
   }
+
+  const handleGenerateAll = async () => {
+    if (!connectedSite || !apiKey) return;
+
+    const mediaToProcess = media.filter(item => !item.alt_text);
+    if (mediaToProcess.length === 0) {
+        toast({ title: "No Action Needed", description: "All images already have alt text."});
+        return;
+    }
+
+    setIsGenerating(true);
+    setProgress(0);
+
+    let processedCount = 0;
+
+    for (const item of mediaToProcess) {
+        // Set status to 'generating'
+        setMedia(prev => prev.map(m => m.id === item.id ? { ...m, status: 'generating' } : m));
+
+        const result = await generateAndSaveAltText(apiKey, connectedSite, item);
+        
+        if ('newAltText' in result) {
+            setMedia(prev => prev.map(m => m.id === result.id ? { ...m, alt_text: result.newAltText, status: 'success' } : m));
+        } else {
+            setMedia(prev => prev.map(m => m.id === result.id ? { ...m, status: 'failed', error: result.error } : m));
+        }
+
+        processedCount++;
+        setProgress((processedCount / mediaToProcess.length) * 100);
+    }
+
+    setIsGenerating(false);
+    toast({ title: "Processing Complete!", description: `Alt text generated for ${processedCount} images.` });
+  }
+
+  const mediaWithoutAltText = media.filter(m => !m.alt_text).length;
+
+  const renderMediaItemContent = (item: WpMediaWithStatus) => {
+        let statusBadge = null;
+        let altTextDisplay = null;
+
+        if (isGenerating) {
+            switch (item.status) {
+                case 'generating':
+                    statusBadge = <Badge variant="secondary" className="w-full justify-center animate-pulse"><Wand2 className="mr-1 h-3 w-3" /> Generating...</Badge>;
+                    break;
+                case 'success':
+                    statusBadge = <Badge className="w-full justify-center bg-green-500 hover:bg-green-600"><CheckCircle2 className="mr-1 h-3 w-3" /> Success</Badge>;
+                    break;
+                case 'failed':
+                    statusBadge = <Badge variant="destructive" className="w-full justify-center"><AlertTriangle className="mr-1 h-3 w-3" /> Failed</Badge>;
+                    break;
+                default:
+                    if (!item.alt_text) {
+                        statusBadge = <Badge variant="outline" className="w-full justify-center">Pending</Badge>;
+                    }
+                    break;
+            }
+        }
+        
+        if (item.alt_text) {
+            altTextDisplay = <p>Alt: <span className="text-foreground/80">{item.alt_text}</span></p>;
+        } else if (!isGenerating) {
+            altTextDisplay = <Badge variant="destructive" className="w-full justify-center">Missing Alt Text</Badge>;
+        }
+
+        return (
+            <>
+                {altTextDisplay}
+                {statusBadge && <div className="mt-1">{statusBadge}</div>}
+            </>
+        )
+    }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -171,7 +247,8 @@ export default function WpAltText() {
                             Successfully connected to <span className="font-semibold text-primary">{connectedSite.url}</span>
                         </CardDescription>
                     </CardHeader>
-                    <CardFooter>
+                    <CardFooter className="flex justify-between">
+                         <Button variant="outline" onClick={() => handleFetchMedia(connectedSite)}>Refresh Media</Button>
                         <Button variant="outline" onClick={handleDisconnect}>Disconnect</Button>
                     </CardFooter>
                 </Card>
@@ -180,7 +257,20 @@ export default function WpAltText() {
 
         {connectedSite && (
             <div className="mt-12">
-                <h2 className="text-2xl font-bold font-headline mb-4 text-center">Media Library</h2>
+                <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                    <h2 className="text-2xl font-bold font-headline text-center">Media Library</h2>
+                    <Button onClick={handleGenerateAll} disabled={isGenerating || mediaWithoutAltText === 0}>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        {isGenerating ? 'Generating...' : `Generate Alt Text for ${mediaWithoutAltText} image(s)`}
+                    </Button>
+                </div>
+                 {isGenerating && (
+                    <div className="mb-4 space-y-2">
+                        <Label>Progress</Label>
+                        <Progress value={progress} />
+                        <p className="text-sm text-muted-foreground text-center">{Math.round(progress)}% complete</p>
+                    </div>
+                )}
                 {isFetchingMedia ? (
                     <div className="flex justify-center items-center h-64">
                         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -190,7 +280,7 @@ export default function WpAltText() {
                         <AlertCircle className="h-4 w-4" />
                         <AlertTitle>Failed to load media</AlertTitle>
                         <AlertDescription>{mediaError}</AlertDescription>
-                    </Alert>
+                    </Aler
                 ) : media.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
                         <ImageOff className="h-16 w-16 text-muted-foreground" />
@@ -201,17 +291,13 @@ export default function WpAltText() {
                         {media.map(item => (
                             <Card key={item.id} className="overflow-hidden group">
                                 <div className="aspect-square relative">
-                                    <Image src={item.source_url} alt={item.title.rendered} fill className="object-cover" data-ai-hint="wordpress library image" />
+                                    <Image src={item.source_url} alt={item.alt_text || item.title.rendered} fill className="object-cover" data-ai-hint="wordpress library image" />
                                      <div className="absolute inset-0 bg-black/70 flex items-center justify-center p-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <p className="text-white text-xs text-center">{item.title.rendered}</p>
                                     </div>
                                 </div>
-                                <CardContent className="p-2 text-xs">
-                                    {item.alt_text ? (
-                                        <p>Alt: <span className="text-foreground/80">{item.alt_text}</span></p>
-                                    ) : (
-                                        <Badge variant="destructive" className="w-full justify-center">Missing Alt Text</Badge>
-                                    )}
+                                <CardContent className="p-2 text-xs space-y-1">
+                                    {renderMediaItemContent(item)}
                                 </CardContent>
                             </Card>
                         ))}

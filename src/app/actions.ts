@@ -1,7 +1,9 @@
+
 'use server';
 
 import { generateImageCaption } from '@/ai/flows/generate-image-caption';
 import { extractSeoMetadata } from '@/ai/flows/extract-seo-metadata';
+import { generateAltText } from '@/ai/flows/generate-alt-text';
 import { type MetadataSettings } from '@/components/metadata-settings';
 
 export interface Metadata {
@@ -124,31 +126,25 @@ export async function connectWpSite(site: WpSite): Promise<{success: boolean, me
             headers: {
                 'Authorization': getAuthHeader(username, appPassword),
             },
-            // Important for debugging: don't cache auth requests
             cache: 'no-store',
         });
 
-        // First, check if the response is ok AND is JSON. This is the only success case.
         const contentType = response.headers.get('content-type');
         if (response.ok && contentType && contentType.includes('application/json')) {
             return { success: true, message: 'Successfully connected to your WordPress site.' };
         }
-
-        // If not, we have an error. Let's figure out what kind.
+        
         let errorMessage;
         if (contentType && contentType.includes('application/json')) {
-            // It's a JSON error from WordPress (e.g., bad password).
             const errorBody = await response.json();
             errorMessage = errorBody.message || `API error with status ${response.status}.`;
         } else {
-            // It's likely an HTML response (e.g., login page, 404, firewall).
-            errorMessage = 'WordPress did not return a valid JSON response. This can be caused by an incorrect URL, a firewall, or a security plugin (like iThemes Security). Please also ensure your permalink settings are set to "Post name" and not "Plain".';
+             errorMessage = 'WordPress did not return a valid JSON response. This can be caused by an incorrect URL, a firewall, or a security plugin (like iThemes Security). Please also ensure your permalink settings are set to "Post name" and not "Plain".';
         }
         
         return { success: false, message: `Connection failed: ${errorMessage}` };
 
     } catch (error) {
-        // This catches network errors (e.g., DNS, CORS, unreachable server).
         console.error('WP Connection Fetch Error:', error);
         if (error instanceof TypeError && error.message.includes('fetch failed')) {
             return { success: false, message: 'Network error. Check if the URL is correct and reachable, and ensure your server has CORS enabled for this domain.' };
@@ -175,13 +171,11 @@ export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: numb
         });
 
         const contentType = response.headers.get('content-type');
-        if (!response.ok || !contentType || !contentType.includes('application/json')) {
+        if (!response.ok) {
             let errorBody;
             try {
-                // Try to get a specific JSON error message if possible
                 errorBody = await response.json();
             } catch (e) {
-                // Otherwise, it's not a JSON error, so throw a generic one.
                  throw new Error(`Failed to fetch media. WordPress returned a non-JSON response with status ${response.status}. Please check your site's permalink settings.`);
             }
             throw new Error(errorBody.message || 'Failed to fetch media.');
@@ -194,5 +188,55 @@ export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: numb
         console.error('WP Media Fetch Error:', error);
         const message = error instanceof Error ? error.message : 'An unknown error occurred while fetching media.';
         return { media: [], error: message };
+    }
+}
+
+export async function updateWpMediaItem(site: WpSite, mediaId: number, altText: string): Promise<{success: boolean, error?: string}> {
+    const { url, username, appPassword } = site;
+    try {
+        const response = await fetch(`${url}/wp-json/wp/v2/media/${mediaId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': getAuthHeader(username, appPassword),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                alt_text: altText,
+            }),
+            cache: 'no-store',
+        });
+
+        if (!response.ok) {
+             const errorBody = await response.json();
+            throw new Error(errorBody.message || `Failed to update media item ${mediaId}.`);
+        }
+
+        return { success: true };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'An unknown error occurred while updating media.';
+        return { success: false, error: message };
+    }
+}
+
+
+export async function generateAndSaveAltText(
+    apiKey: string, 
+    site: WpSite, 
+    mediaItem: WpMedia
+): Promise<{id: number, newAltText: string} | {id: number, error: string}> {
+    try {
+        const { altText } = await generateAltText({ apiKey, imageUrl: mediaItem.source_url });
+        
+        const updateResult = await updateWpMediaItem(site, mediaItem.id, altText);
+
+        if (!updateResult.success) {
+            throw new Error(updateResult.error);
+        }
+
+        return { id: mediaItem.id, newAltText: altText };
+
+    } catch(error) {
+        const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { id: mediaItem.id, error: message };
     }
 }
