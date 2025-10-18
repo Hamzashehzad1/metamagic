@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Header } from '@/components/header';
 import { GeminiKeyDialog } from '@/components/gemini-key-dialog';
@@ -11,14 +11,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { connectWpSite, fetchWpMedia, generateAndSaveAltText, type WpSite, type WpMedia } from '@/app/actions';
-import { Loader2, CheckCircle2, AlertCircle, ImageOff, Link, Wand2, Sparkles, AlertTriangle } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle, ImageOff, Link, Wand2, Sparkles, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 
 type MediaStatus = 'pending' | 'generating' | 'success' | 'failed';
 type WpMediaWithStatus = WpMedia & { status?: MediaStatus, error?: string };
+type FilterType = 'all' | 'missing' | 'added';
 
 const MEDIA_PER_PAGE = 20;
 
@@ -41,6 +43,8 @@ export default function WpAltText() {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
+  
+  const [filter, setFilter] = useState<FilterType>('all');
 
   const { toast } = useToast();
 
@@ -99,6 +103,7 @@ export default function WpAltText() {
     if (reset) {
         setMedia([]);
         setCurrentPage(1);
+        setHasMoreMedia(true);
     }
     const result = await fetchWpMedia(site, pageToFetch, MEDIA_PER_PAGE);
     
@@ -159,6 +164,17 @@ export default function WpAltText() {
     setIsGenerating(false);
     toast({ title: "Processing Complete!", description: `Alt text generated for ${processedCount} images.` });
   }
+
+  const filteredMedia = useMemo(() => {
+    switch (filter) {
+        case 'missing':
+            return media.filter(item => !item.alt_text);
+        case 'added':
+            return media.filter(item => !!item.alt_text);
+        default:
+            return media;
+    }
+  }, [media, filter]);
 
   const mediaWithoutAltText = media.filter(m => !m.alt_text).length;
 
@@ -269,7 +285,10 @@ export default function WpAltText() {
                         </CardDescription>
                     </CardHeader>
                     <CardFooter className="flex justify-between">
-                         <Button variant="outline" onClick={() => handleFetchMedia(connectedSite, true)}>Refresh Media</Button>
+                         <Button variant="outline" onClick={() => handleFetchMedia(connectedSite, true)} disabled={isFetchingMedia}>
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Refresh Media
+                         </Button>
                         <Button variant="outline" onClick={handleDisconnect}>Disconnect</Button>
                     </CardFooter>
                 </Card>
@@ -278,15 +297,41 @@ export default function WpAltText() {
 
         {connectedSite && (
             <div className="mt-12">
-                <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                    <h2 className="text-2xl font-bold font-headline text-center">
-                        Media Library {totalMedia !== null && `(${media.length} of ${totalMedia})`}
-                    </h2>
-                    <Button onClick={handleGenerateAll} disabled={isGenerating || mediaWithoutAltText === 0 || !isApiKeySet}>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        {isGenerating ? 'Generating...' : `Generate for ${mediaWithoutAltText} missing`}
-                    </Button>
+                <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
+                    <div className='text-center md:text-left'>
+                        <h2 className="text-2xl font-bold font-headline">
+                            Media Library 
+                            {totalMedia !== null && (
+                                <Badge variant="secondary" className="ml-2 text-base">
+                                    {totalMedia} {totalMedia === 1 ? 'item' : 'items'}
+                                </Badge>
+                            )}
+                        </h2>
+                        <p className="text-muted-foreground">Showing {filteredMedia.length} of {media.length} loaded images.</p>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-4 w-full md:w-auto">
+                         <Button onClick={handleGenerateAll} disabled={isGenerating || mediaWithoutAltText === 0 || !isApiKeySet} className="w-full md:w-auto">
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            {isGenerating ? 'Generating...' : `Generate for ${mediaWithoutAltText} missing`}
+                        </Button>
+                         <RadioGroup defaultValue="all" onValueChange={(value: FilterType) => setFilter(value)} className="flex items-center space-x-4">
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="all" id="r1" />
+                                <Label htmlFor="r1">All</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="missing" id="r2" />
+                                <Label htmlFor="r2">Missing Alt Text</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="added" id="r3" />
+                                <Label htmlFor="r3">Has Alt Text</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
                 </div>
+
                  {isGenerating && (
                     <div className="mb-4 space-y-2">
                         <Label>Progress</Label>
@@ -312,7 +357,7 @@ export default function WpAltText() {
                 ) : (
                     <>
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                            {media.map(item => (
+                            {filteredMedia.map(item => (
                                 <Card key={item.id} className="overflow-hidden group">
                                     <div className="aspect-square relative">
                                         <Image src={item.source_url} alt={item.alt_text || item.title.rendered} fill className="object-cover" data-ai-hint="wordpress library image" />
@@ -326,7 +371,14 @@ export default function WpAltText() {
                                 </Card>
                             ))}
                         </div>
-                        {hasMoreMedia && (
+
+                        {filteredMedia.length === 0 && media.length > 0 && !isFetchingMedia && (
+                            <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
+                                <p className="text-muted-foreground mt-4">No images match the current filter.</p>
+                            </div>
+                        )}
+
+                        {hasMoreMedia && filter === 'all' && (
                             <div className="mt-8 text-center">
                                 <Button onClick={() => handleFetchMedia(connectedSite)} disabled={isFetchingMedia}>
                                     {isFetchingMedia ? <Loader2 className="mr-2 animate-spin" /> : null}
@@ -348,3 +400,5 @@ export default function WpAltText() {
     </div>
   );
 }
+
+    
