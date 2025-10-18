@@ -127,22 +127,30 @@ export async function connectWpSite(site: WpSite): Promise<{success: boolean, me
             },
         });
 
+        const contentType = response.headers.get('content-type');
+        
+        if (!response.ok) {
+            if (contentType && contentType.includes('application/json')) {
+                const errorBody = await response.json();
+                return { success: false, message: `Connection failed: ${errorBody.message || 'Check credentials and URL.'}` };
+            } else {
+                 return { success: false, message: `Connection failed with status ${response.status}. WordPress did not return a valid JSON response. Check the URL and permalink settings.` };
+            }
+        }
+
         if (response.ok) {
             return { success: true, message: 'Successfully connected to your WordPress site.' };
         }
-        
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-            const errorBody = await response.json();
-            return { success: false, message: `Connection failed: ${errorBody.message || 'Check credentials and URL.'}` };
-        } else {
-             return { success: false, message: `Connection failed: WordPress did not return a valid JSON response. Check the URL and permalink settings.` };
-        }
 
+        // This should not be reached but provides a fallback.
+        return { success: false, message: 'An unexpected error occurred during connection.' };
 
     } catch (error) {
         console.error('WP Connection Error:', error);
-        return { success: false, message: 'An error occurred. Check if the URL is correct and if it has CORS enabled for this domain.' };
+        if (error instanceof TypeError && error.message.includes('fetch failed')) {
+            return { success: false, message: 'Network error. Check if the URL is correct and reachable, and ensure CORS is enabled for this domain.' };
+        }
+        return { success: false, message: 'An unknown error occurred. Check the console for more details.' };
     }
 }
 
@@ -170,7 +178,7 @@ export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: numb
                 const errorBody = await response.json();
                 throw new Error(errorBody.message || 'Failed to fetch media.');
             } else {
-                throw new Error(`WordPress returned an unexpected response. Status: ${response.status}. Check credentials and permissions.`);
+                throw new Error(`WordPress returned an unexpected response (Status: ${response.status}). Check credentials and permissions.`);
             }
         }
 
