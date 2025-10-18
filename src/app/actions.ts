@@ -130,9 +130,15 @@ export async function connectWpSite(site: WpSite): Promise<{success: boolean, me
         if (response.ok) {
             return { success: true, message: 'Successfully connected to your WordPress site.' };
         }
+        
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            const errorBody = await response.json();
+            return { success: false, message: `Connection failed: ${errorBody.message || 'Check credentials and URL.'}` };
+        } else {
+             return { success: false, message: `Connection failed: WordPress did not return a valid JSON response. Check the URL and permalink settings.` };
+        }
 
-        const errorBody = await response.json();
-        return { success: false, message: `Connection failed: ${errorBody.message || 'Check credentials and URL.'}` };
 
     } catch (error) {
         console.error('WP Connection Error:', error);
@@ -159,8 +165,13 @@ export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: numb
         });
 
         if (!response.ok) {
-            const errorBody = await response.json();
-            throw new Error(errorBody.message || 'Failed to fetch media.');
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const errorBody = await response.json();
+                throw new Error(errorBody.message || 'Failed to fetch media.');
+            } else {
+                throw new Error(`WordPress returned an unexpected response. Status: ${response.status}. Check credentials and permissions.`);
+            }
         }
 
         const media: WpMedia[] = await response.json();
