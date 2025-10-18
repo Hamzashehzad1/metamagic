@@ -96,3 +96,78 @@ export async function processUrl(url: string): Promise<{name: string, dataUri: s
     return { error: 'An unknown error occurred while fetching the image.' };
   }
 }
+
+// WordPress Related Actions
+
+export interface WpSite {
+    url: string;
+    username: string;
+    appPassword: string;
+}
+
+export interface WpMedia {
+    id: number;
+    source_url: string;
+    alt_text: string;
+    title: {
+        rendered: string;
+    };
+}
+
+function getAuthHeader(username: string, appPassword: string) {
+    return 'Basic ' + Buffer.from(`${username}:${appPassword}`).toString('base64');
+}
+
+export async function connectWpSite(site: WpSite): Promise<{success: boolean, message: string}> {
+    const { url, username, appPassword } = site;
+    try {
+        const response = await fetch(`${url}/wp-json/wp/v2/users/me`, {
+            headers: {
+                'Authorization': getAuthHeader(username, appPassword),
+            },
+        });
+
+        if (response.ok) {
+            return { success: true, message: 'Successfully connected to your WordPress site.' };
+        }
+
+        const errorBody = await response.json();
+        return { success: false, message: `Connection failed: ${errorBody.message || 'Check credentials and URL.'}` };
+
+    } catch (error) {
+        console.error('WP Connection Error:', error);
+        return { success: false, message: 'An error occurred. Check if the URL is correct and if it has CORS enabled for this domain.' };
+    }
+}
+
+
+export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: number = 20): Promise<{media: WpMedia[], error?: string}> {
+    const { url, username, appPassword } = site;
+    try {
+        // Correctly construct the URL with query parameters
+        const mediaUrl = new URL(`${url}/wp-json/wp/v2/media`);
+        mediaUrl.searchParams.append('page', page.toString());
+        mediaUrl.searchParams.append('per_page', perPage.toString());
+        mediaUrl.searchParams.append('media_type', 'image');
+        mediaUrl.searchParams.append('_fields', 'id,source_url,alt_text,title');
+
+        const response = await fetch(mediaUrl.toString(), {
+            headers: {
+                'Authorization': getAuthHeader(username, appPassword),
+            },
+            cache: 'no-store', // Ensure we always get fresh data
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.json();
+            throw new Error(errorBody.message || 'Failed to fetch media.');
+        }
+
+        const media: WpMedia[] = await response.json();
+        return { media };
+    } catch (error) {
+        console.error('WP Media Fetch Error:', error);
+        const message = error instanceof Error ? error.message : 'An unknown error occurred while fetching media.';
+        return { media: [], error: message };
+    }
+}
