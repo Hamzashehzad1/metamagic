@@ -280,7 +280,7 @@ export default function WpAltText() {
                         <AlertCircle className="h-4 w-4" />
                         <AlertTitle>Failed to load media</AlertTitle>
                         <AlertDescription>{mediaError}</AlertDescription>
-                    </Aler
+                    </Alert>
                 ) : media.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
                         <ImageOff className="h-16 w-16 text-muted-foreground" />
