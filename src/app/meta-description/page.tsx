@@ -555,7 +555,7 @@ export default function MetaDescriptionPage() {
                                     )}
                                      {hasMoreContent && !isFetchingContent && (
                                         <div className="mt-4 text-center">
-                                            <Button onClick={() => handleFetchContent(connectedSite)} disabled={isFetchingContent}>
+                                            <Button onClick={() => handleFetchContent(connectedSite!)} disabled={isFetchingContent}>
                                                 {isFetchingContent ? <Loader2 className="mr-2 animate-spin" /> : null}
                                                 Load More
                                             </Button>
@@ -577,3 +577,5 @@ export default function MetaDescriptionPage() {
     </div>
   );
 }
+
+    
