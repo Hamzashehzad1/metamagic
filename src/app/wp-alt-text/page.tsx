@@ -49,12 +49,16 @@ export default function WpAltText() {
             <Card>
                 <CardHeader>
                     <CardTitle>Connect to WordPress</CardTitle>
-                    <CardDescription>Enter your website URL and an application password to get started.</CardDescription>
+                    <CardDescription>Enter your website URL, username, and an application password to get started.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="wp-url">WordPress Site URL</Label>
                         <Input id="wp-url" placeholder="https://example.com" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="wp-username">WordPress Username</Label>
+                        <Input id="wp-username" placeholder="Enter your WordPress username" />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="app-password">Application Password</Label>
