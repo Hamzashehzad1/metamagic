@@ -45,7 +45,7 @@ const prompt = ai.definePrompt({
   name: 'extractSeoMetadataPrompt',
   input: {schema: ExtractSeoMetadataInputSchema.omit({apiKey: true})},
   output: {schema: ExtractSeoMetadataOutputSchema},
-  model: 'googleai/gemini-2.0-flash',
+  model: 'googleai/gemini-pro-vision',
   prompt: `You are an expert at creating metadata for stock photography websites like Adobe Stock and Getty Images. Your goal is to maximize the visibility and saleability of the image.
 
 Image Caption: {{{imageCaption}}}
