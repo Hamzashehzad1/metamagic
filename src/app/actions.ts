@@ -23,7 +23,7 @@ function handleGenerativeAiError(error: unknown): Error {
     if (error instanceof Error) {
         const lowerCaseMessage = error.message.toLowerCase();
         if (lowerCaseMessage.includes('429') || lowerCaseMessage.includes('quota')) {
-            const quotaError = new Error('Your Gemini Quota has been exceeded, please update your api.');
+            const quotaError = new Error(`Your Gemini Quota has been exceeded. Full error: ${error.message}`);
             // Add a specific property to identify this error type
             (quotaError as any).code = 'GEMINI_QUOTA_EXCEEDED';
             return quotaError;
@@ -64,7 +64,7 @@ export async function processFiles(
   apiKey: string,
   files: {name: string, dataUri: string}[],
   settings: MetadataSettings,
-): Promise<{results: ProcessedFile[], apiCalls: number} | {error: string}> {
+): Promise<{results: ProcessedFile[], apiCalls: number} | {error: string, code?: string}> {
   try {
     const results: ProcessedFile[] = [];
     // Each file processing involves 2 API calls: one for caption, one for metadata
@@ -143,17 +143,19 @@ export async function connectWpSite(site: WpSite): Promise<{success: boolean, me
             cache: 'no-store',
         });
 
-        const contentType = response.headers.get('content-type');
-        if (response.ok && contentType && contentType.includes('application/json')) {
-            return { success: true, message: 'Successfully connected to your WordPress site.' };
+        if (response.ok) {
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return { success: true, message: 'Successfully connected to your WordPress site.' };
+            }
         }
         
         let errorMessage;
-        if (contentType && contentType.includes('application/json')) {
+        try {
             const errorBody = await response.json();
             errorMessage = errorBody.message || `API error with status ${response.status}.`;
-        } else {
-             errorMessage = 'WordPress did not return a valid JSON response. This can be caused by an incorrect URL, a firewall, or a security plugin. Please also check your site\'s permalink settings.';
+        } catch (e) {
+            errorMessage = 'WordPress did not return a valid JSON response. This can be caused by an incorrect URL, a firewall, or a security plugin. Please also check your site\'s permalink settings.';
         }
         
         return { success: false, message: `Connection failed: ${errorMessage}` };
@@ -184,19 +186,14 @@ export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: numb
             cache: 'no-store',
         });
 
-        const contentType = response.headers.get('content-type');
         if (!response.ok) {
             let errorBody;
             try {
-                if (contentType && contentType.includes('application/json')) {
-                    errorBody = await response.json();
-                } else {
-                    throw new Error(`Failed to fetch media. WordPress returned a non-JSON response with status ${response.status}. Please check your site's permalink settings.`);
-                }
+                errorBody = await response.json();
             } catch (e) {
-                 throw new Error(`Failed to fetch media. WordPress returned a non-JSON response with status ${response.status}. Please check your site's permalink settings.`);
+                 throw new Error(`Failed to fetch media. WordPress returned a non-JSON response with status ${response.status}. This can be caused by an incorrect URL, a firewall, or a security plugin. Please also check your site's permalink settings.`);
             }
-            throw new Error(errorBody.message || 'Failed to fetch media.');
+            throw new Error(errorBody.message || `Failed to fetch media with status ${response.status}.`);
         }
         
         const media: WpMedia[] = await response.json();
