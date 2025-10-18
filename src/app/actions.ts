@@ -19,6 +19,21 @@ export interface ProcessedFile {
     metadata: Metadata;
 }
 
+function handleGenerativeAiError(error: unknown): Error {
+    if (error instanceof Error) {
+        const lowerCaseMessage = error.message.toLowerCase();
+        if (lowerCaseMessage.includes('429') || lowerCaseMessage.includes('quota')) {
+            return new Error('Your Gemini Quota has been exceeded, please update your api.');
+        }
+        if (lowerCaseMessage.includes('api key not valid')) {
+            return new Error('Invalid Gemini API Key. Please check your key and try again.');
+        }
+        return error;
+    }
+    return new Error('An unknown error occurred while generating metadata.');
+}
+
+
 async function processSingleFile(
   apiKey: string,
   fileDataUri: string,
@@ -56,14 +71,7 @@ export async function processFiles(
     return results;
   } catch (error) {
     console.error('Error processing file:', error);
-    if (error instanceof Error) {
-        if (error.message.includes('API key not valid')) {
-            throw new Error('Invalid Gemini API Key. Please check your key and try again.');
-        }
-        // Re-throw the original error to get more specific feedback in the UI
-        throw new Error(error.message);
-    }
-    throw new Error('An unknown error occurred while generating metadata.');
+    throw handleGenerativeAiError(error);
   }
 }
 
@@ -248,8 +256,8 @@ export async function generateAndSaveAltText(
         return { id: mediaItem.id, newAltText: altText };
 
     } catch(error) {
-        const message = error instanceof Error ? error.message : 'An unknown error occurred.';
-        return { id: mediaItem.id, error: message };
+        const handledError = handleGenerativeAiError(error);
+        return { id: mediaItem.id, error: handledError.message };
     }
 }
 
@@ -281,9 +289,7 @@ export async function generateMetaDescriptionAction(
         const { metaDescription } = await generateMetaDescription({ apiKey, pageContent });
         return { metaDescription };
     } catch(error) {
-        const message = error instanceof Error ? error.message : 'An unknown error occurred.';
-        return { error: message };
+        const handledError = handleGenerativeAiError(error);
+        return { error: handledError.message };
     }
 }
-
-    
