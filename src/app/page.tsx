@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal, Wand2, Loader2 } from 'lucide-react';
 import { MetadataSettings, type MetadataSettings as TMetadataSettings } from '@/components/metadata-settings';
-import { GeminiKeyDialog } from '@/components/gemini-key-dialog';
+import { GeminiKeyDialog, type ApiKey } from '@/components/gemini-key-dialog';
 import { Button } from '@/components/ui/button';
 
 export default function Home() {
@@ -19,8 +19,9 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [apiKey, setApiKey] = useState<string | null>(null);
-  const [isApiKeySet, setIsApiKeySet] = useState(false);
+  
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [activeKeyId, setActiveKeyId] = useState<string | null>(null);
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
 
   const [metadataSettings, setMetadataSettings] = useState<TMetadataSettings>({
@@ -33,27 +34,61 @@ export default function Home() {
   });
   const { toast } = useToast();
 
+  const activeKey = apiKeys.find(k => k.id === activeKeyId);
+  const isConnected = !!activeKey;
+
   useEffect(() => {
-    const storedApiKey = localStorage.getItem('gemini-api-key');
-    if (storedApiKey) {
-      setApiKey(storedApiKey);
-      setIsApiKeySet(true);
+    try {
+      const storedKeys = localStorage.getItem('gemini-api-keys');
+      const storedActiveId = localStorage.getItem('gemini-active-key-id');
+      const keys = storedKeys ? JSON.parse(storedKeys) : [];
+      setApiKeys(keys);
+      if (storedActiveId) {
+        setActiveKeyId(storedActiveId);
+      } else if (keys.length > 0) {
+        setActiveKeyId(keys[0].id);
+      } else {
+        // If no keys, open the dialog
+        setIsApiKeyDialogOpen(true);
+      }
+    } catch (e) {
+      console.error("Failed to parse API keys from localStorage", e);
+      setIsApiKeyDialogOpen(true);
     }
   }, []);
 
-  const handleSaveApiKey = (newKey: string) => {
-    setApiKey(newKey);
-    setIsApiKeySet(true);
-    localStorage.setItem('gemini-api-key', newKey);
-    setIsApiKeyDialogOpen(false);
-    toast({
-      title: 'API Key Saved',
-      description: 'You are now connected to Gemini.',
-    });
+  const handleKeysUpdate = (updatedKeys: ApiKey[], updatedActiveKeyId: string | null) => {
+    const today = new Date().toISOString().split('T')[0];
+    // When updating keys, also check if any usage counters need resetting
+    const checkedKeys = updatedKeys.map(k => k.lastUsed === today ? k : { ...k, usage: 0, lastUsed: today });
+    
+    setApiKeys(checkedKeys);
+    setActiveKeyId(updatedActiveKeyId);
+    localStorage.setItem('gemini-api-keys', JSON.stringify(checkedKeys));
+    if (updatedActiveKeyId) {
+      localStorage.setItem('gemini-active-key-id', updatedActiveKeyId);
+    } else {
+      localStorage.removeItem('gemini-active-key-id');
+    }
   };
 
+  const incrementUsage = useCallback((count: number) => {
+    if (!activeKeyId) return;
+    const today = new Date().toISOString().split('T')[0];
+    const updatedKeys = apiKeys.map(k => {
+      if (k.id === activeKeyId) {
+        const usageToday = k.lastUsed === today ? k.usage : 0;
+        return { ...k, usage: usageToday + count, lastUsed: today };
+      }
+      return k;
+    });
+    // This will re-trigger the handleKeysUpdate logic
+    handleKeysUpdate(updatedKeys, activeKeyId);
+  }, [apiKeys, activeKeyId]);
+
+
   const handleFileUpload = useCallback((uploadedFiles: File[]) => {
-    if (!apiKey) {
+    if (!isConnected) {
       setIsApiKeyDialogOpen(true);
       toast({
         variant: 'destructive',
@@ -64,7 +99,7 @@ export default function Home() {
     }
     setFiles(prevFiles => [...prevFiles, ...uploadedFiles]);
     setError(null);
-  }, [apiKey, toast]);
+  }, [isConnected, toast]);
 
 
   const handleGenerate = async () => {
@@ -72,7 +107,7 @@ export default function Home() {
       toast({ variant: 'destructive', title: 'No files uploaded', description: 'Please upload one or more files to generate metadata.' });
       return;
     }
-    if (!apiKey) {
+    if (!activeKey) {
       setIsApiKeyDialogOpen(true);
       toast({
         variant: 'destructive',
@@ -100,12 +135,23 @@ export default function Home() {
       const fileData = await Promise.all(fileDataPromises);
 
       setLoadingStatus(`Generating metadata for ${files.length} file(s)...`);
-      const results = await processFiles(apiKey, fileData, metadataSettings);
+      const result = await processFiles(activeKey.key, fileData, metadataSettings);
       
-      setProcessedFiles(results);
+      if ('error' in result) {
+        if ((result as any).code === 'GEMINI_QUOTA_EXCEEDED') {
+            setError(result.error);
+        }
+        throw new Error(result.error);
+      }
+      
+      incrementUsage(result.apiCalls);
+      setProcessedFiles(result.results);
+
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred during processing.';
-      setError(errorMessage);
+       if (!error) { // Don't overwrite a more specific error
+        setError(errorMessage);
+      }
       toast({
         variant: 'destructive',
         title: 'Processing Error',
@@ -130,7 +176,7 @@ export default function Home() {
   // Handle pasted URL
   useEffect(() => {
     const handlePaste = async (event: ClipboardEvent) => {
-      if (!isApiKeySet) {
+      if (!isConnected) {
         setIsApiKeyDialogOpen(true);
         toast({
             variant: 'destructive',
@@ -182,7 +228,7 @@ export default function Home() {
     return () => {
       window.removeEventListener('paste', handlePaste);
     };
-  }, [isApiKeySet, toast, handleFileUpload]);
+  }, [isConnected, toast, handleFileUpload]);
 
   const handleUpdateMetadata = (fileIndex: number, newMetadata: Metadata) => {
     setProcessedFiles(prevFiles => {
@@ -198,9 +244,11 @@ export default function Home() {
       <GeminiKeyDialog 
         isOpen={isApiKeyDialogOpen}
         setIsOpen={setIsApiKeyDialogOpen}
-        onSave={handleSaveApiKey}
+        onKeysUpdate={handleKeysUpdate}
+        apiKeys={apiKeys}
+        activeKeyId={activeKeyId}
       />
-      <Header isConnected={isApiKeySet} onConnectClick={() => setIsApiKeyDialogOpen(true)} />
+      <Header isConnected={isConnected} onConnectClick={() => setIsApiKeyDialogOpen(true)} />
       <main className="flex-1 container mx-auto p-4 md:p-6">
         <section className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter">
@@ -221,12 +269,12 @@ export default function Home() {
               files={files}
               isLoading={isLoading}
               loadingStatus={loadingStatus}
-              disabled={!isApiKeySet}
+              disabled={!isConnected}
               onRemoveFile={handleRemoveFile}
             />
 
             <div className="flex gap-4">
-              <Button onClick={handleGenerate} disabled={isLoading || files.length === 0 || !isApiKeySet} size="lg" className="w-full">
+              <Button onClick={handleGenerate} disabled={isLoading || files.length === 0 || !isConnected} size="lg" className="w-full">
                   {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
                   {isLoading ? `Generating...` : `Generate Metadata for ${files.length} file(s)`}
               </Button>

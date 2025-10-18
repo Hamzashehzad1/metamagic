@@ -23,7 +23,10 @@ function handleGenerativeAiError(error: unknown): Error {
     if (error instanceof Error) {
         const lowerCaseMessage = error.message.toLowerCase();
         if (lowerCaseMessage.includes('429') || lowerCaseMessage.includes('quota')) {
-            return new Error('Your Gemini Quota has been exceeded, please update your api.');
+            const quotaError = new Error('Your Gemini Quota has been exceeded, please update your api.');
+            // Add a specific property to identify this error type
+            (quotaError as any).code = 'GEMINI_QUOTA_EXCEEDED';
+            return quotaError;
         }
         if (lowerCaseMessage.includes('api key not valid')) {
             return new Error('Invalid Gemini API Key. Please check your key and try again.');
@@ -61,17 +64,20 @@ export async function processFiles(
   apiKey: string,
   files: {name: string, dataUri: string}[],
   settings: MetadataSettings,
-): Promise<ProcessedFile[]> {
+): Promise<{results: ProcessedFile[], apiCalls: number} | {error: string}> {
   try {
     const results: ProcessedFile[] = [];
+    // Each file processing involves 2 API calls: one for caption, one for metadata
+    const apiCallsPerFile = 2;
     for (const file of files) {
         const metadata = await processSingleFile(apiKey, file.dataUri, settings);
         results.push({ name: file.name, metadata });
     }
-    return results;
+    return { results, apiCalls: files.length * apiCallsPerFile };
   } catch (error) {
     console.error('Error processing file:', error);
-    throw handleGenerativeAiError(error);
+    const handledError = handleGenerativeAiError(error);
+    return { error: handledError.message, ...('code' in handledError && { code: (handledError as any).code }) };
   }
 }
 
@@ -90,7 +96,6 @@ export async function processUrl(url: string): Promise<{name: string, dataUri: s
     const buffer = Buffer.from(arrayBuffer);
     const dataUri = `data:${contentType};base64,${buffer.toString('base64')}`;
     
-    // Extract filename from URL
     const urlParts = url.split('/');
     const filename = urlParts[urlParts.length - 1].split('?')[0] || 'pasted-image';
 
@@ -98,7 +103,7 @@ export async function processUrl(url: string): Promise<{name: string, dataUri: s
   } catch (error) {
     console.error('Error processing URL:', error);
     if (error instanceof Error) {
-        if (error.message.includes('Failed to fetch')) {
+        if (error.message.includes('fetch failed')) {
             return { error: 'Could not fetch the image from the URL. Please check the link and CORS policy.'}
         }
         return { error: error.message };
@@ -144,7 +149,6 @@ export async function connectWpSite(site: WpSite): Promise<{success: boolean, me
         }
         
         let errorMessage;
-        // If we get an error, we try to parse it as JSON, but if that fails, we show a generic message.
         if (contentType && contentType.includes('application/json')) {
             const errorBody = await response.json();
             errorMessage = errorBody.message || `API error with status ${response.status}.`;
@@ -187,8 +191,7 @@ export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: numb
                 if (contentType && contentType.includes('application/json')) {
                     errorBody = await response.json();
                 } else {
-                    const text = await response.text();
-                    throw new Error(`Failed to fetch media. WordPress returned a non-JSON response with status ${response.status}. Body: ${text.substring(0, 200)}...`);
+                    throw new Error(`Failed to fetch media. WordPress returned a non-JSON response with status ${response.status}. Please check your site's permalink settings.`);
                 }
             } catch (e) {
                  throw new Error(`Failed to fetch media. WordPress returned a non-JSON response with status ${response.status}. Please check your site's permalink settings.`);
@@ -240,7 +243,7 @@ export async function generateAndSaveAltText(
     apiKey: string, 
     site: WpSite, 
     mediaItem: WpMedia
-): Promise<{id: number, newAltText: string} | {id: number, error: string}> {
+): Promise<{id: number, newAltText: string, apiCalls: number} | {id: number, error: string, code?: string}> {
     try {
         if (!apiKey) {
             throw new Error('Gemini API key is not provided.');
@@ -253,11 +256,11 @@ export async function generateAndSaveAltText(
             throw new Error(updateResult.error);
         }
 
-        return { id: mediaItem.id, newAltText: altText };
+        return { id: mediaItem.id, newAltText: altText, apiCalls: 1 };
 
     } catch(error) {
         const handledError = handleGenerativeAiError(error);
-        return { id: mediaItem.id, error: handledError.message };
+        return { id: mediaItem.id, error: handledError.message, ...('code' in handledError && { code: (handledError as any).code }) };
     }
 }
 
@@ -281,15 +284,15 @@ export async function fetchPageContent(url: string): Promise<{content: string} |
 export async function generateMetaDescriptionAction(
     apiKey: string, 
     pageContent: string
-): Promise<{metaDescription: string} | {error: string}> {
+): Promise<{metaDescription: string, apiCalls: number} | {error: string, code?: string}> {
     try {
         if (!apiKey) {
             throw new Error('Gemini API key is not provided.');
         }
         const { metaDescription } = await generateMetaDescription({ apiKey, pageContent });
-        return { metaDescription };
+        return { metaDescription, apiCalls: 1 };
     } catch(error) {
         const handledError = handleGenerativeAiError(error);
-        return { error: handledError.message };
+        return { error: handledError.message, ...('code' in handledError && { code: (handledError as any).code }) };
     }
 }

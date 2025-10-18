@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Header } from '@/components/header';
-import { GeminiKeyDialog } from '@/components/gemini-key-dialog';
+import { GeminiKeyDialog, type ApiKey } from '@/components/gemini-key-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function MetaDescriptionPage() {
-  const [apiKey, setApiKey] = useState<string | null>(null);
-  const [isApiKeySet, setIsApiKeySet] = useState(false);
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [activeKeyId, setActiveKeyId] = useState<string | null>(null);
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
   
   const [url, setUrl] = useState('');
@@ -30,15 +30,49 @@ export default function MetaDescriptionPage() {
 
   const { toast } = useToast();
 
+  const activeKey = apiKeys.find(k => k.id === activeKeyId);
+  const isConnected = !!activeKey;
+
   useEffect(() => {
-    const storedApiKey = localStorage.getItem('gemini-api-key');
-    if (storedApiKey) {
-      setApiKey(storedApiKey);
-      setIsApiKeySet(true);
-    } else {
+    try {
+      const storedKeys = localStorage.getItem('gemini-api-keys');
+      const storedActiveId = localStorage.getItem('gemini-active-key-id');
+      const keys = storedKeys ? JSON.parse(storedKeys) : [];
+      setApiKeys(keys);
+      if (storedActiveId) {
+        setActiveKeyId(storedActiveId);
+      } else if (keys.length > 0) {
+        setActiveKeyId(keys[0].id);
+      } else {
+        setIsApiKeyDialogOpen(true);
+      }
+    } catch (e) {
+      console.error("Failed to parse API keys from localStorage", e);
       setIsApiKeyDialogOpen(true);
     }
   }, []);
+
+  const handleKeysUpdate = (updatedKeys: ApiKey[], updatedActiveKeyId: string | null) => {
+    const today = new Date().toISOString().split('T')[0];
+    const checkedKeys = updatedKeys.map(k => k.lastUsed === today ? k : { ...k, usage: 0, lastUsed: today });
+    
+    setApiKeys(checkedKeys);
+    setActiveKeyId(updatedActiveKeyId);
+    localStorage.setItem('gemini-api-keys', JSON.stringify(checkedKeys));
+    if (updatedActiveKeyId) {
+      localStorage.setItem('gemini-active-key-id', updatedActiveKeyId);
+    } else {
+      localStorage.removeItem('gemini-active-key-id');
+    }
+  };
+
+  const incrementUsage = useCallback((count: number) => {
+    if (!activeKeyId) return;
+    const updatedKeys = apiKeys.map(k => 
+      k.id === activeKeyId ? { ...k, usage: (k.lastUsed === new Date().toISOString().split('T')[0] ? k.usage : 0) + count, lastUsed: new Date().toISOString().split('T')[0] } : k
+    );
+    handleKeysUpdate(updatedKeys, activeKeyId);
+  }, [apiKeys, activeKeyId]);
 
   useEffect(() => {
     if(isCopied) {
@@ -47,24 +81,12 @@ export default function MetaDescriptionPage() {
     }
   }, [isCopied]);
 
-  const handleSaveApiKey = (newKey: string) => {
-    if (!newKey) return;
-    setApiKey(newKey);
-    setIsApiKeySet(true);
-    localStorage.setItem('gemini-api-key', newKey);
-    setIsApiKeyDialogOpen(false);
-    toast({
-      title: 'API Key Saved',
-      description: 'You are now connected to Gemini.',
-    });
-  };
-
   const handleGenerateFromUrl = async () => {
     if (!url) {
       setError("Please enter a URL.");
       return;
     }
-    if (!apiKey) {
+    if (!activeKey) {
       setIsApiKeyDialogOpen(true);
       return;
     }
@@ -93,7 +115,7 @@ export default function MetaDescriptionPage() {
         setError("Please paste some content.");
         return;
     }
-    if (!apiKey) {
+    if (!activeKey) {
       setIsApiKeyDialogOpen(true);
       return;
     }
@@ -104,15 +126,21 @@ export default function MetaDescriptionPage() {
     setIsGenerating(true);
     setError(null);
     try {
-      const result = await generateMetaDescriptionAction(apiKey!, content);
-      if (result.error) {
+      const result = await generateMetaDescriptionAction(activeKey!.key, content);
+      if ('error' in result) {
+          if ((result as any).code === 'GEMINI_QUOTA_EXCEEDED') {
+            setError(result.error);
+          }
           throw new Error(result.error);
       }
+      incrementUsage(result.apiCalls);
       setMetaDescription(result.metaDescription);
       toast({ title: "Success!", description: "Meta description generated." });
     } catch(e) {
       const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-      setError(message);
+      if (!error) {
+        setError(message);
+      }
       toast({ variant: 'destructive', title: 'Generation Error', description: message });
     } finally {
       setIsGenerating(false);
@@ -127,16 +155,18 @@ export default function MetaDescriptionPage() {
     }
   }
 
-  const canGenerate = !!apiKey && !isLoading && !isGenerating;
+  const canGenerate = !!activeKey && !isLoading && !isGenerating;
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <GeminiKeyDialog 
         isOpen={isApiKeyDialogOpen}
         setIsOpen={setIsApiKeyDialogOpen}
-        onSave={handleSaveApiKey}
+        onKeysUpdate={handleKeysUpdate}
+        apiKeys={apiKeys}
+        activeKeyId={activeKeyId}
       />
-      <Header isConnected={isApiKeySet} onConnectClick={() => setIsApiKeyDialogOpen(true)} />
+      <Header isConnected={isConnected} onConnectClick={() => setIsApiKeyDialogOpen(true)} />
       <main className="flex-1 container mx-auto p-4 md:p-6">
         <section className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter">
@@ -254,5 +284,3 @@ export default function MetaDescriptionPage() {
     </div>
   );
 }
-
-    

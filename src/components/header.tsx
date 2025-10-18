@@ -71,7 +71,7 @@ export function Header({ isConnected, onConnectClick }: HeaderProps) {
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={onConnectClick}>
                                 <KeyRound className="mr-2 h-4 w-4" />
-                                Update API Key
+                                Manage API Keys
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>

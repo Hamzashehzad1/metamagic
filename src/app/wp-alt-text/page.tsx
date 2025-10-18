@@ -1,10 +1,10 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { Header } from '@/components/header';
-import { GeminiKeyDialog } from '@/components/gemini-key-dialog';
+import { GeminiKeyDialog, type ApiKey } from '@/components/gemini-key-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,8 +25,8 @@ type FilterType = 'all' | 'missing' | 'added';
 const MEDIA_PER_PAGE = 20;
 
 export default function WpAltText() {
-  const [apiKey, setApiKey] = useState<string | null>(null);
-  const [isApiKeySet, setIsApiKeySet] = useState(false);
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [activeKeyId, setActiveKeyId] = useState<string | null>(null);
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
   
   const [wpSite, setWpSite] = useState<WpSite>({ url: '', username: '', appPassword: ''});
@@ -47,28 +47,56 @@ export default function WpAltText() {
   const [filter, setFilter] = useState<FilterType>('all');
 
   const { toast } = useToast();
+  
+  const activeKey = apiKeys.find(k => k.id === activeKeyId);
+  const isConnected = !!activeKey;
 
   useEffect(() => {
-    const storedApiKey = localStorage.getItem('gemini-api-key');
-    if (storedApiKey) {
-      setApiKey(storedApiKey);
-      setIsApiKeySet(true);
-    } else {
+    try {
+      const storedKeys = localStorage.getItem('gemini-api-keys');
+      const storedActiveId = localStorage.getItem('gemini-active-key-id');
+      const keys = storedKeys ? JSON.parse(storedKeys) : [];
+      setApiKeys(keys);
+      if (storedActiveId) {
+        setActiveKeyId(storedActiveId);
+      } else if (keys.length > 0) {
+        setActiveKeyId(keys[0].id);
+      } else {
         setIsApiKeyDialogOpen(true);
+      }
+    } catch (e) {
+      console.error("Failed to parse API keys from localStorage", e);
+      setIsApiKeyDialogOpen(true);
     }
   }, []);
 
-   const handleSaveApiKey = (newKey: string) => {
-    if (!newKey) return;
-    setApiKey(newKey);
-    setIsApiKeySet(true);
-    localStorage.setItem('gemini-api-key', newKey);
-    setIsApiKeyDialogOpen(false);
-    toast({
-      title: 'API Key Saved',
-      description: 'You are now connected to Gemini.',
-    });
+  const handleKeysUpdate = (updatedKeys: ApiKey[], updatedActiveKeyId: string | null) => {
+    const today = new Date().toISOString().split('T')[0];
+    const checkedKeys = updatedKeys.map(k => k.lastUsed === today ? k : { ...k, usage: 0, lastUsed: today });
+    
+    setApiKeys(checkedKeys);
+    setActiveKeyId(updatedActiveKeyId);
+    localStorage.setItem('gemini-api-keys', JSON.stringify(checkedKeys));
+    if (updatedActiveKeyId) {
+      localStorage.setItem('gemini-active-key-id', updatedActiveKeyId);
+    } else {
+      localStorage.removeItem('gemini-active-key-id');
+    }
   };
+
+  const incrementUsage = useCallback((count: number) => {
+    if (!activeKeyId) return;
+    const today = new Date().toISOString().split('T')[0];
+    const updatedKeys = apiKeys.map(k => {
+      if (k.id === activeKeyId) {
+        const usageToday = k.lastUsed === today ? k.usage : 0;
+        return { ...k, usage: usageToday + count, lastUsed: today };
+      }
+      return k;
+    });
+    handleKeysUpdate(updatedKeys, activeKeyId);
+  }, [apiKeys, activeKeyId]);
+
 
   const handleConnect = async () => {
     if (!wpSite.url || !wpSite.username || !wpSite.appPassword) {
@@ -132,7 +160,7 @@ export default function WpAltText() {
   }
 
   const handleGenerateAll = async () => {
-    if (!connectedSite || !apiKey) return;
+    if (!connectedSite || !activeKey) return;
 
     const mediaToProcess = media.filter(item => !item.alt_text);
     if (mediaToProcess.length === 0) {
@@ -144,23 +172,32 @@ export default function WpAltText() {
     setProgress(0);
 
     let processedCount = 0;
+    let totalApiCalls = 0;
 
     for (const item of mediaToProcess) {
-        // Set status to 'generating'
         setMedia(prev => prev.map(m => m.id === item.id ? { ...m, status: 'generating' } : m));
 
-        const result = await generateAndSaveAltText(apiKey, connectedSite, item);
+        const result = await generateAndSaveAltText(activeKey.key, connectedSite, item);
         
         if ('newAltText' in result) {
+            totalApiCalls += result.apiCalls;
             setMedia(prev => prev.map(m => m.id === result.id ? { ...m, alt_text: result.newAltText, status: 'success' } : m));
         } else {
+            if (result.code === 'GEMINI_QUOTA_EXCEEDED') {
+                 toast({ variant: 'destructive', title: 'Quota Exceeded', description: result.error });
+                 // Stop the process if quota is exceeded
+                 setIsGenerating(false);
+                 incrementUsage(totalApiCalls);
+                 return;
+            }
             setMedia(prev => prev.map(m => m.id === result.id ? { ...m, status: 'failed', error: result.error } : m));
         }
 
         processedCount++;
         setProgress((processedCount / mediaToProcess.length) * 100);
     }
-
+    
+    incrementUsage(totalApiCalls);
     setIsGenerating(false);
     toast({ title: "Processing Complete!", description: `Alt text generated for ${processedCount} images.` });
   }
@@ -191,7 +228,7 @@ export default function WpAltText() {
                     statusBadge = <Badge className="w-full justify-center bg-green-500 hover:bg-green-600"><CheckCircle2 className="mr-1 h-3 w-3" /> Success</Badge>;
                     break;
                 case 'failed':
-                    statusBadge = <Badge variant="destructive" className="w-full justify-center"><AlertTriangle className="mr-1 h-3 w-3" /> Failed</Badge>;
+                    statusBadge = <Badge variant="destructive" className="w-full justify-center" title={item.error}><AlertTriangle className="mr-1 h-3 w-3" /> Failed</Badge>;
                     break;
                 default:
                     if (!item.alt_text) {
@@ -220,9 +257,11 @@ export default function WpAltText() {
        <GeminiKeyDialog 
         isOpen={isApiKeyDialogOpen}
         setIsOpen={setIsApiKeyDialogOpen}
-        onSave={handleSaveApiKey}
+        onKeysUpdate={handleKeysUpdate}
+        apiKeys={apiKeys}
+        activeKeyId={activeKeyId}
       />
-      <Header isConnected={isApiKeySet} onConnectClick={() => setIsApiKeyDialogOpen(true)} />
+      <Header isConnected={isConnected} onConnectClick={() => setIsApiKeyDialogOpen(true)} />
       <main className="flex-1 container mx-auto p-4 md:p-6">
         <section className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter">
@@ -268,7 +307,7 @@ export default function WpAltText() {
                         </div>
                     </CardContent>
                     <CardFooter>
-                         <Button className="w-full" onClick={handleConnect} disabled={isLoading || !isApiKeySet}>
+                         <Button className="w-full" onClick={handleConnect} disabled={isLoading || !isConnected}>
                             {isLoading ? <Loader2 className="animate-spin" /> : 'Connect Site'}
                         </Button>
                     </CardFooter>
@@ -311,7 +350,7 @@ export default function WpAltText() {
                     </div>
 
                     <div className="flex flex-col items-center gap-4 w-full md:w-auto">
-                         <Button onClick={handleGenerateAll} disabled={isGenerating || mediaWithoutAltText === 0 || !isApiKeySet} className="w-full md:w-auto">
+                         <Button onClick={handleGenerateAll} disabled={isGenerating || mediaWithoutAltText === 0 || !isConnected} className="w-full md:w-auto">
                             <Sparkles className="mr-2 h-4 w-4" />
                             {isGenerating ? 'Generating...' : `Generate for ${mediaWithoutAltText} missing`}
                         </Button>
@@ -326,8 +365,7 @@ export default function WpAltText() {
                             </div>
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="added" id="r3" />
-                                <Label htmlFor="r3">Has Alt Text</Label>
-                            </div>
+                                <Label htmlFor="r3">Has Alt Text</Label>                            </div>
                         </RadioGroup>
                     </div>
                 </div>
