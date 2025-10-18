@@ -46,7 +46,7 @@ export default function LandingPage() {
                 <Link href="/signup">Get Started For Free <ChevronRight className="ml-2" /></Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="/login">I Already Have An Account</Link>
+                <Link href="/pricing">View Pricing</Link>
               </Button>
             </div>
             <p className="mt-4 text-sm text-muted-foreground">No credit card required. Unleash your SEO potential now.</p>

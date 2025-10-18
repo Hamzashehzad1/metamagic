@@ -40,7 +40,7 @@ export function Header() {
       <div className="container mx-auto flex justify-between items-center">
         <Link href={user ? "/dashboard" : "/"} className="text-2xl md:text-3xl font-bold font-headline text-primary">MetaMagic</Link>
         
-        {user && (
+        {user ? (
           <NavigationMenu>
               <NavigationMenuList>
                   <NavigationMenuItem>
@@ -65,6 +65,25 @@ export function Header() {
                       </Link>
                   </NavigationMenuItem>
               </NavigationMenuList>
+          </NavigationMenu>
+        ) : (
+          <NavigationMenu>
+            <NavigationMenuList>
+                <NavigationMenuItem>
+                    <Link href="/#features" legacyBehavior passHref>
+                        <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                            Features
+                        </NavigationMenuLink>
+                    </Link>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                    <Link href="/pricing" legacyBehavior passHref>
+                        <NavigationMenuLink active={pathname.startsWith('/pricing')} className={navigationMenuTriggerStyle()}>
+                            Pricing
+                        </NavigationMenuLink>
+                    </Link>
+                </NavigationMenuItem>
+            </NavigationMenuList>
           </NavigationMenu>
         )}
 
@@ -102,9 +121,14 @@ export function Header() {
                     </DropdownMenuContent>
                 </DropdownMenu>
             ) : (
-                <Button asChild>
-                    <Link href="/login">Login</Link>
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" asChild>
+                        <Link href="/login">Login</Link>
+                    </Button>
+                    <Button asChild>
+                        <Link href="/signup">Sign Up</Link>
+                    </Button>
+                </div>
             )}
             <ThemeToggle />
         </div>
