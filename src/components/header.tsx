@@ -8,9 +8,15 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { CheckCircle2, KeyRound } from "lucide-react";
+import { CheckCircle2, KeyRound, ChevronDown } from "lucide-react";
 
 interface HeaderProps {
     isConnected: boolean;
@@ -51,10 +57,25 @@ export function Header({ isConnected, onConnectClick }: HeaderProps) {
 
         <div className="flex items-center gap-2">
             {isConnected ? (
-                <Badge variant="secondary" className="border-green-500/50 text-green-700 dark:text-green-400">
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Connected
-                </Badge>
+                <div className="flex items-center gap-1">
+                    <Badge variant="secondary" className="border-green-500/50 text-green-700 dark:text-green-400">
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Connected
+                    </Badge>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <ChevronDown className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={onConnectClick}>
+                                <KeyRound className="mr-2 h-4 w-4" />
+                                Update API Key
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             ) : (
                 <Button variant="outline" size="sm" onClick={onConnectClick}>
                     <KeyRound className="mr-2 h-4 w-4" />
@@ -67,5 +88,3 @@ export function Header({ isConnected, onConnectClick }: HeaderProps) {
     </header>
   );
 }
-
-    
