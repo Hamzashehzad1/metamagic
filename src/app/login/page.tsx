@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { AlertCircle, Loader2 } from 'lucide-react';
+import AuthGuard from '@/components/auth-guard';
 
 const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -34,7 +35,7 @@ const GoogleIcon = () => (
 );
 
 
-export default function LoginPage() {
+function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -47,7 +48,7 @@ export default function LoginPage() {
         setError(null);
         try {
             await signInWithEmailAndPassword(getAuth(), email, password);
-            router.push('/');
+            router.push('/dashboard');
         } catch (e: any) {
             setError(e.message);
         } finally {
@@ -61,7 +62,7 @@ export default function LoginPage() {
         try {
             const provider = new GoogleAuthProvider();
             await signInWithPopup(getAuth(), provider);
-            router.push('/');
+            router.push('/dashboard');
         } catch (e: any) {
              setError(e.message);
         } finally {
@@ -135,4 +136,13 @@ export default function LoginPage() {
             </Card>
         </div>
     );
+}
+
+
+export default function LoginPageWithAuth() {
+    return (
+        <AuthGuard>
+            <LoginPage />
+        </AuthGuard>
+    )
 }

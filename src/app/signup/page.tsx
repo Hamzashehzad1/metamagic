@@ -13,8 +13,9 @@ import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { AlertCircle, Loader2 } from 'lucide-react';
+import AuthGuard from '@/components/auth-guard';
 
-export default function SignUpPage() {
+function SignUpPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [firstName, setFirstName] = useState('');
@@ -52,7 +53,7 @@ export default function SignUpPage() {
                 displayName: `${firstName} ${lastName}`.trim(),
             });
 
-            router.push('/');
+            router.push('/dashboard');
         } catch (e: any) {
             setError(e.message);
         } finally {
@@ -140,4 +141,12 @@ export default function SignUpPage() {
             </Card>
         </div>
     );
+}
+
+export default function SignUpPageWithAuth() {
+    return (
+        <AuthGuard>
+            <SignUpPage />
+        </AuthGuard>
+    )
 }
