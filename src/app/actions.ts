@@ -1,4 +1,3 @@
-
 'use server';
 
 import { generateImageCaption } from '@/ai/flows/generate-image-caption';
@@ -137,13 +136,14 @@ export async function connectWpSite(site: WpSite): Promise<{success: boolean, me
                  return { success: false, message: `Connection failed with status ${response.status}. WordPress did not return a valid JSON response. Check the URL and permalink settings.` };
             }
         }
-
-        if (response.ok) {
-            return { success: true, message: 'Successfully connected to your WordPress site.' };
+        
+        // Even if response.ok is true, we must verify the content type.
+        if (!contentType || !contentType.includes('application/json')) {
+             return { success: false, message: `Connection test succeeded, but WordPress did not return a valid JSON response. Please check your site's permalink settings.` };
         }
 
-        // This should not be reached but provides a fallback.
-        return { success: false, message: 'An unexpected error occurred during connection.' };
+        // If we reach here, the response is OK and it's JSON.
+        return { success: true, message: 'Successfully connected to your WordPress site.' };
 
     } catch (error) {
         console.error('WP Connection Error:', error);
@@ -172,17 +172,19 @@ export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: numb
             cache: 'no-store', // Ensure we always get fresh data
         });
 
-        if (!response.ok) {
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                const errorBody = await response.json();
-                throw new Error(errorBody.message || 'Failed to fetch media.');
-            } else {
-                throw new Error(`WordPress returned an unexpected response (Status: ${response.status}). Check credentials and permissions.`);
-            }
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error(`WordPress did not return a valid JSON response. Check your site's permalink settings. Status: ${response.status}`);
         }
 
         const media: WpMedia[] = await response.json();
+
+        // The json can contain an error object if the request is bad
+        if (!response.ok) {
+             const errorBody = media as any; // Cast to access potential error properties
+             throw new Error(errorBody.message || 'Failed to fetch media.');
+        }
+
         return { media };
     } catch (error) {
         console.error('WP Media Fetch Error:', error);
