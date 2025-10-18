@@ -36,7 +36,7 @@ const prompt = ai.definePrompt({
   name: 'generateAltTextPrompt',
   input: {schema: GenerateAltTextInputSchema.omit({apiKey: true})},
   output: {schema: GenerateAltTextOutputSchema},
-  model: 'googleai/gemini-2.0-flash',
+  model: 'googleai/gemini-2.5-flash',
   prompt: `You are an AI expert in SEO and accessibility. Generate a concise, descriptive, and SEO-friendly alt text for the following image. The alt text should accurately describe the image for visually impaired users and search engines. Do not include phrases like "image of" or "picture of".
 
 Image: {{media url=imageUrl}}`,

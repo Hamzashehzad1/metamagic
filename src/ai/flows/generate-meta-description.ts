@@ -34,7 +34,7 @@ const prompt = ai.definePrompt({
   name: 'generateMetaDescriptionPrompt',
   input: {schema: GenerateMetaDescriptionInputSchema.omit({apiKey: true})},
   output: {schema: GenerateMetaDescriptionOutputSchema},
-  model: 'googleai/gemini-2.0-flash',
+  model: 'googleai/gemini-2.5-flash',
   prompt: `You are an expert SEO copywriter. Analyze the following webpage content and write a compelling, SEO-friendly meta description.
 
 Rules:

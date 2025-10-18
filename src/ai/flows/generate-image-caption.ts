@@ -36,7 +36,7 @@ const prompt = ai.definePrompt({
   name: 'generateImageCaptionPrompt',
   input: {schema: GenerateImageCaptionInputSchema.omit({apiKey: true})},
   output: {schema: GenerateImageCaptionOutputSchema},
-  model: 'googleai/gemini-2.0-flash',
+  model: 'googleai/gemini-2.5-flash',
   prompt: `You are an AI image captioning expert for stock photography. Generate a concise, factual, and descriptive caption for the image. The caption should be suitable for use as a description on a stock photo website.
 
 Image: {{media url=photoDataUri}}`,
