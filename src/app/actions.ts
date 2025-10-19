@@ -1,4 +1,3 @@
-
 'use server';
 
 import { generateImageCaption } from '@/ai/flows/generate-image-caption';
@@ -149,20 +148,38 @@ function getAuthHeader(username: string, appPassword: string) {
 
 export async function connectWpSite(site: WpSite): Promise<{success: boolean, message: string}> {
     const { url, username, appPassword } = site;
-    try {
-        const cleanedUrl = url.endsWith('/') ? url.slice(0, -1) : url;
-        const response = await fetch(`${cleanedUrl}/wp-json/wp/v2/users/me`, {
-            headers: {
-                'Authorization': getAuthHeader(username, appPassword),
-            },
+    const cleanedUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+
+    const tryConnection = async (testUrl: string): Promise<Response> => {
+        return fetch(testUrl, {
+            headers: { 'Authorization': getAuthHeader(username, appPassword) },
             cache: 'no-store',
         });
+    };
+    
+    // --- Attempt 1: Standard "Pretty Permalinks" URL ---
+    try {
+        const prettyUrl = `${cleanedUrl}/wp-json/wp/v2/users/me`;
+        const response = await tryConnection(prettyUrl);
 
-        if (response.ok) {
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                return { success: true, message: 'Successfully connected to your WordPress site.' };
-            }
+        if (response.ok && response.headers.get('content-type')?.includes('application/json')) {
+            return { success: true, message: 'Successfully connected to your WordPress site.' };
+        }
+        // If it's a clear auth error, fail fast.
+        if (response.status === 401 || response.status === 403) {
+            return { success: false, message: 'Authentication failed. Please check your username and application password.' };
+        }
+    } catch (error) {
+        // Fall through to the next attempt if a network error occurs.
+    }
+
+    // --- Attempt 2: "Plain Permalinks" Fallback URL ---
+    try {
+        const plainUrl = `${cleanedUrl}/?rest_route=/wp/v2/users/me`;
+        const response = await tryConnection(plainUrl);
+
+        if (response.ok && response.headers.get('content-type')?.includes('application/json')) {
+            return { success: true, message: 'Successfully connected to your WordPress site (using fallback URL).' };
         }
         
         let errorMessage;
@@ -170,13 +187,12 @@ export async function connectWpSite(site: WpSite): Promise<{success: boolean, me
             const errorBody = await response.json();
             errorMessage = errorBody.message || `API error with status ${response.status}.`;
         } catch (e) {
-            errorMessage = 'WordPress did not return a valid JSON response. This can be caused by an incorrect URL, a firewall, or a security plugin. Please also check your site\'s permalink settings.';
+            errorMessage = 'WordPress did not return a valid JSON response. This can be caused by an incorrect URL, a firewall, a security plugin, or incorrect permalink settings.';
         }
         
         return { success: false, message: `Connection failed: ${errorMessage}` };
 
     } catch (error) {
-        console.error('WP Connection Fetch Error:', error);
         if (error instanceof TypeError && error.message.includes('fetch failed')) {
             return { success: false, message: 'Network error. Check if the URL is correct and reachable, and ensure your server has CORS enabled for this domain.' };
         }
