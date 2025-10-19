@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { KeyRound, ExternalLink, Trash2, Edit, Check, X, Star, Wand2, PlusCircle, Globe } from 'lucide-react';
+import { KeyRound, ExternalLink, Trash2, Edit, Check, X, Star, Wand2, PlusCircle, Globe, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -24,6 +24,7 @@ import {
   DialogTrigger,
   DialogClose
 } from '@/components/ui/dialog';
+import { connectWpSite } from '../actions';
 
 export interface ApiKey {
   id: string;
@@ -60,6 +61,9 @@ function AccountPage() {
   const [newWpUrl, setNewWpUrl] = useState('');
   const [newWpUsername, setNewWpUsername] = useState('');
   const [newWpAppPassword, setNewWpAppPassword] = useState('');
+  const [isTestingWpConnection, setIsTestingWpConnection] = useState(false);
+  const [showWpDialog, setShowWpDialog] = useState(false);
+
 
   // Handlers for Gemini Keys
   const handleAddKey = async () => {
@@ -120,18 +124,32 @@ function AccountPage() {
           return;
       }
 
-      const newConnection = {
+      setIsTestingWpConnection(true);
+
+      const connectionDetails = {
           url: newWpUrl,
           username: newWpUsername,
-          appPassword: newWpAppPassword, // This should be encrypted server-side in a real app
-          userId: user.uid,
+          appPassword: newWpAppPassword,
       };
 
-      await addDoc(collection(firestore, `users/${user.uid}/wordpressConnections`), newConnection);
-      setNewWpUrl('');
-      setNewWpUsername('');
-      setNewWpAppPassword('');
-      toast({ title: 'Success', description: `Connection for "${newConnection.url}" added.`});
+      const testResult = await connectWpSite(connectionDetails);
+
+      if (testResult.success) {
+          const newConnection = {
+              ...connectionDetails,
+              userId: user.uid,
+          };
+          await addDoc(collection(firestore, `users/${user.uid}/wordpressConnections`), newConnection);
+          setNewWpUrl('');
+          setNewWpUsername('');
+          setNewWpAppPassword('');
+          toast({ title: 'Success!', description: `Connection for "${newConnection.url}" was successful and has been saved.`});
+          setShowWpDialog(false);
+      } else {
+          toast({ variant: 'destructive', title: 'Connection Failed', description: testResult.message, duration: 8000 });
+      }
+
+      setIsTestingWpConnection(false);
   };
 
   const handleDeleteWpConnection = async (connectionId: string) => {
@@ -267,7 +285,7 @@ function AccountPage() {
                      )}
                 </CardContent>
                 <CardFooter className="flex flex-col gap-4 items-stretch">
-                    <Dialog>
+                    <Dialog open={showWpDialog} onOpenChange={setShowWpDialog}>
                         <DialogTrigger asChild>
                             <Button variant="outline"><PlusCircle className="mr-2" />Add New Site</Button>
                         </DialogTrigger>
@@ -275,27 +293,32 @@ function AccountPage() {
                             <DialogHeader>
                                 <DialogTitle>Add WordPress Connection</DialogTitle>
                                 <DialogDescription>
-                                    You'll need an application password for this.
+                                    Your credentials will be tested before being saved. You'll need an application password for this.
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="wp-url">Site URL</Label>
-                                    <Input id="wp-url" placeholder="https://example.com" value={newWpUrl} onChange={e => setNewWpUrl(e.target.value.trim())} />
+                                    <Input id="wp-url" placeholder="https://example.com" value={newWpUrl} onChange={e => setNewWpUrl(e.target.value.trim())} disabled={isTestingWpConnection}/>
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="wp-username">Username</Label>
-                                    <Input id="wp-username" placeholder="Your WP username" value={newWpUsername} onChange={e => setNewWpUsername(e.target.value.trim())} />
+                                    <Input id="wp-username" placeholder="Your WP username" value={newWpUsername} onChange={e => setNewWpUsername(e.target.value.trim())} disabled={isTestingWpConnection} />
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="wp-app-password">Application Password</Label>
-                                    <Input id="wp-app-password" type="password" placeholder="Enter your application password" value={newWpAppPassword} onChange={e => setNewWpAppPassword(e.target.value.trim())} />
+                                    <Input id="wp-app-password" type="password" placeholder="Enter your application password" value={newWpAppPassword} onChange={e => setNewWpAppPassword(e.target.value.trim())} disabled={isTestingWpConnection} />
                                 </div>
                             </div>
                             <DialogFooter>
-                                <DialogClose asChild>
-                                    <Button type="button" onClick={handleAddWpConnection} disabled={!newWpUrl || !newWpUsername || !newWpAppPassword}>Add Connection</Button>
-                                </DialogClose>
+                                <Button 
+                                    type="button" 
+                                    onClick={handleAddWpConnection} 
+                                    disabled={!newWpUrl || !newWpUsername || !newWpAppPassword || isTestingWpConnection}
+                                >
+                                    {isTestingWpConnection && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    {isTestingWpConnection ? 'Testing...' : 'Test & Add Connection'}
+                                </Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
@@ -326,3 +349,5 @@ export default function AccountPageWithAuth() {
         </AuthGuard>
     )
 }
+
+    
