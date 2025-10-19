@@ -50,8 +50,8 @@ function Dashboard() {
 
   useEffect(() => {
     if (apiKeys && apiKeys.length > 0) {
-      // Logic to determine the active key, e.g., the first one, or one stored in localStorage
-      setActiveKey(apiKeys[0]);
+      const defaultKey = apiKeys.find(k => k.isDefault) || apiKeys[0];
+      setActiveKey(defaultKey);
     } else {
       setActiveKey(null);
     }

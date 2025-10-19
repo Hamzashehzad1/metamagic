@@ -61,6 +61,10 @@
         "lastUsed": {
           "type": "string",
           "description": "The last date the key was used."
+        },
+        "isDefault": {
+          "type": "boolean",
+          "description": "Whether this is the default key for the user."
         }
       },
       "required": [

@@ -62,7 +62,8 @@ function WpAltText() {
 
   useEffect(() => {
     if (apiKeys && apiKeys.length > 0) {
-      setActiveKey(apiKeys[0]);
+      const defaultKey = apiKeys.find(k => k.isDefault) || apiKeys[0];
+      setActiveKey(defaultKey);
     } else {
       setActiveKey(null);
     }

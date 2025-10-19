@@ -12,7 +12,7 @@ import { KeyRound, ExternalLink, Trash2, Edit, Check, X, Star, Wand2, PlusCircle
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, doc, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, deleteDoc, setDoc, writeBatch } from 'firebase/firestore';
 import AuthGuard from '@/components/auth-guard';
 import {
   Dialog,
@@ -32,6 +32,7 @@ export interface ApiKey {
   key: string;
   usage: number;
   lastUsed: string; // ISO date string
+  isDefault?: boolean;
 }
 
 export interface WpConnection {
@@ -71,12 +72,14 @@ function AccountPage() {
       toast({ variant: 'destructive', title: 'Error', description: 'Please provide a name and a key.' });
       return;
     }
+    const isFirstKey = !apiKeys || apiKeys.length === 0;
     const newKey = {
       name: newKeyName,
       key: newKeyValue,
       usage: 0,
       lastUsed: new Date().toISOString().split('T')[0],
-      userId: user.uid
+      userId: user.uid,
+      isDefault: isFirstKey
     };
     await addDoc(collection(firestore, `users/${user.uid}/geminiApiKeys`), newKey);
     setNewKeyName('');
@@ -108,6 +111,31 @@ function AccountPage() {
     setEditedName('');
     toast({ title: 'Success', description: 'Key name updated.'});
   }
+
+  const handleSetDefaultKey = async (newDefaultKey: ApiKey) => {
+    if (!user || !apiKeys) return;
+    
+    const batch = writeBatch(firestore);
+    
+    // Find the current default key
+    const currentDefault = apiKeys.find(key => key.isDefault);
+    if (currentDefault && currentDefault.id !== newDefaultKey.id) {
+      const currentDefaultRef = doc(firestore, `users/${user.uid}/geminiApiKeys`, currentDefault.id);
+      batch.update(currentDefaultRef, { isDefault: false });
+    }
+    
+    // Set the new default key
+    const newDefaultRef = doc(firestore, `users/${user.uid}/geminiApiKeys`, newDefaultKey.id);
+    batch.update(newDefaultRef, { isDefault: true });
+    
+    try {
+      await batch.commit();
+      toast({ title: 'Default Key Updated', description: `"${newDefaultKey.name}" is now the default.`});
+    } catch (error) {
+      console.error("Error setting default key: ", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not update the default key.' });
+    }
+  };
   
   const today = new Date().toISOString().split('T')[0];
 
@@ -179,7 +207,7 @@ function AccountPage() {
                         <KeyRound className="text-primary" /> Gemini API Keys
                     </CardTitle>
                     <CardDescription>
-                        Add, select, and manage your Google AI API keys. Your keys are stored securely.
+                        Add, select, and manage your Google AI API keys. Your keys are stored securely. The default key is marked with a star.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -195,6 +223,7 @@ function AccountPage() {
                             ) : (
                             <>
                                 <Button variant={'ghost'} size="sm" className="flex-1 justify-start gap-2">
+                                    <Star className={`h-4 w-4 ${k.isDefault ? 'text-yellow-500 fill-yellow-400' : 'text-muted-foreground'}`} />
                                     <span className="truncate">{k.name}</span>
                                 </Button>
                                 <div className="text-xs text-muted-foreground flex items-center gap-1" title={`API calls made today. Resets daily.`}>
@@ -212,8 +241,13 @@ function AccountPage() {
                                 </>
                             ) : (
                                 <>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStartEdit(k)}><Edit className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteKey(k.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                {!k.isDefault && (
+                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSetDefaultKey(k)} title="Make default">
+                                    <Star className="h-4 w-4 text-muted-foreground" />
+                                  </Button>
+                                )}
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStartEdit(k)} title="Edit name"><Edit className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteKey(k.id)} title="Delete key"><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                 </>
                             )}
                             </div>
@@ -349,5 +383,3 @@ export default function AccountPageWithAuth() {
         </AuthGuard>
     )
 }
-
-    
