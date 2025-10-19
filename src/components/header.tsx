@@ -44,25 +44,25 @@ export function Header() {
           <NavigationMenu>
               <NavigationMenuList>
                   <NavigationMenuItem>
-                      <Link href="/dashboard" legacyBehavior={false}>
-                          <NavigationMenuLink active={pathname.startsWith('/dashboard')} className={navigationMenuTriggerStyle()}>
-                              Metadata Generator
-                          </NavigationMenuLink>
+                    <NavigationMenuLink asChild active={pathname.startsWith('/dashboard')}>
+                      <Link href="/dashboard" className={navigationMenuTriggerStyle()}>
+                        Metadata Generator
                       </Link>
+                    </NavigationMenuLink>
                   </NavigationMenuItem>
                   <NavigationMenuItem>
-                      <Link href="/wp-alt-text" legacyBehavior={false}>
-                          <NavigationMenuLink active={pathname.startsWith('/wp-alt-text')} className={navigationMenuTriggerStyle()}>
-                              WP Alt Text
-                          </NavigationMenuLink>
+                    <NavigationMenuLink asChild active={pathname.startsWith('/wp-alt-text')}>
+                      <Link href="/wp-alt-text" className={navigationMenuTriggerStyle()}>
+                        WP Alt Text
                       </Link>
+                    </NavigationMenuLink>
                   </NavigationMenuItem>
                   <NavigationMenuItem>
-                      <Link href="/meta-description" legacyBehavior={false}>
-                          <NavigationMenuLink active={pathname.startsWith('/meta-description')} className={navigationMenuTriggerStyle()}>
-                              Meta Description
-                          </NavigationMenuLink>
+                    <NavigationMenuLink asChild active={pathname.startsWith('/meta-description')}>
+                      <Link href="/meta-description" className={navigationMenuTriggerStyle()}>
+                        Meta Description
                       </Link>
+                    </NavigationMenuLink>
                   </NavigationMenuItem>
               </NavigationMenuList>
           </NavigationMenu>
@@ -70,18 +70,18 @@ export function Header() {
           <NavigationMenu>
             <NavigationMenuList>
                 <NavigationMenuItem>
-                    <Link href="/#features" legacyBehavior={false}>
-                        <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                            Features
-                        </NavigationMenuLink>
-                    </Link>
+                    <NavigationMenuLink asChild>
+                      <Link href="/#features" className={navigationMenuTriggerStyle()}>
+                        Features
+                      </Link>
+                    </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                    <Link href="/pricing" legacyBehavior={false}>
-                        <NavigationMenuLink active={pathname.startsWith('/pricing')} className={navigationMenuTriggerStyle()}>
-                            Pricing
-                        </NavigationMenuLink>
-                    </Link>
+                    <NavigationMenuLink asChild active={pathname.startsWith('/pricing')}>
+                      <Link href="/pricing" className={navigationMenuTriggerStyle()}>
+                        Pricing
+                      </Link>
+                    </NavigationMenuLink>
                 </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
