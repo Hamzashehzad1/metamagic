@@ -150,7 +150,8 @@ function getAuthHeader(username: string, appPassword: string) {
 export async function connectWpSite(site: WpSite): Promise<{success: boolean, message: string}> {
     const { url, username, appPassword } = site;
     try {
-        const response = await fetch(`${url}/wp-json/wp/v2/users/me`, {
+        const cleanedUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+        const response = await fetch(`${cleanedUrl}/wp-json/wp/v2/users/me`, {
             headers: {
                 'Authorization': getAuthHeader(username, appPassword),
             },
