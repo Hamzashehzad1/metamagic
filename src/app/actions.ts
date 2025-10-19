@@ -165,10 +165,6 @@ export async function connectWpSite(site: WpSite): Promise<{success: boolean, me
         if (response.ok && response.headers.get('content-type')?.includes('application/json')) {
             return { success: true, message: 'Successfully connected to your WordPress site.' };
         }
-        // If it's a clear auth error, fail fast.
-        if (response.status === 401 || response.status === 403) {
-            return { success: false, message: 'Authentication failed. Please check your username and application password.' };
-        }
     } catch (error) {
         // Fall through to the next attempt if a network error occurs.
     }
@@ -182,19 +178,24 @@ export async function connectWpSite(site: WpSite): Promise<{success: boolean, me
             return { success: true, message: 'Successfully connected to your WordPress site (using fallback URL).' };
         }
         
+        // If we're here, both attempts failed. Try to get a meaningful error.
+        if (response.status === 401) {
+            return { success: false, message: 'Authentication failed. Please check your username and application password.' };
+        }
+
         let errorMessage;
         try {
             const errorBody = await response.json();
             errorMessage = errorBody.message || `API error with status ${response.status}.`;
         } catch (e) {
-            errorMessage = 'WordPress did not return a valid JSON response. This can be caused by an incorrect URL, a firewall, a security plugin, or incorrect permalink settings.';
+            errorMessage = `WordPress did not return a valid JSON response. This can be caused by an incorrect URL, a firewall, a security plugin, or incorrect permalink settings. Status code: ${response.status}`;
         }
         
         return { success: false, message: `Connection failed: ${errorMessage}` };
 
     } catch (error) {
         if (error instanceof TypeError && error.message.includes('fetch failed')) {
-            return { success: false, message: 'Network error. Check if the URL is correct and reachable, and ensure your server has CORS enabled for this domain.' };
+            return { success: false, message: 'Network error. Could not reach the server. Check if the URL is correct and reachable, and ensure your server has CORS enabled for this domain.' };
         }
         return { success: false, message: 'An unknown error occurred during connection. Check the browser console for more details.' };
     }
