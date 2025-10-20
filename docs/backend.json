@@ -125,7 +125,7 @@
       "schema": {
         "$ref": "#/entities/User"
       },
-      "description": "Stores user profile information. An admin can read all user profiles, while a regular user can only read/write their own."
+      "description": "Stores user profile information. An admin can read all user profiles (list), while a regular user can only read/write their own."
     },
     "/users/{userId}/geminiApiKeys/{geminiApiKeyId}": {
       "schema": {
