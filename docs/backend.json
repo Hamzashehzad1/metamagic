@@ -24,6 +24,10 @@
           "type": "string",
           "description": "Timestamp indicating the last time the user logged in.",
           "format": "date-time"
+        },
+        "isAdmin": {
+          "type": "boolean",
+          "description": "Indicates if the user has administrative privileges."
         }
       },
       "required": [

@@ -17,14 +17,27 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "./ui/button";
-import { useUser } from "@/firebase";
+import { useUser, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { getAuth, signOut } from "firebase/auth";
-import { LogOut, User as UserIcon, LayoutDashboard } from "lucide-react";
+import { LogOut, User as UserIcon, LayoutDashboard, Shield } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { doc } from "firebase/firestore";
+
+interface UserProfile {
+    isAdmin?: boolean;
+}
 
 export function Header() {
   const { user, isUserLoading } = useUser();
   const pathname = usePathname();
+  const firestore = useFirestore();
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return doc(firestore, `users/${user.uid}`);
+  }, [firestore, user]);
+    
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
   const handleLogout = async () => {
     await signOut(getAuth());
@@ -44,22 +57,22 @@ export function Header() {
           <NavigationMenu>
               <NavigationMenuList>
                   <NavigationMenuItem>
-                    <NavigationMenuLink asChild active={pathname.startsWith('/dashboard')}>
-                      <Link href="/dashboard" className={navigationMenuTriggerStyle()}>
+                    <NavigationMenuLink asChild>
+                      <Link href="/dashboard" className={navigationMenuTriggerStyle()} data-active={pathname.startsWith('/dashboard')}>
                         Metadata Generator
                       </Link>
                     </NavigationMenuLink>
                   </NavigationMenuItem>
                   <NavigationMenuItem>
-                    <NavigationMenuLink asChild active={pathname.startsWith('/wp-alt-text')}>
-                      <Link href="/wp-alt-text" className={navigationMenuTriggerStyle()}>
+                    <NavigationMenuLink asChild>
+                      <Link href="/wp-alt-text" className={navigationMenuTriggerStyle()} data-active={pathname.startsWith('/wp-alt-text')}>
                         WP Alt Text
                       </Link>
                     </NavigationMenuLink>
                   </NavigationMenuItem>
                   <NavigationMenuItem>
-                    <NavigationMenuLink asChild active={pathname.startsWith('/meta-description')}>
-                      <Link href="/meta-description" className={navigationMenuTriggerStyle()}>
+                    <NavigationMenuLink asChild>
+                      <Link href="/meta-description" className={navigationMenuTriggerStyle()} data-active={pathname.startsWith('/meta-description')}>
                         Meta Description
                       </Link>
                     </NavigationMenuLink>
@@ -77,8 +90,8 @@ export function Header() {
                     </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                    <NavigationMenuLink asChild active={pathname.startsWith('/pricing')}>
-                      <Link href="/pricing" className={navigationMenuTriggerStyle()}>
+                    <NavigationMenuLink asChild>
+                      <Link href="/pricing" className={navigationMenuTriggerStyle()} data-active={pathname.startsWith('/pricing')}>
                         Pricing
                       </Link>
                     </NavigationMenuLink>
@@ -113,6 +126,14 @@ export function Header() {
                                 <span>Account</span>
                             </Link>
                         </DropdownMenuItem>
+                        {userProfile?.isAdmin && (
+                            <DropdownMenuItem asChild>
+                                <Link href="/admin">
+                                    <Shield className="mr-2 h-4 w-4" />
+                                    <span>Admin</span>
+                                </Link>
+                            </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout}>
                             <LogOut className="mr-2 h-4 w-4" />
