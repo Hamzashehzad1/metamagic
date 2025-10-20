@@ -33,7 +33,7 @@ export default function LandingPage() {
       <Header />
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="text-center py-20 md:py-32 bg-gradient-to-b from-background to-muted/50">
+        <section className="text-center py-16 md:py-24 bg-gradient-to-b from-background to-muted/50">
           <div className="container mx-auto px-4">
             <h1 className="text-4xl md:text-6xl font-extrabold font-headline text-primary tracking-tighter">
               Stop Guessing. Start Dominating Your Media SEO.
@@ -41,7 +41,7 @@ export default function LandingPage() {
             <p className="mt-6 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
               Are you tired of spending hours writing metadata that never seems to rank? MetaMagic is your secret weapon. We use advanced AI to generate perfect, SEO-optimized metadata for your images and content in seconds. It's time to work smarter, not harder.
             </p>
-            <div className="mt-8 flex justify-center gap-4">
+            <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
               <Button asChild size="lg">
                 <Link href="/signup">Get Started For Free <ChevronRight className="ml-2" /></Link>
               </Button>
@@ -54,7 +54,7 @@ export default function LandingPage() {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="py-20">
+        <section id="features" className="py-16 md:py-20">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold font-headline">The Tools You Need to Win at SEO</h2>
@@ -105,7 +105,7 @@ export default function LandingPage() {
         </section>
 
         {/* "Why You'll Love It" Section */}
-        <section className="py-20 bg-muted/50">
+        <section className="py-16 md:py-20 bg-muted/50">
             <div className="container mx-auto px-4">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold font-headline">Stop Wasting Time. Start Seeing Results.</h2>
@@ -148,7 +148,7 @@ export default function LandingPage() {
 
 
         {/* Final CTA Section */}
-        <section className="py-20">
+        <section className="py-16 md:py-20">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl md:text-4xl font-bold font-headline">Ready to Revolutionize Your SEO Workflow?</h2>
             <p className="mt-4 text-lg max-w-2xl mx-auto text-muted-foreground">

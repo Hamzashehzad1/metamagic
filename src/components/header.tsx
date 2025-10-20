@@ -18,9 +18,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "./ui/button";
 import { useUser, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { getAuth, signOut } from "firebase/auth";
-import { LogOut, User as UserIcon, LayoutDashboard, Shield } from "lucide-react";
+import { LogOut, User as UserIcon, LayoutDashboard, Shield, Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { doc } from "firebase/firestore";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface UserProfile {
     isAdmin?: boolean;
@@ -30,6 +31,7 @@ export function Header() {
   const { user, isUserLoading } = useUser();
   const pathname = usePathname();
   const firestore = useFirestore();
+  const isMobile = useIsMobile();
 
   const userProfileRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -49,59 +51,64 @@ export function Header() {
 
   const isNotAdminArea = !pathname.startsWith('/admin');
 
+  const renderNavLinks = (isDropdown = false) => {
+    const Comp = isDropdown ? DropdownMenuItem : NavigationMenuItem;
+    const LinkComp = isDropdown ? 'div' : NavigationMenuLink;
+
+    if (user && isNotAdminArea) {
+      return (
+        <>
+          <Comp asChild>
+            <Link href="/dashboard" className={!isDropdown ? navigationMenuTriggerStyle() : 'w-full'}>
+              Metadata Generator
+            </Link>
+          </Comp>
+          <Comp asChild>
+            <Link href="/wp-alt-text" className={!isDropdown ? navigationMenuTriggerStyle() : 'w-full'}>
+              WP Alt Text
+            </Link>
+          </Comp>
+          <Comp asChild>
+            <Link href="/meta-description" className={!isDropdown ? navigationMenuTriggerStyle() : 'w-full'}>
+              Meta Description
+            </Link>
+          </Comp>
+        </>
+      );
+    }
+    if (!user) {
+       return (
+        <>
+            <Comp asChild>
+                <Link href="/#features" className={!isDropdown ? navigationMenuTriggerStyle() : ''}>
+                    Features
+                </Link>
+            </Comp>
+            <Comp asChild>
+                <Link href="/pricing" className={!isDropdown ? navigationMenuTriggerStyle() : ''}>
+                    Pricing
+                </Link>
+            </Comp>
+        </>
+       )
+    }
+    return null;
+  }
+
   return (
     <header className="py-4 px-4 md:px-6 border-b sticky top-0 bg-background/95 backdrop-blur-sm z-20">
       <div className="container mx-auto flex justify-between items-center">
         <Link href={user ? "/dashboard" : "/"} className="text-2xl md:text-3xl font-bold font-headline text-primary">MetaMagic</Link>
         
-        {user && isNotAdminArea ? (
-           <NavigationMenu>
-              <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <NavigationMenuLink asChild active={pathname.startsWith('/dashboard')}>
-                      <Link href="/dashboard" className={navigationMenuTriggerStyle()}>
-                        Metadata Generator
-                      </Link>
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                  <NavigationMenuItem>
-                    <NavigationMenuLink asChild active={pathname.startsWith('/wp-alt-text')}>
-                      <Link href="/wp-alt-text" className={navigationMenuTriggerStyle()}>
-                        WP Alt Text
-                      </Link>
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                  <NavigationMenuItem>
-                    <NavigationMenuLink asChild active={pathname.startsWith('/meta-description')}>
-                      <Link href="/meta-description" className={navigationMenuTriggerStyle()}>
-                        Meta Description
-                      </Link>
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-              </NavigationMenuList>
-          </NavigationMenu>
-        ) : !user ? (
+        {!isMobile ? (
           <NavigationMenu>
             <NavigationMenuList>
-                <NavigationMenuItem>
-                    <NavigationMenuLink asChild>
-                      <Link href="/#features" className={navigationMenuTriggerStyle()}>
-                        Features
-                      </Link>
-                    </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                    <NavigationMenuLink asChild active={pathname.startsWith('/pricing')}>
-                      <Link href="/pricing" className={navigationMenuTriggerStyle()}>
-                        Pricing
-                      </Link>
-                    </NavigationMenuLink>
-                </NavigationMenuItem>
+              {renderNavLinks()}
             </NavigationMenuList>
           </NavigationMenu>
         ) : <div />}
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
             {isUserLoading ? (
                 <div />
             ) : user ? (
@@ -143,16 +150,45 @@ export function Header() {
                     </DropdownMenuContent>
                 </DropdownMenu>
             ) : (
-                <div className="flex items-center gap-2">
-                    <Button variant="ghost" asChild>
-                        <Link href="/login">Login</Link>
-                    </Button>
-                    <Button asChild>
-                        <Link href="/signup">Sign Up</Link>
-                    </Button>
-                </div>
+                <>
+                    {isMobile ? null : (
+                        <div className="flex items-center gap-2">
+                            <Button variant="ghost" asChild>
+                                <Link href="/login">Login</Link>
+                            </Button>
+                            <Button asChild>
+                                <Link href="/signup">Sign Up</Link>
+                            </Button>
+                        </div>
+                    )}
+                </>
             )}
-            <ThemeToggle />
+
+            {isMobile && (
+              <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                          <Menu />
+                          <span className="sr-only">Toggle navigation menu</span>
+                      </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {renderNavLinks(true)}
+                    {!user && (
+                      <>
+                        <DropdownMenuSeparator/>
+                        <DropdownMenuItem asChild>
+                           <Link href="/login">Login</Link>
+                        </DropdownMenuItem>
+                         <DropdownMenuItem asChild>
+                           <Link href="/signup">Sign Up</Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            {!isMobile && <ThemeToggle />}
         </div>
       </div>
     </header>
