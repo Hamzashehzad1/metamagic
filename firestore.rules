@@ -1,22 +1,17 @@
 /**
- * @fileoverview Firestore Security Rules for the application.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model. Users can only
- * access their own data, stored under their respective user ID.
+ * @file Firebase Security Rules for Firestore.
+ * @description This ruleset enforces a strict user-ownership model for most data, with an optional admin override for user profile reads.
  *
  * Data Structure:
  * - /users/{userId}: Stores user profile information.
- * - /users/{userId}/geminiApiKeys/{geminiApiKeyId}: Stores Gemini API keys.
- * - /users/{userId}/wordpressConnections/{wordPressConnectionId}: Stores WordPress connections.
+ * - /users/{userId}/geminiApiKeys/{geminiApiKeyId}: Stores Gemini API keys for a user.
+ * - /users/{userId}/wordpressConnections/{wordPressConnectionId}: Stores WordPress connection details.
  *
  * Key Security Decisions:
- * - Users can only create, read, update, and delete their own data.
- * - Listing of user documents is allowed only for the owner.
- * - Schema validation is relaxed in this prototyping phase to allow for rapid iteration. Only critical fields for authorization are validated.
- *
- * Denormalization for Authorization:
- * The `userId` is used in the path to all subcollections, and documents within those subcollections contain a `userId` field. This enables simple, performant authorization checks.
+ * - Users can only read and write their own profile data and associated subcollections.
+ * - Admins can list all user profiles.
+ * - All write operations are protected by authorization checks to prevent unauthorized data modification or deletion.
+ * - Data validation is minimal in this prototyping phase, focusing on ownership and relational integrity.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -25,10 +20,14 @@ service cloud.firestore {
     /**
      * @description Controls access to user profile information.
      * @path /users/{userId}
-     * @allow (create) Signed-in user creates their own profile with matching UID.
-     * @allow (get, list, update, delete) Signed-in user accesses their own profile.
-     * @deny (create) Signed-in user attempts to create a profile with a mismatched UID.
-     * @principle Enforces document ownership and relational integrity.
+     * @allow (create) - Authenticated user creates their own profile.
+     * @allow (get) - Authenticated user reads their own profile. Admin can read any profile.
+     * @allow (update) - Authenticated user updates their own profile.
+     * @allow (delete) - Authenticated user deletes their own profile.
+     * @deny (create) - Unauthorized user attempts to create a profile for another user.
+     * @deny (update) - Unauthorized user attempts to update another user's profile.
+     * @deny (delete) - Unauthorized user attempts to delete another user's profile.
+     * @principle Enforces document ownership for writes, allows admin read.
      */
     match /users/{userId} {
       function isSignedIn() {
@@ -39,12 +38,16 @@ service cloud.firestore {
         return request.auth.uid == userId;
       }
 
+      function isAdmin() {
+        return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      }
+
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
 
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
       allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
@@ -53,16 +56,16 @@ service cloud.firestore {
     /**
      * @description Controls access to Gemini API keys for a user.
      * @path /users/{userId}/geminiApiKeys/{geminiApiKeyId}
-     * @allow (create) Signed-in user creates an API key under their own user ID.
-     * @allow (get, list, update, delete) Signed-in user manages their own API keys.
-     * @deny (create) Signed-in user attempts to create an API key under a different user ID.
-     * @principle Enforces document ownership and relational integrity.
+     * @allow (create) - Authenticated user creates a Gemini API key for their own profile.
+     * @allow (get) - Authenticated user reads a Gemini API key from their own profile.
+     * @allow (update) - Authenticated user updates a Gemini API key in their own profile.
+     * @allow (delete) - Authenticated user deletes a Gemini API key from their own profile.
+     * @deny (create) - Unauthorized user attempts to create a Gemini API key for another user.
+     * @deny (update) - Unauthorized user attempts to update another user's Gemini API key.
+     * @deny (delete) - Unauthorized user attempts to delete another user's Gemini API key.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/geminiApiKeys/{geminiApiKeyId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
@@ -73,7 +76,7 @@ service cloud.firestore {
 
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
@@ -81,16 +84,16 @@ service cloud.firestore {
     /**
      * @description Controls access to WordPress connections for a user.
      * @path /users/{userId}/wordpressConnections/{wordPressConnectionId}
-     * @allow (create) Signed-in user creates a WordPress connection under their own user ID.
-     * @allow (get, list, update, delete) Signed-in user manages their own WordPress connections.
-     * @deny (create) Signed-in user attempts to create a WordPress connection under a different user ID.
-     * @principle Enforces document ownership and relational integrity.
+     * @allow (create) - Authenticated user creates a WordPress connection for their own profile.
+     * @allow (get) - Authenticated user reads a WordPress connection from their own profile.
+     * @allow (update) - Authenticated user updates a WordPress connection in their own profile.
+     * @allow (delete) - Authenticated user deletes a WordPress connection from their own profile.
+     * @deny (create) - Unauthorized user attempts to create a WordPress connection for another user.
+     * @deny (update) - Unauthorized user attempts to update another user's WordPress connection.
+     * @deny (delete) - Unauthorized user attempts to delete another user's WordPress connection.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/wordpressConnections/{wordPressConnectionId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
@@ -101,7 +104,7 @@ service cloud.firestore {
 
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
