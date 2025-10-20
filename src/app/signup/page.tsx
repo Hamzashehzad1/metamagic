@@ -61,7 +61,7 @@ function SignUpPage() {
             };
 
             // Check if the user is the designated admin
-            if (user.email === 'hamza@webbrewery.co') {
+            if (user.email === 'hamzashehzad59@gmail.com') {
                 userData.isAdmin = true;
             }
 
