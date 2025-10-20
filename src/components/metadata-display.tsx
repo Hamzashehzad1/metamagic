@@ -85,14 +85,14 @@ export function MetadataDisplay({ processedFiles, isLoading, onUpdateMetadata }:
 
   return (
     <Card className="shadow-lg">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <CardTitle className="font-headline text-xl md:text-2xl">Generated Metadata</CardTitle>
           <CardDescription>Generated for {processedFiles.length} image(s). You can edit the text before exporting.</CardDescription>
         </div>
-        <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={exportAllAsCsv} disabled={processedFiles.length === 0}>
-                <Download className="mr-2 h-4 w-4" /> Export All for Adobe Stock
+        <div className="flex items-center gap-2 w-full md:w-auto">
+            <Button variant="outline" size="sm" onClick={exportAllAsCsv} disabled={processedFiles.length === 0} className="w-full">
+                <Download className="mr-2 h-4 w-4" /> Export for Adobe Stock
             </Button>
         </div>
       </CardHeader>
@@ -101,51 +101,53 @@ export function MetadataDisplay({ processedFiles, isLoading, onUpdateMetadata }:
             {processedFiles.map((file, index) => (
               <AccordionItem value={`item-${index}`} key={index}>
                 <AccordionTrigger className="font-semibold text-left hover:no-underline">
-                    <span className="truncate">{file.name}</span>
+                    <span className="truncate pr-4">{file.name}</span>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
-                   <Tabs defaultValue="caption">
-                        <TabsList className="grid w-full grid-cols-4">
-                            <TabsTrigger value="caption">Caption</TabsTrigger>
-                            <TabsTrigger value="title">Title</TabsTrigger>
-                            <TabsTrigger value="description">Description</TabsTrigger>
-                            <TabsTrigger value="keywords">Keywords</TabsTrigger>
+                   <Tabs defaultValue="caption" className="md:grid md:grid-cols-4 gap-4">
+                        <TabsList className="md:flex md:flex-col md:h-auto col-span-1 grid grid-cols-2 h-auto">
+                            <TabsTrigger value="caption" className="w-full justify-start">Caption</TabsTrigger>
+                            <TabsTrigger value="title" className="w-full justify-start">Title</TabsTrigger>
+                            <TabsTrigger value="description" className="w-full justify-start">Description</TabsTrigger>
+                            <TabsTrigger value="keywords" className="w-full justify-start">Keywords</TabsTrigger>
                         </TabsList>
-                        <TabsContent value="caption" className="mt-4">
-                            <MetadataCard 
-                                title="AI Generated Caption" 
-                                content={file.metadata.caption} 
-                                onContentChange={(val) => handleMetadataChange(index, 'caption', val)}
-                            />
-                        </TabsContent>
-                        <TabsContent value="title" className="mt-4">
-                            <MetadataCard 
-                                title="Stock Title" 
-                                content={file.metadata.stockTitle} 
-                                onContentChange={(val) => handleMetadataChange(index, 'stockTitle', val)}
-                            />
-                        </TabsContent>
-                        <TabsContent value="description" className="mt-4">
-                            <MetadataCard 
-                                title="Stock Description" 
-                                content={file.metadata.stockDescription}
-                                onContentChange={(val) => handleMetadataChange(index, 'stockDescription', val)}
-                            />
-                        </TabsContent>
-                        <TabsContent value="keywords" className="mt-4">
-                            <div className="space-y-2">
+                        <div className="col-span-3 mt-4 md:mt-0">
+                            <TabsContent value="caption">
                                 <MetadataCard 
-                                    title="Stock Keywords" 
-                                    content={file.metadata.stockKeywords} 
-                                    onContentChange={(val) => handleMetadataChange(index, 'stockKeywords', val)}
+                                    title="AI Generated Caption" 
+                                    content={file.metadata.caption} 
+                                    onContentChange={(val) => handleMetadataChange(index, 'caption', val)}
                                 />
-                                <div className="flex flex-wrap gap-2">
-                                    {file.metadata.stockKeywords.split(',').map(k => k.trim()).filter(Boolean).map((keyword, i) => (
-                                        <Badge key={i} variant="secondary" className="rounded-md">{keyword}</Badge>
-                                    ))}
+                            </TabsContent>
+                            <TabsContent value="title">
+                                <MetadataCard 
+                                    title="Stock Title" 
+                                    content={file.metadata.stockTitle} 
+                                    onContentChange={(val) => handleMetadataChange(index, 'stockTitle', val)}
+                                />
+                            </TabsContent>
+                            <TabsContent value="description">
+                                <MetadataCard 
+                                    title="Stock Description" 
+                                    content={file.metadata.stockDescription}
+                                    onContentChange={(val) => handleMetadataChange(index, 'stockDescription', val)}
+                                />
+                            </TabsContent>
+                            <TabsContent value="keywords">
+                                <div className="space-y-2">
+                                    <MetadataCard 
+                                        title="Stock Keywords" 
+                                        content={file.metadata.stockKeywords} 
+                                        onContentChange={(val) => handleMetadataChange(index, 'stockKeywords', val)}
+                                    />
+                                    <div className="flex flex-wrap gap-2">
+                                        {file.metadata.stockKeywords.split(',').map(k => k.trim()).filter(Boolean).map((keyword, i) => (
+                                            <Badge key={i} variant="secondary" className="rounded-md">{keyword}</Badge>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        </TabsContent>
+                            </TabsContent>
+                        </div>
                    </Tabs>
                 </AccordionContent>
               </AccordionItem>

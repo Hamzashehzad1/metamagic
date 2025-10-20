@@ -255,8 +255,8 @@ function Dashboard() {
               onRemoveFile={handleRemoveFile}
             />
 
-            <div className="flex gap-4">
-              <Button onClick={handleGenerate} disabled={isLoading || files.length === 0 || !isConnected || hasNoKeys} size="lg" className="w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Button onClick={handleGenerate} disabled={isLoading || files.length === 0 || !isConnected || hasNoKeys} size="lg">
                   {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
                   {isLoading ? `Generating...` : `Generate Metadata for ${files.length} file(s)`}
               </Button>
