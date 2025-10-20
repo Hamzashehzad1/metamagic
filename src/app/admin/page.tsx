@@ -1,10 +1,12 @@
+
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, collectionGroup } from 'firebase/firestore';
+import { collection, query, where, getDocs, collectionGroup } from 'firebase/firestore';
 import { type ApiKey, type WpConnection } from '../account/page';
 import { Loader2, Users, KeyRound, Globe } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface UserProfile {
     id: string;
@@ -18,13 +20,35 @@ function AdminPage() {
   const usersQuery = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
   const { data: users, isLoading: isLoadingUsers } = useCollection<UserProfile>(usersQuery);
 
-  const apiKeysQuery = useMemoFirebase(() => collectionGroup(firestore, 'geminiApiKeys'), [firestore]);
-  const { data: apiKeys, isLoading: isLoadingApiKeys } = useCollection<ApiKey>(apiKeysQuery);
-  
-  const wpConnectionsQuery = useMemoFirebase(() => collectionGroup(firestore, 'wordpressConnections'), [firestore]);
-  const { data: wpConnections, isLoading: isLoadingWpConnections } = useCollection<WpConnection>(wpConnectionsQuery);
+  const [totalApiKeys, setTotalApiKeys] = useState<number | null>(null);
+  const [totalWpConnections, setTotalWpConnections] = useState<number | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
 
-  const isLoading = isLoadingUsers || isLoadingApiKeys || isLoadingWpConnections;
+  useEffect(() => {
+    async function fetchStats() {
+      if (firestore) {
+        setIsLoadingStats(true);
+        try {
+          const apiKeysQuery = collectionGroup(firestore, 'geminiApiKeys');
+          const wpConnectionsQuery = collectionGroup(firestore, 'wordpressConnections');
+          
+          const apiKeysSnapshot = await getDocs(apiKeysQuery);
+          const wpConnectionsSnapshot = await getDocs(wpConnectionsQuery);
+
+          setTotalApiKeys(apiKeysSnapshot.size);
+          setTotalWpConnections(wpConnectionsSnapshot.size);
+        } catch (e) {
+            console.error("Failed to fetch admin stats", e);
+        } finally {
+            setIsLoadingStats(false);
+        }
+      }
+    }
+    fetchStats();
+  }, [firestore]);
+
+
+  const isLoading = isLoadingUsers || isLoadingStats;
   
   return (
     <div className="flex flex-col">
@@ -59,7 +83,7 @@ function AdminPage() {
                         <KeyRound className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{apiKeys?.length ?? 0}</div>
+                        <div className="text-2xl font-bold">{totalApiKeys ?? 0}</div>
                         <p className="text-xs text-muted-foreground">API keys saved by users</p>
                     </CardContent>
                 </Card>
@@ -69,7 +93,7 @@ function AdminPage() {
                         <Globe className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{wpConnections?.length ?? 0}</div>
+                        <div className="text-2xl font-bold">{totalWpConnections ?? 0}</div>
                         <p className="text-xs text-muted-foreground">WordPress sites connected</p>
                     </CardContent>
                 </Card>
