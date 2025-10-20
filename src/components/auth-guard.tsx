@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
@@ -23,37 +22,49 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     }, [firestore, user]);
     
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
+    const isLoading = isUserLoading || (user && isProfileLoading);
 
     useEffect(() => {
-        const isLoading = isUserLoading || isProfileLoading;
         if (!isLoading) {
             const isAuthRoute = pathname === '/login' || pathname === '/signup';
-            const isLandingRoute = pathname === '/' || pathname === '/pricing';
+            const isPublicRoute = pathname === '/' || pathname === '/pricing';
             const isAdminRoute = pathname.startsWith('/admin');
 
-            // If user is not logged in, redirect to login page unless on a public-only route
-            if (!user && !isAuthRoute && !isLandingRoute) {
+            // If user is not logged in, redirect to login page unless on a public route
+            if (!user && !isAuthRoute && !isPublicRoute) {
                 router.push('/login');
             }
             
-            // If user is logged in, redirect away from landing/auth routes
-            if (user && (isAuthRoute || isLandingRoute)) {
+            // If user is logged in, redirect away from public/auth routes
+            if (user && (isAuthRoute || isPublicRoute)) {
                 router.push('/dashboard');
             }
 
             // If user tries to access admin route but is not an admin, redirect
-            if (user && isAdminRoute && !userProfile?.isAdmin) {
+            if (user && isAdminRoute && userProfile && !userProfile.isAdmin) {
                 router.push('/dashboard');
             }
         }
-    }, [user, userProfile, isUserLoading, isProfileLoading, router, pathname]);
+    }, [user, userProfile, isLoading, router, pathname]);
 
-    const isRedirecting = 
-        (user && (pathname === '/login' || pathname === '/signup' || pathname === '/' || pathname === '/pricing')) || 
-        (!user && pathname !== '/' && pathname !== '/pricing' && pathname !== '/login' && pathname !== '/signup') ||
-        (user && pathname.startsWith('/admin') && !userProfile?.isAdmin);
+    const isAuthRoute = pathname === '/login' || pathname === '/signup';
+    const isPublicRoute = pathname === '/' || pathname === '/pricing';
+    const isAdminRoute = pathname.startsWith('/admin');
 
-    if (isUserLoading || isProfileLoading || isRedirecting) {
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-background">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+        );
+    }
+    
+    // While loading, or if conditions for redirect are met, show loading spinner
+    if (
+        (user && (isAuthRoute || isPublicRoute)) || 
+        (!user && !isPublicRoute && !isAuthRoute) ||
+        (user && isAdminRoute && userProfile && !userProfile.isAdmin)
+    ) {
         return (
             <div className="flex items-center justify-center h-screen bg-background">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />

@@ -1,4 +1,3 @@
-
 import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import {
@@ -48,38 +47,40 @@ export function Header() {
     return email.charAt(0).toUpperCase();
   }
 
+  const isNotAdminArea = !pathname.startsWith('/admin');
+
   return (
     <header className="py-4 px-4 md:px-6 border-b sticky top-0 bg-background/95 backdrop-blur-sm z-20">
       <div className="container mx-auto flex justify-between items-center">
         <Link href={user ? "/dashboard" : "/"} className="text-2xl md:text-3xl font-bold font-headline text-primary">MetaMagic</Link>
         
-        {user ? (
-          <NavigationMenu>
+        {user && isNotAdminArea ? (
+           <NavigationMenu>
               <NavigationMenuList>
                   <NavigationMenuItem>
-                    <NavigationMenuLink asChild>
-                      <Link href="/dashboard" className={navigationMenuTriggerStyle()} data-active={pathname.startsWith('/dashboard')}>
+                    <NavigationMenuLink asChild active={pathname.startsWith('/dashboard')}>
+                      <Link href="/dashboard" className={navigationMenuTriggerStyle()}>
                         Metadata Generator
                       </Link>
                     </NavigationMenuLink>
                   </NavigationMenuItem>
                   <NavigationMenuItem>
-                    <NavigationMenuLink asChild>
-                      <Link href="/wp-alt-text" className={navigationMenuTriggerStyle()} data-active={pathname.startsWith('/wp-alt-text')}>
+                    <NavigationMenuLink asChild active={pathname.startsWith('/wp-alt-text')}>
+                      <Link href="/wp-alt-text" className={navigationMenuTriggerStyle()}>
                         WP Alt Text
                       </Link>
                     </NavigationMenuLink>
                   </NavigationMenuItem>
                   <NavigationMenuItem>
-                    <NavigationMenuLink asChild>
-                      <Link href="/meta-description" className={navigationMenuTriggerStyle()} data-active={pathname.startsWith('/meta-description')}>
+                    <NavigationMenuLink asChild active={pathname.startsWith('/meta-description')}>
+                      <Link href="/meta-description" className={navigationMenuTriggerStyle()}>
                         Meta Description
                       </Link>
                     </NavigationMenuLink>
                   </NavigationMenuItem>
               </NavigationMenuList>
           </NavigationMenu>
-        ) : (
+        ) : !user ? (
           <NavigationMenu>
             <NavigationMenuList>
                 <NavigationMenuItem>
@@ -90,15 +91,15 @@ export function Header() {
                     </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                    <NavigationMenuLink asChild>
-                      <Link href="/pricing" className={navigationMenuTriggerStyle()} data-active={pathname.startsWith('/pricing')}>
+                    <NavigationMenuLink asChild active={pathname.startsWith('/pricing')}>
+                      <Link href="/pricing" className={navigationMenuTriggerStyle()}>
                         Pricing
                       </Link>
                     </NavigationMenuLink>
                 </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
-        )}
+        ) : <div />}
 
         <div className="flex items-center gap-4">
             {isUserLoading ? (
