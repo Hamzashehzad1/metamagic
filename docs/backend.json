@@ -129,7 +129,7 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profile information. Only the user can read/write their own profile. The 'userId' parameter corresponds to the Firebase Auth UID."
+          "description": "Stores user profile information. An admin can read all user profiles, while a regular user can only read/write their own."
         }
       },
       {
