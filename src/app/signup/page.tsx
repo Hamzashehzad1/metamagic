@@ -46,12 +46,26 @@ function SignUpPage() {
             
             // Create user document in Firestore
             const userDocRef = doc(firestore, 'users', user.uid);
-            await setDoc(userDocRef, {
+            
+            const userData: {
+                id: string;
+                email: string | null;
+                createdAt: any;
+                displayName: string;
+                isAdmin?: boolean;
+            } = {
                 id: user.uid,
                 email: user.email,
                 createdAt: serverTimestamp(),
                 displayName: `${firstName} ${lastName}`.trim(),
-            });
+            };
+
+            // Check if the user is the designated admin
+            if (user.email === 'hamza@webbrewery.co') {
+                userData.isAdmin = true;
+            }
+
+            await setDoc(userDocRef, userData);
 
             router.push('/dashboard');
         } catch (e: any) {
