@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -84,7 +85,7 @@ export function useCollection<T = any>(
         setError(null);
         setIsLoading(false);
       },
-      (error: FirestoreError) => {
+      async (error: FirestoreError) => {
         // This logic extracts the path from either a ref or a query
         const path: string =
           memoizedTargetRefOrQuery.type === 'collection'
@@ -96,9 +97,9 @@ export function useCollection<T = any>(
           path,
         })
 
-        setError(contextualError)
-        setData(null)
-        setIsLoading(false)
+        setError(contextualError);
+        setData(null);
+        setIsLoading(false);
 
         // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);
