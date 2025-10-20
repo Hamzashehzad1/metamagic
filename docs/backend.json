@@ -121,37 +121,23 @@
     ]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profile information. An admin can read all user profiles, while a regular user can only read/write their own."
-        }
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
       },
-      {
-        "path": "/users/{userId}/geminiApiKeys/{geminiApiKeyId}",
-        "definition": {
-          "entityName": "GeminiApiKey",
-          "schema": {
-            "$ref": "#/backend/entities/GeminiApiKey"
-          },
-          "description": "Stores Gemini API keys associated with a user. Only the user can manage their own keys."
-        }
+      "description": "Stores user profile information. An admin can read all user profiles, while a regular user can only read/write their own."
+    },
+    "/users/{userId}/geminiApiKeys/{geminiApiKeyId}": {
+      "schema": {
+        "$ref": "#/entities/GeminiApiKey"
       },
-      {
-        "path": "/users/{userId}/wordpressConnections/{wordPressConnectionId}",
-        "definition": {
-          "entityName": "WordPressConnection",
-          "schema": {
-            "$ref": "#/backend/entities/WordPressConnection"
-          },
-          "description": "Stores WordPress connection details for a user. Only the user can manage their own connections."
-        }
-      }
-    ]
+      "description": "Stores Gemini API keys associated with a user. Only the user can manage their own keys."
+    },
+    "/users/{userId}/wordpressConnections/{wordPressConnectionId}": {
+      "schema": {
+        "$ref": "#/entities/WordPressConnection"
+      },
+      "description": "Stores WordPress connection details for a user. Only the user can manage their own connections."
+    }
   }
 }
