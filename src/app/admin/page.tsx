@@ -76,12 +76,23 @@ function AdminPage() {
             </div>
         )}
 
-        <div className="grid gap-8 max-w-4xl mx-auto mt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
             <Card>
                 <CardHeader>
                     <CardTitle>Analytics</CardTitle>
                     <CardDescription>
                         Charts and graphs for user activity will be displayed here.
+                    </CardDescription>
+                </CardHeader>
+                 <CardContent>
+                    <p className="text-muted-foreground text-center">Coming soon...</p>
+                 </CardContent>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle>Recent Activity</CardTitle>
+                    <CardDescription>
+                        A feed of recent user actions will be shown here.
                     </CardDescription>
                 </CardHeader>
                  <CardContent>
