@@ -189,12 +189,12 @@ function WpAltText() {
             setMedia(prev => prev.map(m => m.id === result.id ? { ...m, alt_text: result.newAltText, status: 'success' } : m));
         } else {
             if (result.code === 'GEMINI_QUOTA_EXCEEDED') {
-                 toast({ variant: 'destructive', title: 'Quota Exceeded', description: result.error, duration: 5000 });
+                 toast({ variant: 'destructive', title: 'Quota Exceeded', description: "Your API key quota has been exceeded. Please try again later.", duration: 5000 });
                  setIsGenerating(false);
                  if (totalApiCalls > 0) await incrementUsage(activeKey, totalApiCalls);
                  return;
             }
-            setMedia(prev => prev.map(m => m.id === result.id ? { ...m, status: 'failed', error: result.error } : m));
+            setMedia(prev => prev.map(m => m.id === result.id ? { ...m, status: 'failed', error: "Failed to generate alt text for this image." } : m));
         }
 
         processedCount++;
@@ -315,6 +315,7 @@ function WpAltText() {
                         <div className="flex flex-col gap-4">
                             {wpConnections?.map(site => (
                                 <Button key={site.id} variant="outline" onClick={() => handleConnect(site)} disabled={isLoading || hasNoKeys}>
+                                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                     Connect to {site.url}
                                 </Button>
                             ))}
@@ -465,3 +466,5 @@ export default function WpAltTextPage() {
         </AuthGuard>
     )
 }
+
+    

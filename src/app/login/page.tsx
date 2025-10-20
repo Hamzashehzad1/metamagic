@@ -50,7 +50,7 @@ function LoginPage() {
             await signInWithEmailAndPassword(getAuth(), email, password);
             router.push('/dashboard');
         } catch (e: any) {
-            setError(e.message);
+            setError("Invalid email or password. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -64,7 +64,7 @@ function LoginPage() {
             await signInWithPopup(getAuth(), provider);
             router.push('/dashboard');
         } catch (e: any) {
-             setError(e.message);
+             setError("Could not sign in with Google. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -72,7 +72,7 @@ function LoginPage() {
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-background">
-            <Card className="mx-auto max-w-sm">
+            <Card className="mx-auto max-w-sm w-full">
                 <CardHeader>
                     <CardTitle className="text-2xl">Login</CardTitle>
                     <CardDescription>Enter your email below to login to your account</CardDescription>
@@ -146,3 +146,5 @@ export default function LoginPageWithAuth() {
         </AuthGuard>
     )
 }
+
+    

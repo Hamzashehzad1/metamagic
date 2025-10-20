@@ -69,15 +69,19 @@ function SignUpPage() {
 
             router.push('/dashboard');
         } catch (e: any) {
-            setError(e.message);
+            if (e.code === 'auth/email-already-in-use') {
+                setError('This email address is already in use by another account.');
+            } else {
+                setError('Could not create an account. Please try again.');
+            }
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-background">
-            <Card className="mx-auto max-w-sm">
+        <div className="flex items-center justify-center min-h-screen bg-background p-4">
+            <Card className="mx-auto max-w-sm w-full">
                 <CardHeader>
                     <CardTitle className="text-xl">Sign Up</CardTitle>
                     <CardDescription>Enter your information to create an account</CardDescription>
@@ -164,3 +168,5 @@ export default function SignUpPageWithAuth() {
         </AuthGuard>
     )
 }
+
+    

@@ -129,7 +129,7 @@ function MetaDescriptionPage() {
     } catch (e) {
       const message = e instanceof Error ? e.message : 'An unknown error occurred.';
       setError(message);
-      toast({ variant: 'destructive', title: 'Error Fetching URL', description: message });
+      toast({ variant: 'destructive', title: 'Error Fetching URL', description: "Could not fetch content from the URL. Please check the link and try again." });
     } finally {
       setIsLoading(false);
     }
@@ -151,22 +151,19 @@ function MetaDescriptionPage() {
     setIsGenerating(true);
     setError(null);
     try {
-      const result = await generateMetaDescriptionAction(activeKey!.key, content, isWpContent);
+      if (!activeKey) throw new Error("Missing API Key");
+
+      const result = await generateMetaDescriptionAction(activeKey.key, content, isWpContent);
       if ('error' in result) {
-          if ((result as any).code === 'GEMINI_QUOTA_EXCEEDED') {
-            setError(result.error);
-          }
           throw new Error(result.error);
       }
-      await incrementUsage(activeKey!, result.apiCalls);
+      await incrementUsage(activeKey, result.apiCalls);
       setMetaDescription(result.metaDescription);
       toast({ title: "Success!", description: "Meta description generated." });
     } catch(e) {
       const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-      if (!error) {
-        setError(message);
-      }
-      toast({ variant: 'destructive', title: 'Generation Error', description: message });
+      setError(message);
+      toast({ variant: 'destructive', title: 'Generation Error', description: "Could not generate a meta description. Please try again." });
     } finally {
       setIsGenerating(false);
     }
@@ -250,7 +247,7 @@ function MetaDescriptionPage() {
         const generationResult = await generateMetaDescriptionAction(activeKey.key, contentResult.content, true);
         if (generationResult.error) {
             if ((generationResult as any).code === 'GEMINI_QUOTA_EXCEEDED') {
-              toast({ variant: 'destructive', title: 'Quota Exceeded', description: generationResult.error, duration: 5000 });
+              toast({ variant: 'destructive', title: 'Quota Exceeded', description: "Your Gemini API key quota has been exceeded.", duration: 5000 });
             }
             throw new Error(generationResult.error);
         }
@@ -264,7 +261,7 @@ function MetaDescriptionPage() {
         toast({ title: "Success!", description: `Meta description updated for "${item.title.rendered}".` });
 
     } catch (e) {
-        const message = e instanceof Error ? e.message : "An unknown error occurred.";
+        const message = "Failed to generate description. Please try again.";
         setContentItems(prev => prev.map(p => p.id === item.id ? { ...p, status: 'failed', error: message } : p));
         toast({ variant: 'destructive', title: `Error for "${item.title.rendered}"`, description: message, duration: 5000 });
     }
@@ -449,6 +446,7 @@ function MetaDescriptionPage() {
                                 <div className="flex flex-col gap-4">
                                     {wpConnections?.map(site => (
                                         <Button key={site.id} variant="outline" onClick={() => handleWpConnect(site)} disabled={isWpLoading || hasNoKeys}>
+                                            {isWpLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
                                             Connect to {site.url}
                                         </Button>
                                     ))}
@@ -586,3 +584,5 @@ export default function MetaDescriptionPageWithAuth() {
         </AuthGuard>
     )
 }
+
+    

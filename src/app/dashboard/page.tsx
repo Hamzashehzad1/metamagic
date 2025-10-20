@@ -116,9 +116,6 @@ function Dashboard() {
       const result = await processFiles(activeKey.key, fileData, metadataSettings);
       
       if ('error' in result) {
-        if ((result as any).code === 'GEMINI_QUOTA_EXCEEDED') {
-            setError(result.error);
-        }
         throw new Error(result.error);
       }
       
@@ -127,13 +124,11 @@ function Dashboard() {
 
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred during processing.';
-       if (!error) { // Don't overwrite a more specific error
-        setError(errorMessage);
-      }
+      setError(errorMessage);
       toast({
         variant: 'destructive',
         title: 'Processing Error',
-        description: errorMessage,
+        description: "There was a problem generating metadata. Please try again.",
       });
     } finally {
         setIsLoading(false);
@@ -189,8 +184,8 @@ function Dashboard() {
                   toast({ title: 'Image Pasted!', description: `Successfully loaded ${result.name} from URL.` });
                 } catch(e) {
                   const err = e instanceof Error ? e.message : 'Could not process the fetched image.'
-                  setError(err);
-                  toast({ variant: 'destructive', title: 'Image Processing Error', description: err });
+                  setError("Could not process the image from the URL.");
+                  toast({ variant: 'destructive', title: 'Image Processing Error', description: "Could not process the image from the URL." });
                 }
               }
               setIsLoading(false);
@@ -268,7 +263,7 @@ function Dashboard() {
             {error && (
               <Alert variant="destructive">
                 <Terminal className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
+                <AlertTitle>An Error Occurred</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
@@ -297,3 +292,5 @@ export default function DashboardPage() {
         </AuthGuard>
     )
 }
+
+    

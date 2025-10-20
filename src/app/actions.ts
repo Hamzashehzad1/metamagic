@@ -24,16 +24,18 @@ function handleGenerativeAiError(error: unknown): Error {
     if (error instanceof Error) {
         const lowerCaseMessage = error.message.toLowerCase();
         if (lowerCaseMessage.includes('429') || lowerCaseMessage.includes('quota')) {
-            const quotaError = new Error(`Your Gemini Quota has been exceeded. Full error: ${error.message}`);
+            const quotaError = new Error(`Your Gemini API key quota has been exceeded. Please check your account or try again later.`);
             // Add a specific property to identify this error type
             (quotaError as any).code = 'GEMINI_QUOTA_EXCEEDED';
             return quotaError;
         }
         if (lowerCaseMessage.includes('api key not valid')) {
-            return new Error('Invalid Gemini API Key. Please check your key and try again.');
+            return new Error('The provided Gemini API Key is invalid or has been revoked. Please check your key in the account settings and try again.');
         }
-        return error;
+         // A generic error for other AI-related issues
+        return new Error('An unexpected error occurred with the AI service. Please try again.');
     }
+    // Fallback for non-Error objects
     return new Error('An unknown error occurred while generating metadata.');
 }
 
@@ -76,7 +78,6 @@ export async function processFiles(
     }
     return { results, apiCalls: files.length * apiCallsPerFile };
   } catch (error) {
-    console.error('Error processing file:', error);
     const handledError = handleGenerativeAiError(error);
     return { error: handledError.message, ...('code' in handledError && { code: (handledError as any).code }) };
   }
@@ -102,12 +103,8 @@ export async function processUrl(url: string): Promise<{name: string, dataUri: s
 
     return { name: filename, dataUri };
   } catch (error) {
-    console.error('Error processing URL:', error);
-    if (error instanceof Error) {
-        if (error.message.includes('fetch failed')) {
-            return { error: 'Could not fetch the image from the URL. Please check the link and CORS policy.'}
-        }
-        return { error: error.message };
+    if (error instanceof Error && error.message.includes('fetch failed')) {
+        return { error: 'Could not fetch the image from the URL. Please check the link and ensure the hosting site allows direct access.'}
     }
     return { error: 'An unknown error occurred while fetching the image.' };
   }
@@ -183,16 +180,8 @@ export async function connectWpSite(site: WpSite): Promise<{success: boolean, me
         if (response.status === 401) {
             return { success: false, message: 'Authentication failed. Please check your username and application password.' };
         }
-
-        let errorMessage;
-        try {
-            const errorBody = await response.json();
-            errorMessage = errorBody.message || `API error with status ${response.status}.`;
-        } catch (e) {
-            errorMessage = `WordPress did not return a valid JSON response. This can be caused by an incorrect URL, a firewall, a security plugin, or incorrect permalink settings. Status code: ${response.status}`;
-        }
         
-        return { success: false, message: `Connection failed: ${errorMessage}` };
+        return { success: false, message: `Connection failed. This could be due to an incorrect URL, a firewall, a security plugin, or incorrect permalink settings.` };
 
     } catch (error) {
         if (error instanceof TypeError && error.message.includes('fetch failed')) {
@@ -220,13 +209,7 @@ export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: numb
         });
 
         if (!response.ok) {
-            let errorBody;
-            try {
-                errorBody = await response.json();
-            } catch (e) {
-                 throw new Error(`Failed to fetch media. WordPress returned a non-JSON response with status ${response.status}. This can be caused by an incorrect URL, a firewall, or a security plugin. Please also check your site's permalink settings.`);
-            }
-            throw new Error(errorBody.message || `Failed to fetch media with status ${response.status}.`);
+           throw new Error(`Failed to fetch media. Please check your site's URL, firewall, and security plugin settings.`);
         }
         
         const media: WpMedia[] = await response.json();
@@ -235,7 +218,6 @@ export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: numb
         return { media, totalMedia: totalMedia ? parseInt(totalMedia, 10) : undefined };
 
     } catch (error) {
-        console.error('WP Media Fetch Error:', error);
         const message = error instanceof Error ? error.message : 'An unknown error occurred while fetching media.';
         return { media: [], error: message };
     }
@@ -343,7 +325,7 @@ export async function fetchPageContent(url: string): Promise<{content: string} |
                               .trim();
         return { content: plainText };
     } catch (error) {
-        const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+        const message = "Could not fetch content from the URL. Please check the link and try again.";
         return { error: message };
     }
 }
@@ -365,7 +347,7 @@ export async function fetchWpPostsAndPages(site: WpSite, page: number = 1, perPa
 
         if (!postsResponse.ok || !pagesResponse.ok) {
             // A simple error handling, can be improved to show which one failed
-            throw new Error(`Failed to fetch content. Status - Posts: ${postsResponse.status}, Pages: ${pagesResponse.status}`);
+            throw new Error(`Failed to fetch content. Please check your connection and site settings.`);
         }
 
         const posts: WpPost[] = await postsResponse.json();
@@ -377,7 +359,6 @@ export async function fetchWpPostsAndPages(site: WpSite, page: number = 1, perPa
         return { items: [...posts, ...pages], totalItems: totalPosts + totalPages };
 
     } catch (error) {
-        console.error('WP Posts/Pages Fetch Error:', error);
         const message = error instanceof Error ? error.message : 'An unknown error occurred while fetching content.';
         return { items: [], error: message };
     }
@@ -463,3 +444,5 @@ export async function generateMetaDescriptionAction(
         return { error: handledError.message, ...('code' in handledError && { code: (handledError as any).code }) };
     }
 }
+
+    
