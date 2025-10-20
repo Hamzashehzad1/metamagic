@@ -99,9 +99,12 @@ export function Header() {
   return (
     <header className="py-4 px-4 md:px-6 border-b sticky top-0 bg-background/95 backdrop-blur-sm z-20">
       <div className="container mx-auto flex justify-between items-center">
-        <Link href={user ? "/dashboard" : "/"} className="flex flex-col items-start">
+        <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2">
             <Logo className="h-8 w-auto"/>
-            <span className="text-xs text-muted-foreground -mt-1 ml-px">By Web Brewery</span>
+            <div className="flex flex-col">
+              <span className="font-headline font-bold text-xl tracking-tighter text-primary">MetaMagic</span>
+              <span className="text-xs text-muted-foreground -mt-1">By Web Brewery</span>
+            </div>
         </Link>
         
         {!isMobile ? (
