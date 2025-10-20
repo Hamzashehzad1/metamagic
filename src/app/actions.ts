@@ -1,3 +1,4 @@
+
 'use server';
 
 import { generateImageCaption } from '@/ai/flows/generate-image-caption';
@@ -238,6 +239,38 @@ export async function fetchWpMedia(site: WpSite, page: number = 1, perPage: numb
         const message = error instanceof Error ? error.message : 'An unknown error occurred while fetching media.';
         return { media: [], error: message };
     }
+}
+
+export async function fetchAllWpMedia(site: WpSite): Promise<{media: WpMedia[], error?: string}> {
+    let allMedia: WpMedia[] = [];
+    let page = 1;
+    const perPage = 100; // Fetch max allowed per page
+    let hasMore = true;
+
+    while(hasMore) {
+        try {
+            const result = await fetchWpMedia(site, page, perPage);
+            if (result.error) {
+                // If any page fails, return the error
+                return { media: [], error: result.error };
+            }
+
+            if (result.media.length > 0) {
+                allMedia = allMedia.concat(result.media);
+                page++;
+                // If we get fewer results than we asked for, we've reached the end
+                if (result.media.length < perPage) {
+                    hasMore = false;
+                }
+            } else {
+                hasMore = false;
+            }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'An unknown error occurred while fetching all media.';
+            return { media: [], error: message };
+        }
+    }
+    return { media: allMedia };
 }
 
 export async function updateWpMediaItem(site: WpSite, mediaId: number, altText: string): Promise<{success: boolean, error?: string}> {

@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { connectWpSite, fetchWpMedia, generateAndSaveAltText, type WpSite, type WpMedia } from '@/app/actions';
+import { connectWpSite, fetchWpMedia, generateAndSaveAltText, fetchAllWpMedia, type WpSite, type WpMedia } from '@/app/actions';
 import { Loader2, CheckCircle2, AlertCircle, ImageOff, Link as LinkIcon, Wand2, Sparkles, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -128,6 +128,25 @@ function WpAltText() {
         setCurrentPage(page => page + 1);
     }
     setIsFetchingMedia(false);
+  }
+
+  const handleFetchAllMedia = async (site: WpSite) => {
+      setIsFetchingMedia(true);
+      setMediaError(null);
+      setMedia([]);
+      setCurrentPage(1);
+
+      const result = await fetchAllWpMedia(site);
+
+      if (result.error) {
+          setMediaError(result.error);
+      } else {
+          setMedia(result.media.map(m => ({...m, status: 'pending'})));
+          setTotalMedia(result.media.length);
+          setHasMoreMedia(false);
+          toast({ title: "All Media Loaded", description: `Found ${result.media.length} images.`});
+      }
+      setIsFetchingMedia(false);
   }
 
   const handleDisconnect = async () => {
@@ -412,14 +431,18 @@ function WpAltText() {
                             </div>
                         )}
 
-                        {hasMoreMedia && (
-                            <div className="mt-8 text-center">
+                        <div className="mt-8 text-center flex justify-center gap-4">
+                            {hasMoreMedia && (
                                 <Button onClick={() => handleFetchMedia(connectedSite!)} disabled={isFetchingMedia}>
                                     {isFetchingMedia ? <Loader2 className="mr-2 animate-spin" /> : null}
                                     Load More
                                 </Button>
-                            </div>
-                        )}
+                            )}
+                             <Button onClick={() => handleFetchAllMedia(connectedSite!)} disabled={isFetchingMedia}>
+                                {isFetchingMedia && media.length > 0 ? <Loader2 className="mr-2 animate-spin" /> : null}
+                                Load All Media
+                            </Button>
+                        </div>
                     </>
                 )}
             </div>
