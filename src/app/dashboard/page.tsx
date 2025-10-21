@@ -16,6 +16,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { type ApiKey } from '@/app/account/page';
 import AuthGuard from '@/components/auth-guard';
 import { AuthOverlay } from '@/components/auth-overlay';
+import Link from 'next/link';
 
 
 function Dashboard() {
@@ -282,9 +283,9 @@ function Dashboard() {
                 <p className="text-sm text-muted-foreground">An AI-powered SEO toolkit by <a href="https://webbrewery.co/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Web Brewery</a>.</p>
             </div>
             <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                <a href="/#features" className="hover:text-primary hover:underline">Features</a>
-                <a href="/pricing" className="hover:text-primary hover:underline">Pricing</a>
-                <a href="/dashboard" className="hover:text-primary hover:underline">Dashboard</a>
+                <Link href="/#features" className="hover:text-primary hover:underline">Features</Link>
+                <Link href="/pricing" className="hover:text-primary hover:underline">Pricing</Link>
+                <Link href="/dashboard" className="hover:text-primary hover:underline">Dashboard</Link>
             </nav>
         </div>
       </footer>

@@ -63,7 +63,7 @@ export function Header() {
         <>
           <Comp asChild>
             <Link href="/dashboard" className={!isDropdown ? navigationMenuTriggerStyle() : 'w-full'}>
-              Metadata Generator
+              Dashboard
             </Link>
           </Comp>
           <Comp asChild>
@@ -96,6 +96,13 @@ export function Header() {
                     </NavigationMenuLink>
                 </Link>
             </NavigationMenuItem>
+            <NavigationMenuItem asChild>
+                <Link href="/dashboard" legacyBehavior passHref>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                        Dashboard
+                    </NavigationMenuLink>
+                </Link>
+            </NavigationMenuItem>
         </>
        )
     }
@@ -107,7 +114,7 @@ export function Header() {
       return (
         <>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard">Metadata Generator</Link>
+            <Link href="/dashboard">Dashboard</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/wp-alt-text">WP Alt Text</Link>
@@ -126,6 +133,9 @@ export function Header() {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                     <Link href="/pricing">Pricing</Link>
+                </DropdownMenuItem>
+                 <DropdownMenuItem asChild>
+                    <Link href="/dashboard">Dashboard</Link>
                 </DropdownMenuItem>
             </>
         )
