@@ -1,7 +1,5 @@
-
-import type {NextConfig} from 'next';
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   async headers() {
     const cspHeader = `
       default-src 'self';
@@ -9,7 +7,7 @@ const nextConfig: NextConfig = {
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       img-src 'self' data: blob: https://placehold.co https://*;
       font-src 'self' https://fonts.gstatic.com;
-      connect-src 'self' https://*.firebaseapp.com https://*.firebaseio.com https://*.googleapis.com *;
+      connect-src 'self' https://*.firebaseapp.com https://*.firebaseio.com https://*.googleapis.com * ws://* wss://*;
       frame-src 'self' https://*.firebaseapp.com *;
       object-src 'none';
       base-uri 'self';
@@ -75,5 +73,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-
-    
