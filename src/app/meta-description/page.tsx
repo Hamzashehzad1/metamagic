@@ -568,10 +568,21 @@ function MetaDescriptionPage() {
             </TabsContent>
         </Tabs>
       </main>
-      <footer className="py-4 px-4 md:px-6 border-t mt-16">
-        <div className="container mx-auto text-center text-sm text-muted-foreground flex justify-center items-center gap-4">
-            <p>&copy; {new Date().getFullYear()} MetaMagic. All Rights Reserved.</p>
-            <Link href="/sitemap.xml" className="hover:underline">Sitemap</Link>
+      <footer className="py-6 px-4 md:px-6 border-t mt-16">
+        <div className="container mx-auto flex flex-col items-center gap-4">
+            <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                <Link href="/" className="hover:text-primary hover:underline">Home</Link>
+                <Link href="/#features" className="hover:text-primary hover:underline">Features</Link>
+                <Link href="/pricing" className="hover:text-primary hover:underline">Pricing</Link>
+                <Link href="/dashboard" className="hover:text-primary hover:underline">Dashboard</Link>
+                <Link href="/wp-alt-text" className="hover:text-primary hover:underline">WP Alt Text</Link>
+                <Link href="/meta-description" className="hover:text-primary hover:underline">Meta Description</Link>
+                <Link href="/account" className="hover:text-primary hover:underline">Account</Link>
+            </nav>
+            <div className="text-center text-sm text-muted-foreground flex justify-center items-center gap-4">
+                <p>&copy; {new Date().getFullYear()} MetaMagic. All Rights Reserved.</p>
+                <Link href="/sitemap.xml" className="hover:underline">Sitemap</Link>
+            </div>
         </div>
       </footer>
     </div>
@@ -585,5 +596,3 @@ export default function MetaDescriptionPageWithAuth() {
         </AuthGuard>
     )
 }
-
-    
