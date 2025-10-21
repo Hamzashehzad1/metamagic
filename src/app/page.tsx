@@ -259,29 +259,41 @@ export default function LandingPage() {
             <div className="container mx-auto px-4">
                 <div className="text-center mb-16">
                     <p className="text-sm font-semibold uppercase tracking-wider text-primary">Who We Help</p>
-                    <h2 className="mt-2 text-3xl md:text-4xl font-bold font-headline">Built for Creators and Marketers</h2>
-                    <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">If you work with images online, you'll find MetaMagic indispensable.</p>
+                    <h2 className="mt-2 text-3xl md:text-4xl font-bold font-headline">Built for the Modern Web Creator</h2>
+                    <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">If you create content online, MetaMagic will feel like a superpower.</p>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center max-w-5xl mx-auto">
-                    <div className="flex flex-col items-center">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+                    <div className="flex flex-col items-center text-center p-6 border rounded-lg bg-background hover:shadow-lg hover:-translate-y-1 transition-all">
                         <div className="p-4 bg-primary/10 rounded-xl border border-primary/20 mb-4"><Users className="h-8 w-8 text-primary"/></div>
                         <h3 className="font-semibold text-lg">Photographers</h3>
-                        <p className="text-muted-foreground text-sm mt-1">Generate commercially-viable titles, descriptions, and keywords for stock photo sites like Adobe Stock and Getty in seconds.</p>
+                        <p className="text-muted-foreground text-sm mt-1">Stop guessing keywords. Generate commercially-viable titles, descriptions, and keywords for stock sites like Adobe Stock in seconds.
+                        <br/><br/>
+                        <span className="italic text-primary/80">Example: A travel photographer uploaded 200 photos from a trip. MetaMagic generated unique, location-aware metadata, and one of the photos sold for a premium license within a week.</span>
+                        </p>
                     </div>
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col items-center text-center p-6 border rounded-lg bg-background hover:shadow-lg hover:-translate-y-1 transition-all">
                         <div className="p-4 bg-primary/10 rounded-xl border border-primary/20 mb-4"><Globe className="h-8 w-8 text-primary"/></div>
                         <h3 className="font-semibold text-lg">E-Commerce Stores</h3>
-                        <p className="text-muted-foreground text-sm mt-1">Optimize thousands of product images with descriptive **alternative text SEO** to improve your Google Shopping and organic search visibility.</p>
+                        <p className="text-muted-foreground text-sm mt-1">Turn your product images into traffic magnets. Optimize thousands of images with descriptive **alternative text SEO** to boost your Google Shopping and organic search visibility.
+                        <br/><br/>
+                        <span className="italic text-primary/80">Example: A boutique owner used MetaMagic to fix alt text on 500 product images. Within a month, their "blue floral dress" started ranking on the first page of Google Images, driving direct sales.</span>
+                        </p>
                     </div>
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col items-center text-center p-6 border rounded-lg bg-background hover:shadow-lg hover:-translate-y-1 transition-all">
                         <div className="p-4 bg-primary/10 rounded-xl border border-primary/20 mb-4"><BookOpen className="h-8 w-8 text-primary"/></div>
                         <h3 className="font-semibold text-lg">Bloggers & Publishers</h3>
-                        <p className="text-muted-foreground text-sm mt-1">Ensure every image in your articles has a proper **alt picture** tag, boosting your **SEO image alt text** and making your content more accessible.</p>
+                        <p className="text-muted-foreground text-sm mt-1">Ensure every image in your articles has a perfect **alt picture** tag, boosting your **SEO image alt text** and making your content more accessible to all readers.
+                        <br/><br/>
+                        <span className="italic text-primary/80">Example: A food blogger ran our WordPress tool and found 150 posts with missing alt text. After a few clicks, her image accessibility score improved, and she saw a 20% bump in traffic from niche recipe searches.</span>
+                        </p>
                     </div>
-                     <div className="flex flex-col items-center">
+                     <div className="flex flex-col items-center text-center p-6 border rounded-lg bg-background hover:shadow-lg hover:-translate-y-1 transition-all">
                         <div className="p-4 bg-primary/10 rounded-xl border border-primary/20 mb-4"><Layers className="h-8 w-8 text-primary"/></div>
                         <h3 className="font-semibold text-lg">Agencies & Developers</h3>
-                        <p className="text-muted-foreground text-sm mt-1">Audit and fix entire client websites in minutes. Our WordPress integration makes **adding alt text to images** a billable service that takes you almost no time to complete.</p>
+                        <p className="text-muted-foreground text-sm mt-1">Turn a tedious chore into a quick win. Audit and fix entire client websites in minutes. Our WordPress integration makes **adding alt text to images** a profitable, high-value service.
+                        <br/><br/>
+                        <span className="italic text-primary/80">Example: A freelance developer onboarded a new client and used MetaMagic to fix 1,000+ missing alt tags in under 10 minutes, immediately demonstrating value and improving the site’s technical SEO baseline.</span>
+                        </p>
                     </div>
                 </div>
             </div>
