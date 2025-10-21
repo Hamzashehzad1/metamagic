@@ -4,32 +4,13 @@
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useUser } from '@/firebase';
 import { Check, ChevronRight, Image as ImageIcon, FileText, Globe } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { faqData, testimonials } from './landing-page-data';
 
 export default function LandingPage() {
-    const { user, isUserLoading } = useUser();
-    const router = useRouter();
-
-    useEffect(() => {
-        if (!isUserLoading && user) {
-            router.push('/dashboard');
-        }
-    }, [user, isUserLoading, router]);
-    
-    if (isUserLoading || user) {
-        return (
-            <div className="flex items-center justify-center h-screen bg-background">
-                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
-            </div>
-        );
-    }
   
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -231,5 +212,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
-    
