@@ -9,7 +9,6 @@ import Link from 'next/link';
 import { faqData, testimonials } from './landing-page-data';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Image from 'next/image';
 
 
@@ -125,7 +124,7 @@ export default function LandingPage() {
                              <div className="flex-shrink-0 w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-headline text-2xl text-primary font-bold">2</div>
                             <div className="flex-1 text-center md:text-right">
                                 <h3 className="text-2xl font-semibold">Click "Generate"</h3>
-                                <p className="text-muted-foreground mt-2">This is the magic button. Our AI alt text engine analyzes your content and instantly writes everything you need: a descriptive alt attribute, SEO titles, and commercially-valuable keywords.</p>
+                                <p className="text-muted-foreground mt-2">This is the magic button. Our alt text AI engine analyzes your content and instantly writes everything you need: a descriptive alt attribute, SEO titles, and commercially-valuable keywords.</p>
                             </div>
                         </div>
                         <div className="flex flex-col md:flex-row items-center gap-8">
@@ -155,11 +154,11 @@ export default function LandingPage() {
                         </CardHeader>
                         <CardContent>
                             <ul className="space-y-4">
-                                <li className="flex items-start gap-3"><span className="text-destructive mt-1">&#10007;</span><div><strong>Stare at an image.</strong> Think about what to write.</div></li>
-                                <li className="flex items-start gap-3"><span className="text-destructive mt-1">&#10007;</span><div><strong>Write a mediocre alt tag.</strong> Is it good for SEO? Who knows.</div></li>
-                                <li className="flex items-start gap-3"><span className="text-destructive mt-1">&#10007;</span><div><strong>Brainstorm keywords.</strong> Guess what people might search for.</div></li>
-                                <li className="flex items-start gap-3"><span className="text-destructive mt-1">&#10007;</span><div><strong>Write a title and description.</strong> Hope it's compelling.</div></li>
-                                <li className="flex items-start gap-3"><span className="text-destructive mt-1">&#10007;</span><div><strong>Repeat 49 more times.</strong> Lose your will to live.</div></li>
+                                <li className="flex items-start gap-3"><span className="text-destructive mt-1">&#10007;</span><div>Stare at an image. Think about what to write.</div></li>
+                                <li className="flex items-start gap-3"><span className="text-destructive mt-1">&#10007;</span><div>Write a mediocre alt tag. Is it good for SEO? Who knows.</div></li>
+                                <li className="flex items-start gap-3"><span className="text-destructive mt-1">&#10007;</span><div>Brainstorm keywords. Guess what people might search for.</div></li>
+                                <li className="flex items-start gap-3"><span className="text-destructive mt-1">&#10007;</span><div>Write a title and description. Hope it's compelling.</div></li>
+                                <li className="flex items-start gap-3"><span className="text-destructive mt-1">&#10007;</span><div>Repeat 49 more times. Lose your will to live.</div></li>
                                 <li className="flex items-start gap-3 font-bold mt-4"><span className="text-destructive mt-1">&#10007;</span><div>Result: Hours wasted, inconsistent quality.</div></li>
                             </ul>
                         </CardContent>
@@ -170,10 +169,10 @@ export default function LandingPage() {
                         </CardHeader>
                         <CardContent>
                             <ul className="space-y-4">
-                                <li className="flex items-start gap-3"><span className="text-green-500 mt-1">&#10003;</span><div><strong>Upload 50 images.</strong> Go grab a coffee.</div></li>
-                                <li className="flex items-start gap-3"><span className="text-green-500 mt-1">&#10003;</span><div><strong>Click one button.</strong> Seriously, just one.</div></li>
-                                <li className="flex items-start gap-3"><span className="text-green-500 mt-1">&#10003;</span><div><strong>Review perfect metadata.</strong> Our AI handles the alt attribute for images, titles, and keywords.</div></li>
-                                <li className="flex items-start gap-3"><span className="text-green-500 mt-1">&#10003;</span><div><strong>Export or Sync.</strong> All 50 images are done and optimized.</div></li>
+                                <li className="flex items-start gap-3"><span className="text-green-500 mt-1">&#10003;</span><div>Upload 50 images. Go grab a coffee.</div></li>
+                                <li className="flex items-start gap-3"><span className="text-green-500 mt-1">&#10003;</span><div>Click one button. Seriously, just one.</div></li>
+                                <li className="flex items-start gap-3"><span className="text-green-500 mt-1">&#10003;</span><div>Review perfect metadata. Our AI handles the alt attribute for images, titles, and keywords.</div></li>
+                                <li className="flex items-start gap-3"><span className="text-green-500 mt-1">&#10003;</span><div>Export or Sync. All 50 images are done and optimized.</div></li>
                                 <li className="flex items-start gap-3 font-bold mt-4"><span className="text-green-500 mt-1">&#10003;</span><div>Result: Minutes spent, expert-level optimization.</div></li>
                             </ul>
                         </CardContent>
@@ -441,7 +440,7 @@ export default function LandingPage() {
                         <p className="text-sm text-muted-foreground">For secure user authentication and data storage.</p>
                     </div>
                      <div className="flex flex-col items-center gap-2">
-                        <Image src="https://upload.wikimedia.org/wikipedia/commons/2/20/WordPress_logo.svg" width={64} height={64} alt="WordPress Logo" data-ai-hint="logo" />
+                        <Image src="https://s.w.org/style/images/about/WordPress-logotype-wmark.png" width={64} height={64} alt="WordPress Logo" data-ai-hint="logo" />
                         <span className="font-semibold">WordPress</span>
                         <p className="text-sm text-muted-foreground">For direct media library integration and adding alt tags to images.</p>
                     </div>

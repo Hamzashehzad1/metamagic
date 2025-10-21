@@ -1,3 +1,4 @@
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -8,11 +9,7 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'raw.githubusercontent.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'upload.wikimedia.org',
+        hostname: 's.w.org',
       },
       {
         protocol: 'https',
