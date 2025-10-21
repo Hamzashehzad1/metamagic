@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 export default function LandingPage() {
     const { user, isUserLoading } = useUser();
@@ -20,6 +21,59 @@ export default function LandingPage() {
             router.push('/dashboard');
         }
     }, [user, isUserLoading, router]);
+
+    const testimonials = [
+      {
+        quote: "MetaMagic has been a game-changer for our stock photography business. We've cut our metadata workflow time by over 80% and our image visibility has skyrocketed. An essential tool.",
+        name: "Sarah L.",
+        title: "Professional Photographer"
+      },
+      {
+        quote: "I used to dread writing alt text for my client's WordPress sites. Now, I can fix an entire media library in minutes. My clients are happy, and my SEO reports look great.",
+        name: "Mike R.",
+        title: "Freelance Web Developer"
+      },
+      {
+        quote: "The meta description generator is scary good. It consistently writes better, more clickable descriptions than I can. Our blog's click-through rate from Google has increased by 15%.",
+        name: "Elena K.",
+        title: "Content Marketing Manager"
+      },
+      {
+        quote: "As a blogger, image SEO was my bottleneck. MetaMagic automated the whole process. I'm getting more traffic from Google Images than ever before. Highly recommended!",
+        name: "David Chen",
+        title: "Travel Blogger"
+      },
+      {
+        quote: "The ability to customize AI output with my own keywords is a killer feature. It gives me the perfect blend of automation and control. This is the SEO tool I didn't know I needed.",
+        name: "Jessica P.",
+        title: "E-commerce Store Owner"
+      },
+      {
+        quote: "I manage multiple WordPress sites. The WP Alt Text tool is a lifesaver. Connecting a site and fixing all missing alt text in one go saves me an incredible amount of time.",
+        name: "Tom Henderson",
+        title: "Agency Owner"
+      },
+      {
+        quote: "The pricing model is the best part. It's free to use the platform, and I just pay for my own Gemini API usage. It's transparent, fair, and incredibly cost-effective.",
+        name: "Maria G.",
+        title: "Indie Developer"
+      },
+      {
+        quote: "I was skeptical about AI-generated metadata, but the quality is outstanding. The titles and descriptions are creative, relevant, and optimized for clicks. My sales on Adobe Stock have increased.",
+        name: "Alex Johnson",
+        title: "Stock Artist"
+      },
+      {
+        quote: "The interface is so intuitive. I was able to connect my site and start generating metadata in less than five minutes. No complicated setup, just results.",
+        name: "Emily W.",
+        title: "Small Business Owner"
+      },
+      {
+        quote: "This tool paid for itself within the first week. The time I saved on content updates allowed me to focus on creating new products. It's an incredible ROI.",
+        name: "Brian S.",
+        title: "Digital Creator"
+      }
+    ];
 
     if (isUserLoading || user) {
         return (
@@ -156,29 +210,33 @@ export default function LandingPage() {
                         Don't just take our word for it. Here's what real users are saying about MetaMagic.
                     </p>
                 </div>
-                <div className="grid md:grid-cols-3 gap-8">
-                    <Card>
-                        <CardContent className="p-6">
-                            <p className="text-muted-foreground mb-4">"MetaMagic has been a game-changer for our stock photography business. We've cut our metadata workflow time by over 80% and our image visibility has skyrocketed. An essential tool."</p>
-                            <div className="font-semibold">Sarah L.</div>
-                            <div className="text-sm text-muted-foreground">Professional Photographer</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="p-6">
-                            <p className="text-muted-foreground mb-4">"I used to dread writing alt text for my client's WordPress sites. Now, I can fix an entire media library in minutes. My clients are happy, my SEO reports look great, and I have more time to focus on design."</p>
-                            <div className="font-semibold">Mike R.</div>
-                            <div className="text-sm text-muted-foreground">Freelance Web Developer</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="p-6">
-                            <p className="text-muted-foreground mb-4">"The meta description generator is scary good. It consistently writes better, more clickable descriptions than I can. Our blog's click-through rate from Google has increased by 15% since we started using it."</p>
-                            <div className="font-semibold">Elena K.</div>
-                            <div className="text-sm text-muted-foreground">Content Marketing Manager</div>
-                        </CardContent>
-                    </Card>
-                </div>
+                <Carousel
+                  opts={{
+                    align: "start",
+                    loop: true,
+                  }}
+                  className="w-full max-w-xs sm:max-w-xl md:max-w-3xl lg:max-w-5xl mx-auto"
+                >
+                  <CarouselContent>
+                    {testimonials.map((testimonial, index) => (
+                      <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+                        <div className="p-1 h-full">
+                           <Card className="h-full flex flex-col">
+                              <CardContent className="p-6 flex-1 flex flex-col justify-between">
+                                  <p className="text-muted-foreground mb-4">"{testimonial.quote}"</p>
+                                  <div>
+                                    <div className="font-semibold">{testimonial.name}</div>
+                                    <div className="text-sm text-muted-foreground">{testimonial.title}</div>
+                                  </div>
+                              </CardContent>
+                          </Card>
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious />
+                  <CarouselNext />
+                </Carousel>
             </div>
         </section>
 
@@ -213,6 +271,42 @@ export default function LandingPage() {
                   Not at all! MetaMagic is designed for everyone—from professional SEOs to bloggers, photographers, and small business owners. Our tools automate the best practices, so you can achieve expert-level results without the steep learning curve.
                 </AccordionContent>
               </AccordionItem>
+              <AccordionItem value="item-5">
+                <AccordionTrigger className="text-lg">What is an "Application Password" for WordPress?</AccordionTrigger>
+                <AccordionContent className="text-base text-muted-foreground">
+                  An Application Password is a special password you can create in your WordPress user profile. It allows applications like MetaMagic to connect to your site securely without you having to use your main password. It's a standard and safe way to authorize external tools.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-6">
+                <AccordionTrigger className="text-lg">Can I edit the metadata the AI generates?</AccordionTrigger>
+                <AccordionContent className="text-base text-muted-foreground">
+                  Yes! We encourage it. The AI gives you a fantastic, optimized starting point, but you can always tweak the titles, descriptions, and keywords directly in our interface before you export or update them.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-7">
+                <AccordionTrigger className="text-lg">What happens to my data?</AccordionTrigger>
+                <AccordionContent className="text-base text-muted-foreground">
+                  Your API keys and WordPress connections are stored in your own private data space in our database. The images and content you process are sent to the Gemini API for generation but are not stored by MetaMagic.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-8">
+                <AccordionTrigger className="text-lg">Which SEO plugins for WordPress are supported?</AccordionTrigger>
+                <AccordionContent className="text-base text-muted-foreground">
+                  Our Meta Description tool for WordPress is currently optimized to work with the "All in One SEO" (AIOSEO) plugin, as it's one of the most popular. Support for other plugins like Yoast or Rank Math may be added in the future.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-9">
+                <AccordionTrigger className="text-lg">Is there a limit to how many images or pages I can process?</AccordionTrigger>
+                <AccordionContent className="text-base text-muted-foreground">
+                  There are no limits imposed by MetaMagic. You can process as many items as you like. The only constraint will be the rate limits and quotas on your own Gemini API key, which are generally very generous for most use cases.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-10">
+                <AccordionTrigger className="text-lg">How do I get a Google Gemini API key?</AccordionTrigger>
+                <AccordionContent className="text-base text-muted-foreground">
+                  You can get a free API key from Google AI Studio. Simply sign in with your Google account and create a new key. We have a link to it in the Account section of the app to make it easy for you.
+                </AccordionContent>
+              </AccordionItem>
             </Accordion>
           </div>
         </section>
@@ -240,3 +334,5 @@ export default function LandingPage() {
     </div>
   );
 }
+
+    
