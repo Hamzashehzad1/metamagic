@@ -124,7 +124,7 @@ function Dashboard() {
 
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred during processing.';
-      setError(errorMessage);
+      setError('An unexpected error occurred. Please try again.');
       toast({
         variant: 'destructive',
         title: 'Processing Error',
@@ -173,8 +173,8 @@ function Dashboard() {
               const result = await processUrl(text);
 
               if ('error' in result) {
-                setError(result.error);
-                toast({ variant: 'destructive', title: 'URL Paste Error', description: result.error });
+                setError('Could not fetch the image from the URL. Please check the link and ensure it is a direct image link.');
+                toast({ variant: 'destructive', title: 'URL Paste Error', description: 'Could not fetch the image from the URL.' });
               } else {
                 try {
                   const response = await fetch(result.dataUri);
@@ -292,5 +292,3 @@ export default function DashboardPage() {
         </AuthGuard>
     )
 }
-
-    

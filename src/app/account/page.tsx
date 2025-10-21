@@ -174,7 +174,7 @@ function AccountPage() {
           toast({ title: 'Success!', description: `Connection for "${newConnection.url}" was successful and has been saved.`});
           setShowWpDialog(false);
       } else {
-          toast({ variant: 'destructive', title: 'Connection Failed', description: testResult.message, duration: 8000 });
+          toast({ variant: 'destructive', title: 'Connection Failed', description: 'Connection failed. Please check your URL, username, and application password.', duration: 8000 });
       }
 
       setIsTestingWpConnection(false);

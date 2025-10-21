@@ -6,6 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: 'Pricing | MetaMagic',
+    description: 'Get free, unlimited access to all of MetaMagic\'s AI-powered SEO tools. Your only limit is your own Gemini API key quota.',
+    alternates: {
+        canonical: '/pricing',
+    },
+};
 
 export default function PricingPage() {
   return (

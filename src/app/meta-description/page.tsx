@@ -128,7 +128,7 @@ function MetaDescriptionPage() {
       await handleGenerate(result.content, false);
     } catch (e) {
       const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-      setError(message);
+      setError('Could not fetch content from the URL. Please check the link and try again.');
       toast({ variant: 'destructive', title: 'Error Fetching URL', description: "Could not fetch content from the URL. Please check the link and try again." });
     } finally {
       setIsLoading(false);
@@ -162,7 +162,7 @@ function MetaDescriptionPage() {
       toast({ title: "Success!", description: "Meta description generated." });
     } catch(e) {
       const message = e instanceof Error ? e.message : 'An unknown error occurred.';
-      setError(message);
+      setError('Could not generate a meta description. Please try again.');
       toast({ variant: 'destructive', title: 'Generation Error', description: "Could not generate a meta description. Please try again." });
     } finally {
       setIsGenerating(false);
@@ -191,7 +191,7 @@ function MetaDescriptionPage() {
         toast({ title: 'Success!', description: result.message });
         handleFetchContent(site, true);
     } else {
-        setWpError(result.message);
+        setWpError('Connection failed. Please check your URL, username, and application password.');
     }
   };
 
@@ -207,7 +207,7 @@ function MetaDescriptionPage() {
     const result = await fetchWpPostsAndPages(site, pageToFetch, POSTS_PER_PAGE);
     
     if (result.error) {
-        setWpContentError(result.error);
+        setWpContentError('Could not fetch posts and pages. Please check your connection and permissions.');
     } else {
         setContentItems(prev => reset ? result.items.map(p => ({...p, status: 'pending'})) : [...prev, ...result.items.map(p => ({...p, status: 'pending'}))]);
         if(result.totalItems !== undefined) setTotalItems(result.totalItems);
@@ -584,5 +584,3 @@ export default function MetaDescriptionPageWithAuth() {
         </AuthGuard>
     )
 }
-
-    

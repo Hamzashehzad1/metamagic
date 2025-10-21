@@ -100,7 +100,7 @@ function WpAltText() {
         toast({ title: 'Success!', description: result.message });
         handleFetchMedia(site, true);
     } else {
-        setError(result.message);
+        setError('Connection failed. Please check your URL, username, and application password.');
     }
   };
 
@@ -116,7 +116,7 @@ function WpAltText() {
     const result = await fetchWpMedia(site, pageToFetch, MEDIA_PER_PAGE);
     
     if (result.error) {
-        setMediaError(result.error);
+        setMediaError('Could not fetch media. Please check your site connection and permissions.');
     } else {
         setMedia(prev => reset ? result.media.map(m => ({...m, status: 'pending'})) : [...prev, ...result.media.map(m => ({...m, status: 'pending'}))]);
         if(result.totalMedia !== undefined) setTotalMedia(result.totalMedia);
@@ -139,7 +139,7 @@ function WpAltText() {
       const result = await fetchAllWpMedia(site);
 
       if (result.error) {
-          setMediaError(result.error);
+          setMediaError('Could not fetch all media. The connection may have been interrupted.');
       } else {
           setMedia(result.media.map(m => ({...m, status: 'pending'})));
           setTotalMedia(result.media.length);
@@ -466,5 +466,3 @@ export default function WpAltTextPage() {
         </AuthGuard>
     )
 }
-
-    
