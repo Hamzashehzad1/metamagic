@@ -88,6 +88,7 @@ function MetaDescriptionPage() {
     if (wpConnections && wpConnections.length > 0 && !connectedSite) {
         handleWpConnect(wpConnections[0]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wpConnections, connectedSite]);
 
   const incrementUsage = useCallback(async (key: ApiKey, count: number) => {
@@ -258,7 +259,7 @@ function MetaDescriptionPage() {
         
         // 3. Update WordPress
         const updateResult = await updateWpPostMeta(connectedSite, item.id, generationResult.metaDescription);
-        if (!updateResult.success) {
+        if ('error' in updateResult && updateResult.error) {
             throw new Error(updateResult.error);
         }
         
@@ -281,8 +282,8 @@ function MetaDescriptionPage() {
     });
   }, [contentItems, wpFilter]);
 
-  const hasNoKeys = !isLoadingKeys && !!apiKeys && apiKeys.length === 0;
-  const hasNoConnections = !isLoadingConnections && !!wpConnections && wpConnections.length === 0;
+  const hasNoKeys = !isLoadingKeys && (!apiKeys || apiKeys.length === 0);
+  const hasNoConnections = !isLoadingConnections && (!wpConnections || wpConnections.length === 0);
 
   if (isLoadingConnections || isLoadingKeys) {
       return (
@@ -603,5 +604,3 @@ export default function MetaDescriptionPageWithAuth() {
         </AuthGuard>
     )
 }
-
-    

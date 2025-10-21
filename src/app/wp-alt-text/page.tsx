@@ -75,6 +75,7 @@ function WpAltText() {
         const lastUsedConnection = wpConnections[0];
         handleConnect(lastUsedConnection);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wpConnections, connectedSite]);
 
 
@@ -219,8 +220,8 @@ function WpAltText() {
 
   const mediaWithoutAltText = useMemo(() => media.filter(m => !m.alt_text).length, [media]);
 
-  const hasNoKeys = !isLoadingKeys && !!apiKeys && apiKeys.length === 0;
-  const hasNoConnections = !isLoadingConnections && !!wpConnections && wpConnections.length === 0;
+  const hasNoKeys = !isLoadingKeys && (!apiKeys || apiKeys.length === 0);
+  const hasNoConnections = !isLoadingConnections && (!wpConnections || wpConnections.length === 0);
 
   if (isLoadingConnections || isLoadingKeys) {
       return (
@@ -314,7 +315,7 @@ function WpAltText() {
                         )}
                         <div className="flex flex-col gap-4">
                             {wpConnections?.map(site => (
-                                <Button key={site.id} variant="outline" onClick={() => handleConnect(site)} disabled={isLoading || hasNoKeys}>
+                                <Button key={site.id} variant="outline" onClick={() => handleConnect(site)} disabled={!!isLoading || !!hasNoKeys}>
                                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                     Connect to {site.url}
                                 </Button>
@@ -478,5 +479,3 @@ export default function WpAltTextPage() {
         </AuthGuard>
     )
 }
-
-    
