@@ -27,14 +27,13 @@ export type SummarizeContentOutput = z.infer<typeof SummarizeContentOutputSchema
 
 export async function summarizeContentForMeta(input: SummarizeContentInput): Promise<SummarizeContentOutput> {
   const { apiKey, ...rest } = input;
-  return summarizeContentFlow(rest, { auth: apiKey });
+  return summarizeContentFlow.withAuth({ apiKey })(rest);
 }
 
 const prompt = ai.definePrompt({
   name: 'summarizeContentForMetaPrompt',
   input: {schema: SummarizeContentInputSchema.omit({apiKey: true})},
   output: {schema: SummarizeContentOutputSchema},
-  model: 'googleai/gemini-2.5-flash',
   prompt: `You are an expert SEO analyst. Your task is to read the following webpage content and distill it into a short, potent summary. This summary will be used by another AI to write a meta description.
 
 Focus on the most important topics, keywords, and the core value proposition of the content. Ignore boilerplate text like menus, footers, and ads. The output should be a dense paragraph of the most critical information.

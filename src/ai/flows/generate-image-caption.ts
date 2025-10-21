@@ -29,14 +29,14 @@ export type GenerateImageCaptionOutput = z.infer<typeof GenerateImageCaptionOutp
 
 export async function generateImageCaption(input: GenerateImageCaptionInput): Promise<GenerateImageCaptionOutput> {
   const { apiKey, ...rest } = input;
-  return generateImageCaptionFlow(rest, { auth: apiKey });
+  return generateImageCaptionFlow.withAuth({ apiKey })(rest);
 }
 
 const prompt = ai.definePrompt({
   name: 'generateImageCaptionPrompt',
   input: {schema: GenerateImageCaptionInputSchema.omit({apiKey: true})},
   output: {schema: GenerateImageCaptionOutputSchema},
-  model: 'googleai/gemini-2.5-flash',
+  model: 'googleai/gemini-pro-vision',
   prompt: `You are an AI image captioning expert for stock photography. Generate a concise, factual, and descriptive caption for the image. The caption should be suitable for use as a description on a stock photo website.
 
 Image: {{media url=photoDataUri}}`,

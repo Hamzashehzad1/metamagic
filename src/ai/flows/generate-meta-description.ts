@@ -27,14 +27,13 @@ export type GenerateMetaDescriptionOutput = z.infer<typeof GenerateMetaDescripti
 
 export async function generateMetaDescription(input: GenerateMetaDescriptionInput): Promise<GenerateMetaDescriptionOutput> {
   const { apiKey, ...rest } = input;
-  return generateMetaDescriptionFlow(rest, { auth: apiKey });
+  return generateMetaDescriptionFlow.withAuth({ apiKey })(rest);
 }
 
 const prompt = ai.definePrompt({
   name: 'generateMetaDescriptionPrompt',
   input: {schema: GenerateMetaDescriptionInputSchema.omit({apiKey: true})},
   output: {schema: GenerateMetaDescriptionOutputSchema},
-  model: 'googleai/gemini-2.5-flash',
   prompt: `You are an expert SEO copywriter. Analyze the following webpage content and write a compelling, SEO-friendly meta description.
 
 Rules:
@@ -63,5 +62,3 @@ const generateMetaDescriptionFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    

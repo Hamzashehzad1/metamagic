@@ -38,7 +38,7 @@ export type ExtractSeoMetadataOutput = z.infer<typeof ExtractSeoMetadataOutputSc
 
 export async function extractSeoMetadata(input: ExtractSeoMetadataInput): Promise<ExtractSeoMetadataOutput> {
   const { apiKey, ...rest } = input;
-  return extractSeoMetadataFlow(rest, { auth: apiKey });
+  return extractSeoMetadataFlow.withAuth({ apiKey })(rest);
 }
 
 const prompt = ai.definePrompt({

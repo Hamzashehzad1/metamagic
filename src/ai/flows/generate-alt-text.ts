@@ -27,16 +27,14 @@ export type GenerateAltTextOutput = z.infer<typeof GenerateAltTextOutputSchema>;
 
 export async function generateAltText(input: GenerateAltTextInput): Promise<GenerateAltTextOutput> {
   const { apiKey, ...rest } = input;
-  // Note: The 'auth' field is being used to pass the API key to the flow's execution context.
-  // This is a temporary solution until a more integrated auth system is in place.
-  return generateAltTextFlow(rest, { auth: apiKey });
+  return generateAltTextFlow.withAuth({ apiKey })(rest);
 }
 
 const prompt = ai.definePrompt({
   name: 'generateAltTextPrompt',
   input: {schema: GenerateAltTextInputSchema.omit({apiKey: true})},
   output: {schema: GenerateAltTextOutputSchema},
-  model: 'googleai/gemini-2.5-flash',
+  model: 'googleai/gemini-pro-vision',
   prompt: `You are an AI expert in SEO and accessibility. Generate a concise, descriptive, and SEO-friendly alt text for the following image. The alt text should accurately describe the image for visually impaired users and search engines. Do not include phrases like "image of" or "picture of".
 
 Image: {{media url=imageUrl}}`,
