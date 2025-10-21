@@ -2,7 +2,7 @@
 "use client"
 
 import { useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, type Accept } from 'react-dropzone';
 import { UploadCloud, Loader2, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -14,7 +14,7 @@ interface FileUploaderProps {
   files: File[];
   isLoading: boolean;
   loadingStatus: string;
-  accept?: Record<string, string[]>;
+  accept?: Accept;
   dropzoneText?: string;
   disabled?: boolean;
   onRemoveFile: (index: number) => void;
@@ -26,9 +26,9 @@ export function FileUploader({
     isLoading, 
     loadingStatus, 
     accept = {
-        'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.svg+xml'],
+        'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.svg'],
     },
-    dropzoneText = "Images supported (JPG, PNG, GIF, WEBP)",
+    dropzoneText = "Images supported (JPG, PNG, GIF, WEBP, SVG)",
     disabled = false,
     onRemoveFile
 }: FileUploaderProps) {
@@ -51,7 +51,7 @@ export function FileUploader({
     return (
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-4">
         {files.map((file, index) => (
-          <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border">
+          <div key={`${file.name}-${index}`} className="relative group aspect-square rounded-lg overflow-hidden border">
              <Image
                 src={URL.createObjectURL(file)}
                 alt={`Preview of ${file.name}`}
@@ -61,7 +61,7 @@ export function FileUploader({
                 data-ai-hint="uploaded image"
              />
              <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="destructive" size="icon" onClick={() => onRemoveFile(index)}>
+                <Button variant="destructive" size="icon" onClick={(e) => { e.stopPropagation(); onRemoveFile(index); }}>
                     <X className="h-5 w-5"/>
                 </Button>
              </div>
