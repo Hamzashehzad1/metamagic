@@ -366,7 +366,7 @@ function WpAltText() {
                     </div>
 
                     <div className="flex flex-col items-center gap-4 w-full md:w-auto">
-                         <Button onClick={handleGenerateAll} disabled={isGenerating || mediaWithoutAltText === 0 || !isConnected} className="w-full md:w-auto">
+                         <Button onClick={handleGenerateAll} disabled={isGenerating || mediaWithoutAltText === 0 || !isConnected || hasNoKeys} className="w-full md:w-auto">
                             <Sparkles className="mr-2 h-4 w-4" />
                             {isGenerating ? 'Generating...' : `Generate for ${mediaWithoutAltText} missing`}
                         </Button>

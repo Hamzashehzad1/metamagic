@@ -122,13 +122,14 @@ function MetaDescriptionPage() {
 
     try {
       const result = await fetchPageContent(url);
-      if (result.error) {
+      if ('error' in result) {
         throw new Error(result.error);
       }
       await handleGenerate(result.content, false);
     } catch (e) {
-      setError('Could not fetch content from the URL. Please check the link and try again.');
-      toast({ variant: 'destructive', title: 'Error Fetching URL', description: "Could not fetch content from the URL. Please check the link and try again." });
+      const message = e instanceof Error ? e.message : 'Could not fetch content from the URL. Please check the link and try again.';
+      setError(message);
+      toast({ variant: 'destructive', title: 'Error Fetching URL', description: message });
     } finally {
       setIsLoading(false);
     }
@@ -239,7 +240,7 @@ function MetaDescriptionPage() {
     try {
         // 1. Fetch content from the post/page URL
         const contentResult = await fetchPageContent(item.link);
-        if (contentResult.error) throw new Error(contentResult.error);
+        if ('error' in contentResult) throw new Error(contentResult.error);
 
         // 2. Generate new meta description
         const generationResult = await generateMetaDescriptionAction(activeKey.key, contentResult.content, true);
@@ -259,7 +260,7 @@ function MetaDescriptionPage() {
         toast({ title: "Success!", description: `Meta description updated for "${item.title.rendered}".` });
 
     } catch (e) {
-        const message = "Failed to generate description. Please try again.";
+        const message = e instanceof Error ? e.message : "Failed to generate description. Please try again.";
         setContentItems(prev => prev.map(p => p.id === item.id ? { ...p, status: 'failed', error: message } : p));
         toast({ variant: 'destructive', title: `Error for "${item.title.rendered}"`, description: message, duration: 5000 });
     }
@@ -596,3 +597,5 @@ export default function MetaDescriptionPageWithAuth() {
         </AuthGuard>
     )
 }
+
+    
