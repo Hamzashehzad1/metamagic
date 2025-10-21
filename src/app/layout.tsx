@@ -13,11 +13,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'MetaMagic - AI-Powered SEO Metadata Generator',
     description: 'Stop guessing. Start dominating your media SEO with AI-generated metadata.',
-    url: 'https://metamagic.cloud', // Use the new domain
+    url: 'https://metamagic.cloud',
     siteName: 'MetaMagic',
     images: [
       {
-        url: 'https://metamagic.cloud/og-image.png', // Use the new domain
+        url: 'https://metamagic.cloud/og-image.png',
         width: 1200,
         height: 630,
         alt: 'MetaMagic Logo and Tagline',
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     title: 'MetaMagic - AI-Powered SEO Metadata Generator',
     description: 'Stop guessing. Start dominating your media SEO with AI-generated metadata.',
     creator: '@webbrewery',
-    images: ['https://metamagic.cloud/twitter-image.png'], // Use the new domain
+    images: ['https://metamagic.cloud/twitter-image.png'],
   },
   robots: {
     index: true,
@@ -57,8 +57,8 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "MetaMagic",
-    "url": "https://metamagic.cloud", // Use the new domain
-    "logo": "https://metamagic.cloud/icon.svg", // Use the new domain
+    "url": "https://metamagic.cloud",
+    "logo": "https://metamagic.cloud/icon.svg",
     "description": "AI-powered metadata generation for images and web content to improve SEO.",
     "sameAs": []
   };
