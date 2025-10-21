@@ -400,7 +400,7 @@ export default function LandingPage() {
                             <CardTitle className="text-lg">Be Descriptive, Not Spammy</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-muted-foreground text-sm">Good **alt text** describes the image. Bad alt text is just a list of keywords. Instead of `alt="dog cat pet buy"`, write `alt="A golden retriever playing with a calico cat in a sunny field"`. It's better for **alt tags SEO** and users.</p>
+                            <p className="text-muted-foreground text-sm">Good **alt text** describes what's in the image. Bad alt text is just a list of keywords. Instead of `alt="dog cat pet buy"`, write `alt="A golden retriever playing with a calico cat in a sunny field"`. It's better for **alt tags SEO** and for users.</p>
                         </CardContent>
                     </Card>
                     <Card className="bg-background">
@@ -408,7 +408,7 @@ export default function LandingPage() {
                             <CardTitle className="text-lg">Don't Forget the `title`</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-muted-foreground text-sm">The **alt title** attribute, while less important for SEO than the **alt attribute**, provides a tooltip on hover. It's a small UX win. Our tool generates both for you.</p>
+                            <p className="text-muted-foreground text-sm">The **alt title** attribute, while less crucial than the main **alt attribute**, provides a handy tooltip on hover. It's a small user experience win that adds a touch of polish. Our tool generates both for you.</p>
                         </CardContent>
                     </Card>
                      <Card className="bg-background">
@@ -416,7 +416,7 @@ export default function LandingPage() {
                             <CardTitle className="text-lg">Context is King</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-muted-foreground text-sm">Your `alt` tag should reflect the context of the page. If an image of a laptop is on a page selling that laptop, include the model name in the alt text. This is a key part of our AI's process.</p>
+                            <p className="text-muted-foreground text-sm">Your **alt** tag should reflect the context of the page. If an image of a laptop is on a page selling that exact model, it's a good idea to include the model name in the alt text. This is a key part of our AI's process for creating relevant **image alt text**.</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -428,7 +428,7 @@ export default function LandingPage() {
             <div className="container mx-auto px-4 text-center">
                  <p className="text-sm font-semibold uppercase tracking-wider text-primary">Plays Well With Others</p>
                 <h2 className="mt-2 text-3xl md:text-4xl font-bold font-headline">Seamless Integrations</h2>
-                <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">We connect with the tools you already use.</p>
+                <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">We connect with the tools you already use, ensuring a smooth workflow.</p>
                 <div className="mt-12 flex justify-center items-center gap-12">
                     <div className="flex flex-col items-center gap-2">
                         <Image src="https://raw.githubusercontent.com/firebase/firebase-brand-guidelines/main/static/images/brand-guidelines/logo-logomark.svg" width={64} height={64} alt="Firebase Logo" data-ai-hint="logo" />
@@ -438,15 +438,15 @@ export default function LandingPage() {
                      <div className="flex flex-col items-center gap-2">
                         <Image src="https://upload.wikimedia.org/wikipedia/commons/2/20/WordPress_logo.svg" width={64} height={64} alt="WordPress Logo" data-ai-hint="logo" />
                         <span className="font-semibold">WordPress</span>
-                        <p className="text-sm text-muted-foreground">For direct media library integration.</p>
+                        <p className="text-sm text-muted-foreground">For direct media library integration and **adding alt tags to images**.</p>
                     </div>
                     <div className="flex flex-col items-center gap-2">
                         <Image src="https://www.gstatic.com/images/branding/product/1x/gemini_48dp.png" width={64} height={64} alt="Google Gemini Logo" data-ai-hint="logo" />
                         <span className="font-semibold">Google Gemini</span>
-                        <p className="text-sm text-muted-foreground">The AI engine powering our metadata generation.</p>
+                        <p className="text-sm text-muted-foreground">The AI engine powering our **alt text AI** generation.</p>
                     </div>
                 </div>
-                 <p className="text-xs text-muted-foreground mt-8">Our tool generates a standard CSV for stock sites, making your life easier.</p>
+                 <p className="text-xs text-muted-foreground mt-8">Our tool also generates a standard CSV for stock sites, making your life easier.</p>
             </div>
         </section>
 
