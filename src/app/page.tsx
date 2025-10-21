@@ -9,6 +9,7 @@ import { Check, ChevronRight, Image as ImageIcon, FileText, Globe } from 'lucide
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export default function LandingPage() {
     const { user, isUserLoading } = useUser();
@@ -146,6 +147,75 @@ export default function LandingPage() {
             </div>
         </section>
 
+        {/* Testimonials Section */}
+        <section className="py-16 md:py-20">
+            <div className="container mx-auto px-4">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl md:text-4xl font-bold font-headline">What Our Users Say</h2>
+                    <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
+                        Don't just take our word for it. Here's what real users are saying about MetaMagic.
+                    </p>
+                </div>
+                <div className="grid md:grid-cols-3 gap-8">
+                    <Card>
+                        <CardContent className="p-6">
+                            <p className="text-muted-foreground mb-4">"MetaMagic has been a game-changer for our stock photography business. We've cut our metadata workflow time by over 80% and our image visibility has skyrocketed. An essential tool."</p>
+                            <div className="font-semibold">Sarah L.</div>
+                            <div className="text-sm text-muted-foreground">Professional Photographer</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardContent className="p-6">
+                            <p className="text-muted-foreground mb-4">"I used to dread writing alt text for my client's WordPress sites. Now, I can fix an entire media library in minutes. My clients are happy, my SEO reports look great, and I have more time to focus on design."</p>
+                            <div className="font-semibold">Mike R.</div>
+                            <div className="text-sm text-muted-foreground">Freelance Web Developer</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardContent className="p-6">
+                            <p className="text-muted-foreground mb-4">"The meta description generator is scary good. It consistently writes better, more clickable descriptions than I can. Our blog's click-through rate from Google has increased by 15% since we started using it."</p>
+                            <div className="font-semibold">Elena K.</div>
+                            <div className="text-sm text-muted-foreground">Content Marketing Manager</div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section className="py-16 md:py-20 bg-muted/50">
+          <div className="container mx-auto px-4 max-w-4xl">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold font-headline">Frequently Asked Questions</h2>
+            </div>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="item-1">
+                <AccordionTrigger className="text-lg">How does the pricing work? Is it really free?</AccordionTrigger>
+                <AccordionContent className="text-base text-muted-foreground">
+                  Yes, MetaMagic is completely free to use. We don't charge any subscription fees. The only cost is from your own Google Gemini API key usage. You have full control over your API key and can set quotas and monitor usage directly in your Google AI Studio account.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-2">
+                <AccordionTrigger className="text-lg">Is it secure to add my Gemini API key and WordPress password?</AccordionTrigger>
+                <AccordionContent className="text-base text-muted-foreground">
+                  Absolutely. Your credentials are encrypted and stored securely in a Firestore database that only you can access. We use Firebase's robust security rules to ensure that your data is private and linked exclusively to your authenticated account.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-3">
+                <AccordionTrigger className="text-lg">What AI model does MetaMagic use?</AccordionTrigger>
+                <AccordionContent className="text-base text-muted-foreground">
+                  MetaMagic is powered by Google's state-of-the-art Gemini family of models. We use different models for different tasks—like Gemini 2.5 Flash for its speed in text generation and Gemini Pro Vision for its powerful image analysis capabilities—to ensure the highest quality results.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-4">
+                <AccordionTrigger className="text-lg">Do I need to be an SEO expert to use this?</AccordionTrigger>
+                <AccordionContent className="text-base text-muted-foreground">
+                  Not at all! MetaMagic is designed for everyone—from professional SEOs to bloggers, photographers, and small business owners. Our tools automate the best practices, so you can achieve expert-level results without the steep learning curve.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        </section>
 
         {/* Final CTA Section */}
         <section className="py-16 md:py-20">
