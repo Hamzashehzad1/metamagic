@@ -208,7 +208,8 @@ function MetaDescriptionPage() {
     if (result.error) {
         setWpContentError('Could not fetch posts and pages. Please check your connection and permissions.');
     } else {
-        setContentItems(prev => reset ? result.items.map(p => ({...p, status: 'pending'})) : [...prev, ...result.items.map(p => ({...p, status: 'pending'}))]);
+        const newItems = result.items.map(p => ({ ...p, status: 'pending' } as WpPostWithStatus));
+        setContentItems(prev => reset ? newItems : [...prev, ...newItems]);
         if(result.totalItems !== undefined) setTotalItems(result.totalItems);
         if (result.items.length < POSTS_PER_PAGE * 2) { // *2 for posts and pages
             setHasMoreContent(false);
