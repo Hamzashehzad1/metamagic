@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Inter, Space_Grotesk } from 'next/font/google';
 import './globals.css';
@@ -102,7 +103,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationSchema) }}
         />
       </head>
-      <body className={`${inter.variable} ${spaceGrotesk.variable} font-body antialiased`}>
+      <body className={`${inter.variable} ${spaceGrotesk.variable} ${inter.className} ${spaceGrotesk.className} font-body antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
