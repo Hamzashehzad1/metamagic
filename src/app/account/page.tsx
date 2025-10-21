@@ -189,41 +189,42 @@ function AccountPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
-      <main className="flex-1 container mx-auto p-4 md:p-6">
-        <section className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter">
+      <main className="flex-1 container mx-auto p-4 md:p-8 lg:p-12">
+        <section className="text-center mb-16">
+            <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter text-balance">
                 Account Settings
             </h1>
-            <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
+            <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground text-balance">
                 Manage your connected services and API keys.
             </p>
         </section>
 
-        <div className="grid gap-8 lg:grid-cols-2 max-w-6xl mx-auto">
+        <div className="grid gap-12 lg:grid-cols-2 max-w-6xl mx-auto">
             {/* Gemini API Keys Card */}
-            <Card>
+            <Card className="transition-shadow hover:shadow-lg">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <KeyRound className="text-primary" /> Gemini API Keys
+                    <CardTitle className="flex items-center gap-3">
+                        <KeyRound className="text-primary h-6 w-6" /> 
+                        <span className="text-2xl">Gemini API Keys</span>
                     </CardTitle>
                     <CardDescription>
-                        Add, select, and manage your Google AI API keys. Your keys are stored securely. The default key is marked with a star.
+                        Add and manage your Google AI API keys. Your keys are stored securely. The default key is marked with a star.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
                     <h3 className="text-lg font-semibold">Your Keys</h3>
-                    {isLoadingKeys ? <p>Loading keys...</p> : apiKeys?.length === 0 ? (
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                    {isLoadingKeys ? <p className="text-muted-foreground">Loading keys...</p> : apiKeys?.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-4">You haven't added any API keys yet.</p>
                     ) : (
                         apiKeys?.map(k => (
-                        <div key={k.id} className="flex items-center gap-2 rounded-lg p-2 border bg-background hover:bg-muted/50">
+                        <div key={k.id} className="flex items-center gap-2 rounded-lg p-2 border bg-background hover:bg-muted/50 transition-colors">
                             {editingKey?.id === k.id ? (
                             <Input value={editedName} onChange={e => setEditedName(e.target.value)} className="h-8" />
                             ) : (
                             <>
-                                <Button variant={'ghost'} size="sm" className="flex-1 justify-start gap-2">
-                                    <Star className={`h-4 w-4 ${k.isDefault ? 'text-yellow-500 fill-yellow-400' : 'text-muted-foreground'}`} />
+                                <Button variant={'ghost'} size="sm" className="flex-1 justify-start gap-2 group">
+                                    <Star className={`h-4 w-4 transition-colors ${k.isDefault ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground group-hover:text-yellow-400'}`} />
                                     <span className="truncate">{k.name}</span>
                                 </Button>
                                 <div className="text-xs text-muted-foreground flex items-center gap-1" title={`API calls made today. Resets daily.`}>
@@ -243,11 +244,11 @@ function AccountPage() {
                                 <>
                                 {!k.isDefault && (
                                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSetDefaultKey(k)} title="Make default">
-                                    <Star className="h-4 w-4 text-muted-foreground" />
+                                    <Star className="h-4 w-4 text-muted-foreground hover:text-yellow-400" />
                                   </Button>
                                 )}
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStartEdit(k)} title="Edit name"><Edit className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteKey(k.id)} title="Delete key"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStartEdit(k)} title="Edit name"><Edit className="h-4 w-4 text-muted-foreground hover:text-primary" /></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteKey(k.id)} title="Delete key"><Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" /></Button>
                                 </>
                             )}
                             </div>
@@ -256,16 +257,16 @@ function AccountPage() {
                     )}
                     </div>
                 </CardContent>
-                <CardFooter className="flex flex-col gap-4 items-stretch">
+                <CardFooter className="flex flex-col gap-4 items-stretch pt-6">
                      <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline"><PlusCircle className="mr-2" />Add New Key</Button>
+                            <Button><PlusCircle className="mr-2" />Add New Key</Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
                                 <DialogTitle>Add New Gemini API Key</DialogTitle>
                                 <DialogDescription>
-                                    Get your key from Google AI Studio.
+                                    Get your key from Google AI Studio. Your key is stored securely and never shared.
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
@@ -286,42 +287,45 @@ function AccountPage() {
                         </DialogContent>
                     </Dialog>
                     <p className="text-xs text-muted-foreground text-center">
-                        <Link href="https://aistudio.google.com/apikey" target="_blank" className="underline hover:text-primary inline-flex items-center">
-                            Need a new key? Get one here <ExternalLink className="ml-1 h-3 w-3" />
+                        <Link href="https://aistudio.google.com/apikey" target="_blank" className="underline hover:text-primary inline-flex items-center group">
+                            Need a new key? Get one here <ExternalLink className="ml-1 h-3 w-3 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                         </Link>
                     </p>
                 </CardFooter>
             </Card>
 
             {/* WordPress Connections Card */}
-            <Card>
+            <Card className="transition-shadow hover:shadow-lg">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Globe className="text-primary" /> WordPress Connections
+                    <CardTitle className="flex items-center gap-3">
+                        <Globe className="text-primary h-6 w-6" /> 
+                        <span className="text-2xl">WordPress Connections</span>
                     </CardTitle>
                     <CardDescription>
-                        Manage your saved WordPress site connections.
+                        Manage your saved WordPress site connections to enable direct content integration.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                <CardContent className="space-y-4">
                      <h3 className="text-lg font-semibold">Your Sites</h3>
-                     {isLoadingWpConnections ? <p>Loading connections...</p> : wpConnections?.length === 0 ? (
+                     <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                     {isLoadingWpConnections ? <p className="text-muted-foreground">Loading connections...</p> : wpConnections?.length === 0 ? (
                          <p className="text-sm text-muted-foreground text-center py-4">You have no saved WordPress sites.</p>
                      ) : (
                          wpConnections?.map(site => (
-                             <div key={site.id} className="flex items-center justify-between gap-2 rounded-lg p-2 border bg-background">
+                             <div key={site.id} className="flex items-center justify-between gap-2 rounded-lg p-2 pl-4 border bg-background">
                                  <span className="font-medium truncate">{site.url}</span>
                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteWpConnection(site.id)}>
-                                     <Trash2 className="h-4 w-4 text-destructive" />
+                                     <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                                  </Button>
                              </div>
                          ))
                      )}
+                     </div>
                 </CardContent>
-                <CardFooter className="flex flex-col gap-4 items-stretch">
+                <CardFooter className="flex flex-col gap-4 items-stretch pt-6">
                     <Dialog open={showWpDialog} onOpenChange={setShowWpDialog}>
                         <DialogTrigger asChild>
-                            <Button variant="outline"><PlusCircle className="mr-2" />Add New Site</Button>
+                            <Button><PlusCircle className="mr-2" />Add New Site</Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
@@ -357,8 +361,8 @@ function AccountPage() {
                         </DialogContent>
                     </Dialog>
                     <p className="text-xs text-muted-foreground text-center">
-                        <a href="https://wordpress.org/documentation/article/application-passwords/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary inline-flex items-center">
-                            How to create an Application Password <ExternalLink className="ml-1 h-3 w-3" />
+                        <a href="https://wordpress.org/documentation/article/application-passwords/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary inline-flex items-center group">
+                            How to create an Application Password <ExternalLink className="ml-1 h-3 w-3 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                         </a>
                     </p>
                 </CardFooter>
@@ -366,21 +370,18 @@ function AccountPage() {
 
         </div>
       </main>
-      <footer className="py-6 px-4 md:px-6 border-t mt-16">
-        <div className="container mx-auto flex flex-col items-center gap-4">
+      <footer className="py-8 border-t bg-background mt-24">
+        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="text-center md:text-left">
+                <p className="text-sm font-semibold">&copy; {new Date().getFullYear()} MetaMagic. All Rights Reserved.</p>
+                <p className="text-sm text-muted-foreground">An AI-powered SEO toolkit by Web Brewery.</p>
+            </div>
             <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
                 <Link href="/" className="hover:text-primary hover:underline">Home</Link>
                 <Link href="/#features" className="hover:text-primary hover:underline">Features</Link>
                 <Link href="/pricing" className="hover:text-primary hover:underline">Pricing</Link>
                 <Link href="/dashboard" className="hover:text-primary hover:underline">Dashboard</Link>
-                <Link href="/wp-alt-text" className="hover:text-primary hover:underline">WP Alt Text</Link>
-                <Link href="/meta-description" className="hover:text-primary hover:underline">Meta Description</Link>
-                <Link href="/account" className="hover:text-primary hover:underline">Account</Link>
             </nav>
-            <div className="text-center text-sm text-muted-foreground flex justify-center items-center gap-4">
-                <p>&copy; {new Date().getFullYear()} MetaMagic. All Rights Reserved.</p>
-                <Link href="/sitemap.xml" className="hover:underline">Sitemap</Link>
-            </div>
         </div>
       </footer>
     </div>

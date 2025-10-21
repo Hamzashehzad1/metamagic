@@ -8,7 +8,7 @@ import { MetadataDisplay } from '@/components/metadata-display';
 import { type ProcessedFile, processFiles, processUrl, type Metadata } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal, Wand2, Loader2 } from 'lucide-react';
+import { Terminal, Wand2, Loader2, PartyPopper } from 'lucide-react';
 import { MetadataSettings, type MetadataSettings as TMetadataSettings } from '@/components/metadata-settings';
 import { Button } from '@/components/ui/button';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -215,20 +215,20 @@ function Dashboard() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
-      <main className="flex-1 container mx-auto p-4 md:p-6">
-        <section className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter">
+      <main className="flex-1 container mx-auto p-4 md:p-8 lg:p-12">
+        <section className="text-center mb-16">
+            <h1 className="text-4xl md:text-5xl font-bold font-headline text-primary tracking-tighter text-balance">
                 Generate Perfect Media Metadata
             </h1>
-            <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
+            <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground text-balance">
                 Upload images or <span className="font-semibold text-primary/80">paste an image URL (Ctrl+V)</span>. Our AI will instantly write SEO-optimized titles, descriptions, and keywords.
             </p>
         </section>
 
         {hasNoKeys && (
-          <Alert className="mb-8 max-w-2xl mx-auto">
-            <Terminal className="h-4 w-4" />
-            <AlertTitle>Welcome to MetaMagic!</AlertTitle>
+          <Alert className="mb-8 max-w-2xl mx-auto border-primary/20 bg-primary/5">
+            <PartyPopper className="h-4 w-4 text-primary" />
+            <AlertTitle className="text-primary">Welcome to MetaMagic!</AlertTitle>
             <AlertDescription>
               To get started, please add a Gemini API key in your{' '}
               <Link href="/account" className="font-semibold underline">Account settings</Link>.
@@ -236,7 +236,7 @@ function Dashboard() {
           </Alert>
         )}
 
-        <div className="grid gap-8 lg:grid-cols-12">
+        <div className="grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-4 space-y-6">
              <MetadataSettings settings={metadataSettings} onSettingsChange={setMetadataSettings} />
           </div>
@@ -246,12 +246,12 @@ function Dashboard() {
               files={files}
               isLoading={isLoading}
               loadingStatus={loadingStatus}
-              disabled={!isConnected || hasNoKeys}
+              disabled={!isConnected || !!hasNoKeys}
               onRemoveFile={handleRemoveFile}
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Button onClick={handleGenerate} disabled={isLoading || files.length === 0 || !isConnected || hasNoKeys} size="lg">
+              <Button onClick={handleGenerate} disabled={isLoading || files.length === 0 || !isConnected || !!hasNoKeys} size="lg">
                   {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
                   {isLoading ? `Generating...` : `Generate Metadata for ${files.length} file(s)`}
               </Button>
@@ -276,21 +276,18 @@ function Dashboard() {
         </div>
 
       </main>
-      <footer className="py-6 px-4 md:px-6 border-t mt-16">
-        <div className="container mx-auto flex flex-col items-center gap-4">
+      <footer className="py-8 border-t bg-background mt-24">
+        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="text-center md:text-left">
+                <p className="text-sm font-semibold">&copy; {new Date().getFullYear()} MetaMagic. All Rights Reserved.</p>
+                <p className="text-sm text-muted-foreground">An AI-powered SEO toolkit by Web Brewery.</p>
+            </div>
             <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
                 <Link href="/" className="hover:text-primary hover:underline">Home</Link>
                 <Link href="/#features" className="hover:text-primary hover:underline">Features</Link>
                 <Link href="/pricing" className="hover:text-primary hover:underline">Pricing</Link>
                 <Link href="/dashboard" className="hover:text-primary hover:underline">Dashboard</Link>
-                <Link href="/wp-alt-text" className="hover:text-primary hover:underline">WP Alt Text</Link>
-                <Link href="/meta-description" className="hover:text-primary hover:underline">Meta Description</Link>
-                <Link href="/account" className="hover:text-primary hover:underline">Account</Link>
             </nav>
-            <div className="text-center text-sm text-muted-foreground flex justify-center items-center gap-4">
-                <p>&copy; {new Date().getFullYear()} MetaMagic. All Rights Reserved.</p>
-                <Link href="/sitemap.xml" className="hover:underline">Sitemap</Link>
-            </div>
         </div>
       </footer>
     </div>
