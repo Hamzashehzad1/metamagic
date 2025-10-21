@@ -374,7 +374,7 @@ function AccountPage() {
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="text-center md:text-left">
                 <p className="text-sm font-semibold">&copy; {new Date().getFullYear()} MetaMagic. All Rights Reserved.</p>
-                <p className="text-sm text-muted-foreground">An AI-powered SEO toolkit by Web Brewery.</p>
+                <p className="text-sm text-muted-foreground">An AI-powered SEO toolkit by <a href="https://webbrewery.co/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Web Brewery</a>.</p>
             </div>
             <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
                 <Link href="/" className="hover:text-primary hover:underline">Home</Link>
