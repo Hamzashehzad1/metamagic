@@ -219,8 +219,8 @@ function WpAltText() {
 
   const mediaWithoutAltText = useMemo(() => media.filter(m => !m.alt_text).length, [media]);
 
-  const hasNoKeys = !isLoadingKeys && apiKeys && apiKeys.length === 0;
-  const hasNoConnections = !isLoadingConnections && wpConnections && wpConnections.length === 0;
+  const hasNoKeys = !isLoadingKeys && !!apiKeys && apiKeys.length === 0;
+  const hasNoConnections = !isLoadingConnections && !!wpConnections && wpConnections.length === 0;
 
   if (isLoadingConnections || isLoadingKeys) {
       return (
@@ -478,3 +478,5 @@ export default function WpAltTextPage() {
         </AuthGuard>
     )
 }
+
+    

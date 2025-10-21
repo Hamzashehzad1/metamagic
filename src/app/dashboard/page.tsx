@@ -210,7 +210,7 @@ function Dashboard() {
     });
   };
 
-  const hasNoKeys = !isLoadingKeys && apiKeys && apiKeys.length === 0;
+  const hasNoKeys = !isLoadingKeys && !!apiKeys && apiKeys.length === 0;
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -304,3 +304,5 @@ export default function DashboardPage() {
         </AuthGuard>
     )
 }
+
+    
