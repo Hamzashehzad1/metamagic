@@ -1,8 +1,7 @@
 import { MetadataRoute } from 'next'
  
 export default function sitemap(): MetadataRoute.Sitemap {
-  // TODO: Replace with your actual domain
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://metamagic.app';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://metamagic.cloud';
 
   return [
     {
