@@ -1,3 +1,4 @@
+
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,7 +43,7 @@ export default function PricingPage() {
                 <div className="text-center">
                     <span className="text-7xl font-extrabold">$0</span>
                     <span className="text-xl text-muted-foreground">/ month</span>
-                    <p className="text-sm text-muted-foreground mt-2">MetaMagic is free. You only pay for what you use on your own Google Gemini API key.</p>
+                    <p className="text-sm text-muted-foreground mt-2">MetaMagic is free. You bring your own Google Gemini API key and only pay for what you use at their standard rates. We don't add any extra charges.</p>
                 </div>
                 <ul className="space-y-4">
                   <li className="flex items-start gap-4">
