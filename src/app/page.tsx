@@ -4,7 +4,7 @@
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, ChevronRight, Image as ImageIcon, FileText, Globe, Zap, Users, BrainCircuit, BarChart, Settings, BookOpen, Layers, GitBranch, ArrowRight } from 'lucide-react';
+import { Check, ChevronRight, Image as ImageIcon, FileText, Globe, Zap, Users, BrainCircuit, BarChart, Settings, BookOpen, Layers, GitBranch, ArrowRight, Link as LinkIcon } from 'lucide-react';
 import Link from 'next/link';
 import { faqData, testimonials } from './landing-page-data';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
@@ -191,7 +191,7 @@ export default function LandingPage() {
                     <h2 className="mt-2 text-3xl md:text-4xl font-bold font-headline">Why Does Google Care So Much About Alt Text?</h2>
                     <p className="mt-4 max-w-3xl mx-auto text-muted-foreground">It’s not just busy work. That small piece of alt text HTML is one of the most powerful and overlooked tools for SEO and accessibility. Let's break down the alt tag meaning.</p>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
                     <div className="flex flex-col items-center text-center p-6 border rounded-lg hover:shadow-lg transition-shadow">
                         <BarChart className="h-10 w-10 text-primary mb-4" />
                         <h3 className="text-xl font-semibold">It's a Ranking Signal</h3>
@@ -206,6 +206,11 @@ export default function LandingPage() {
                         <ImageIcon className="h-10 w-10 text-primary mb-4" />
                         <h3 className="text-xl font-semibold">It's Your Broken Image Backup</h3>
                         <p className="text-muted-foreground mt-2">Ever seen a broken image icon on a webpage? If an image fails to load, the browser displays the alternate tags instead. A well-written alternative text for images ensures the user still understands what was supposed to be there, maintaining the context of your page.</p>
+                    </div>
+                    <div className="flex flex-col items-center text-center p-6 border rounded-lg hover:shadow-lg transition-shadow">
+                        <LinkIcon className="h-10 w-10 text-primary mb-4" />
+                        <h3 className="text-xl font-semibold">It Powers Image Links</h3>
+                        <p className="text-muted-foreground mt-2">When you wrap an image in a link, the alt attribute acts as the anchor text. A descriptive alt tag tells search engines what the linked page is about, passing along valuable SEO equity. This is a simple but powerful way to strengthen your internal linking strategy using the alt text HTML.</p>
                     </div>
                 </div>
             </div>
