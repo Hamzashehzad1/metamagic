@@ -451,8 +451,9 @@ function WpAltText() {
 
       </main>
       <footer className="py-4 px-4 md:px-6 border-t mt-16">
-        <div className="container mx-auto text-center text-sm text-muted-foreground">
+        <div className="container mx-auto text-center text-sm text-muted-foreground flex justify-center items-center gap-4">
             <p>&copy; {new Date().getFullYear()} MetaMagic. All Rights Reserved.</p>
+            <Link href="/sitemap.xml" className="hover:underline">Sitemap</Link>
         </div>
       </footer>
     </div>
@@ -466,3 +467,5 @@ export default function WpAltTextPage() {
         </AuthGuard>
     )
 }
+
+    
