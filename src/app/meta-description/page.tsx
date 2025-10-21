@@ -241,12 +241,14 @@ function MetaDescriptionPage() {
     try {
         // 1. Fetch content from the post/page URL
         const contentResult = await fetchPageContent(item.link);
-        if ('error' in contentResult) throw new Error(contentResult.error);
+        if ('error' in contentResult) {
+            throw new Error(contentResult.error);
+        }
 
         // 2. Generate new meta description
         const generationResult = await generateMetaDescriptionAction(activeKey.key, contentResult.content, true);
-        if (generationResult.error) {
-            if ((generationResult as any).code === 'GEMINI_QUOTA_EXCEEDED') {
+        if ('error' in generationResult) {
+            if (generationResult.code === 'GEMINI_QUOTA_EXCEEDED') {
               toast({ variant: 'destructive', title: 'Quota Exceeded', description: "Your Gemini API key quota has been exceeded.", duration: 5000 });
             }
             throw new Error(generationResult.error);
@@ -255,7 +257,9 @@ function MetaDescriptionPage() {
         
         // 3. Update WordPress
         const updateResult = await updateWpPostMeta(connectedSite, item.id, generationResult.metaDescription);
-        if (!updateResult.success) throw new Error(updateResult.error);
+        if (!updateResult.success) {
+            throw new Error(updateResult.error);
+        }
         
         setContentItems(prev => prev.map(p => p.id === item.id ? { ...p, meta: {...p.meta, _aioseo_description: generationResult.metaDescription }, status: 'success' } : p));
         toast({ title: "Success!", description: `Meta description updated for "${item.title.rendered}".` });
@@ -598,5 +602,3 @@ export default function MetaDescriptionPageWithAuth() {
         </AuthGuard>
     )
 }
-
-    
