@@ -440,7 +440,14 @@ export default function LandingPage() {
                         <p className="text-sm text-muted-foreground">For secure user authentication and data storage.</p>
                     </div>
                      <div className="flex flex-col items-center gap-2">
-                        <Image src="https://s.w.org/style/images/about/WordPress-logotype-wmark.png" width={64} height={64} alt="WordPress Logo" data-ai-hint="logo" />
+                        <Image 
+                          src="https://s.w.org/style/images/about/WordPress-logotype-wmark.png" 
+                          width={64} 
+                          height={64} 
+                          alt="WordPress Logo" 
+                          data-ai-hint="logo" 
+                          className="brightness-0 invert dark:filter-none"
+                        />
                         <span className="font-semibold">WordPress</span>
                         <p className="text-sm text-muted-foreground">For direct media library integration and adding alt tags to images.</p>
                     </div>
