@@ -127,7 +127,6 @@ function MetaDescriptionPage() {
       }
       await handleGenerate(result.content, false);
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'An unknown error occurred.';
       setError('Could not fetch content from the URL. Please check the link and try again.');
       toast({ variant: 'destructive', title: 'Error Fetching URL', description: "Could not fetch content from the URL. Please check the link and try again." });
     } finally {
@@ -161,7 +160,6 @@ function MetaDescriptionPage() {
       setMetaDescription(result.metaDescription);
       toast({ title: "Success!", description: "Meta description generated." });
     } catch(e) {
-      const message = e instanceof Error ? e.message : 'An unknown error occurred.';
       setError('Could not generate a meta description. Please try again.');
       toast({ variant: 'destructive', title: 'Generation Error', description: "Could not generate a meta description. Please try again." });
     } finally {
@@ -481,11 +479,16 @@ function MetaDescriptionPage() {
 
                              <Card>
                                 <CardHeader>
-                                    <CardTitle className="flex items-center justify-between">
-                                        <div className='flex items-center gap-2'>
-                                            <Database />
-                                            Posts & Pages
-                                            {totalItems !== null && <Badge variant="secondary">{totalItems} items</Badge>}
+                                    <div className="flex items-center justify-between">
+                                        <div className='flex flex-col gap-1.5'>
+                                            <h2 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2">
+                                                <Database />
+                                                Posts & Pages
+                                                {totalItems !== null && <Badge variant="secondary">{totalItems} items</Badge>}
+                                            </h2>
+                                            <p className="text-sm text-muted-foreground">
+                                                Showing {filteredContent.length} of {contentItems.length} loaded posts and pages. Descriptions from All-in-One SEO plugin are shown.
+                                            </p>
                                         </div>
                                          <div className="flex items-center gap-4">
                                             <Label>Filter</Label>
@@ -500,10 +503,7 @@ function MetaDescriptionPage() {
                                                 </div>
                                             </RadioGroup>
                                         </div>
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Showing {filteredContent.length} of {contentItems.length} loaded posts and pages. Descriptions from All-in-One SEO plugin are shown.
-                                    </CardDescription>
+                                    </div>
                                 </CardHeader>
                                 <CardContent>
                                     {isFetchingContent && contentItems.length === 0 ? (
