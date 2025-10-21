@@ -42,6 +42,7 @@ export default function PricingPage() {
                 <div className="text-center">
                     <span className="text-7xl font-extrabold">$0</span>
                     <span className="text-xl text-muted-foreground">/ month</span>
+                    <p className="text-sm text-muted-foreground mt-2">MetaMagic is free. You only pay for what you use on your own Google Gemini API key.</p>
                 </div>
                 <ul className="space-y-4">
                   <li className="flex items-start gap-4">
