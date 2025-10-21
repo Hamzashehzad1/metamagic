@@ -29,6 +29,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const isAuthRoute = pathname === '/login' || pathname === '/signup';
     const isPublicRoute = pathname === '/' || pathname === '/pricing';
     const isAdminRoute = pathname.startsWith('/admin');
+    
+    // The dashboard is now a special case: it can be viewed by unauthenticated users in a "sneak peek" mode.
+    const isSneakPeekRoute = pathname === '/dashboard';
 
     useEffect(() => {
         if (isLoading) {
@@ -41,8 +44,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
             return;
         }
         
-        // If user is NOT logged in, and tries to access a protected route, redirect to login
-        if (!user && !isPublicRoute && !isAuthRoute) {
+        // If user is NOT logged in, and tries to access a protected route (that's not public, auth, or sneak-peek-able), redirect to login
+        if (!user && !isPublicRoute && !isAuthRoute && !isSneakPeekRoute) {
             router.push('/login');
             return;
         }
@@ -53,10 +56,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
             return;
         }
 
-    }, [user, userProfile, isLoading, router, pathname, isAuthRoute, isPublicRoute, isAdminRoute]);
-
-    // Show a loading spinner while the initial auth check is happening or a redirect is imminent.
-    if (isLoading || (!user && !isPublicRoute && !isAuthRoute) || (user && isAuthRoute)) {
+    }, [user, userProfile, isLoading, router, pathname, isAuthRoute, isPublicRoute, isAdminRoute, isSneakPeekRoute]);
+    
+    // While loading, or if an unauthenticated user is on a page that will redirect, show a loader.
+    if (isLoading || (!user && !isPublicRoute && !isAuthRoute && !isSneakPeekRoute) || (user && isAuthRoute)) {
         return (
             <div className="flex items-center justify-center h-screen bg-background">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />

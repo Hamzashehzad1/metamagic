@@ -8,17 +8,18 @@ import { MetadataDisplay } from '@/components/metadata-display';
 import { type ProcessedFile, processFiles, processUrl, type Metadata } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal, Wand2, Loader2, PartyPopper } from 'lucide-react';
+import { Terminal, Wand2, Loader2 } from 'lucide-react';
 import { MetadataSettings, type MetadataSettings as TMetadataSettings } from '@/components/metadata-settings';
 import { Button } from '@/components/ui/button';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { addDoc, collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { type ApiKey } from '@/app/account/page';
 import AuthGuard from '@/components/auth-guard';
-import Link from 'next/link';
+import { AuthOverlay } from '@/components/auth-overlay';
+
 
 function Dashboard() {
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const firestore = useFirestore();
 
   const apiKeysQuery = useMemoFirebase(() => {
@@ -26,7 +27,7 @@ function Dashboard() {
     return collection(firestore, `users/${user.uid}/geminiApiKeys`);
   }, [firestore, user]);
 
-  const { data: apiKeys, isLoading: isLoadingKeys } = useCollection<ApiKey>(apiKeysQuery);
+  const { data: apiKeys } = useCollection<ApiKey>(apiKeysQuery);
 
   const [activeKey, setActiveKey] = useState<ApiKey | null>(null);
 
@@ -116,6 +117,10 @@ function Dashboard() {
       const result = await processFiles(activeKey.key, fileData, metadataSettings);
       
       if ('error' in result) {
+        // Here we explicitly check for the error property.
+        if (result.code === 'GEMINI_QUOTA_EXCEEDED') {
+            toast({ variant: 'destructive', title: 'Quota Exceeded', description: "Your Gemini API key quota has been exceeded.", duration: 5000 });
+        }
         throw new Error(result.error);
       }
       
@@ -124,11 +129,11 @@ function Dashboard() {
 
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred during processing.';
-      setError('An unexpected error occurred. Please try again.');
+      setError(errorMessage);
       toast({
         variant: 'destructive',
         title: 'Processing Error',
-        description: "There was a problem generating metadata. Please try again.",
+        description: errorMessage,
       });
     } finally {
         setIsLoading(false);
@@ -149,6 +154,8 @@ function Dashboard() {
   // Handle pasted URL
   useEffect(() => {
     const handlePaste = async (event: ClipboardEvent) => {
+      if (!user) return; // Only allow paste for logged-in users
+
       if (!isConnected) {
         toast({
             variant: 'destructive',
@@ -173,8 +180,8 @@ function Dashboard() {
               const result = await processUrl(text);
 
               if ('error' in result) {
-                setError('Could not fetch the image from the URL. Please check the link and ensure it is a direct image link.');
-                toast({ variant: 'destructive', title: 'URL Paste Error', description: 'Could not fetch the image from the URL.' });
+                setError(result.error);
+                toast({ variant: 'destructive', title: 'URL Paste Error', description: result.error });
               } else {
                 try {
                   const response = await fetch(result.dataUri);
@@ -183,9 +190,9 @@ function Dashboard() {
                   handleFileUpload([newFile]);
                   toast({ title: 'Image Pasted!', description: `Successfully loaded ${result.name} from URL.` });
                 } catch(e) {
-                  const err = e instanceof Error ? e.message : 'Could not process the fetched image.'
-                  setError("Could not process the image from the URL.");
-                  toast({ variant: 'destructive', title: 'Image Processing Error', description: "Could not process the image from the URL." });
+                  const errMessage = e instanceof Error ? e.message : 'Could not process the fetched image.'
+                  setError(errMessage);
+                  toast({ variant: 'destructive', title: 'Image Processing Error', description: errMessage });
                 }
               }
               setIsLoading(false);
@@ -200,7 +207,7 @@ function Dashboard() {
     return () => {
       window.removeEventListener('paste', handlePaste);
     };
-  }, [isConnected, toast, handleFileUpload]);
+  }, [isConnected, toast, handleFileUpload, user]);
 
   const handleUpdateMetadata = (fileIndex: number, newMetadata: Metadata) => {
     setProcessedFiles(prevFiles => {
@@ -210,7 +217,7 @@ function Dashboard() {
     });
   };
 
-  const hasNoKeys = !isLoadingKeys && (!apiKeys || apiKeys.length === 0);
+  const hasNoKeys = user && !isLoading && (!apiKeys || apiKeys.length === 0);
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -221,60 +228,52 @@ function Dashboard() {
                 Generate Perfect Media Metadata
             </h1>
             <p className="mt-4 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground text-balance">
-                Upload images or <span className="font-semibold text-primary/80">paste an image URL (Ctrl+V)</span>. Our AI will instantly write SEO-optimized titles, descriptions, and keywords.
+                Upload your images or <span className="font-semibold text-primary/80">paste an image URL</span>. Our AI will instantly write SEO-optimized titles, descriptions, and keywords.
             </p>
         </section>
-
-        {hasNoKeys && (
-          <Alert className="mb-8 max-w-2xl mx-auto border-primary/20 bg-primary/5">
-            <PartyPopper className="h-4 w-4 text-primary" />
-            <AlertTitle className="text-primary">Welcome to MetaMagic!</AlertTitle>
-            <AlertDescription>
-              To get started, please add a Gemini API key in your{' '}
-              <Link href="/account" className="font-semibold underline">Account settings</Link>.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <div className="grid gap-12 lg:grid-cols-12">
-          <div className="lg:col-span-4 space-y-6">
-             <MetadataSettings settings={metadataSettings} onSettingsChange={setMetadataSettings} />
-          </div>
-          <div className="lg:col-span-8 grid gap-8">
-             <FileUploader 
-              onFileUpload={handleFileUpload}
-              files={files}
-              isLoading={isLoading}
-              loadingStatus={loadingStatus}
-              disabled={!isConnected || !!hasNoKeys}
-              onRemoveFile={handleRemoveFile}
-            />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Button onClick={handleGenerate} disabled={isLoading || files.length === 0 || !isConnected || !!hasNoKeys} size="lg">
-                  {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
-                  {isLoading ? `Generating...` : `Generate Metadata for ${files.length} file(s)`}
-              </Button>
-              <Button onClick={handleClear} variant="outline" size="lg" disabled={isLoading || (files.length === 0 && processedFiles.length === 0)}>
-                Clear All
-              </Button>
+        
+        <div className="relative">
+          {!user && <AuthOverlay />}
+          
+          <div className={`grid gap-12 lg:grid-cols-12 ${!user ? 'blur-sm pointer-events-none' : ''}`}>
+            <div className="lg:col-span-4 space-y-6">
+              <MetadataSettings settings={metadataSettings} onSettingsChange={setMetadataSettings} />
             </div>
-            
-            {error && (
-              <Alert variant="destructive">
-                <Terminal className="h-4 w-4" />
-                <AlertTitle>An Error Occurred</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            <MetadataDisplay 
-                processedFiles={processedFiles} 
+            <div className="lg:col-span-8 grid gap-8">
+              <FileUploader 
+                onFileUpload={handleFileUpload}
+                files={files}
                 isLoading={isLoading}
-                onUpdateMetadata={handleUpdateMetadata} 
-            />
+                loadingStatus={loadingStatus}
+                disabled={!isConnected || !!hasNoKeys || !user}
+                onRemoveFile={handleRemoveFile}
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Button onClick={handleGenerate} disabled={isLoading || files.length === 0 || !isConnected || !!hasNoKeys || !user} size="lg">
+                    {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Wand2 className="mr-2" />}
+                    {isLoading ? `Generating...` : `Generate Metadata for ${files.length} file(s)`}
+                </Button>
+                <Button onClick={handleClear} variant="outline" size="lg" disabled={isLoading || (files.length === 0 && processedFiles.length === 0)}>
+                  Clear All
+                </Button>
+              </div>
+              
+              {error && (
+                <Alert variant="destructive">
+                  <Terminal className="h-4 w-4" />
+                  <AlertTitle>An Error Occurred</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              <MetadataDisplay 
+                  processedFiles={processedFiles} 
+                  isLoading={isLoading}
+                  onUpdateMetadata={handleUpdateMetadata} 
+              />
+            </div>
           </div>
         </div>
-
       </main>
       <footer className="py-8 border-t bg-background mt-24">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
@@ -283,10 +282,9 @@ function Dashboard() {
                 <p className="text-sm text-muted-foreground">An AI-powered SEO toolkit by <a href="https://webbrewery.co/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Web Brewery</a>.</p>
             </div>
             <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                <Link href="/" className="hover:text-primary hover:underline">Home</Link>
-                <Link href="/#features" className="hover:text-primary hover:underline">Features</Link>
-                <Link href="/pricing" className="hover:text-primary hover:underline">Pricing</Link>
-                <Link href="/dashboard" className="hover:text-primary hover:underline">Dashboard</Link>
+                <a href="/#features" className="hover:text-primary hover:underline">Features</a>
+                <a href="/pricing" className="hover:text-primary hover:underline">Pricing</a>
+                <a href="/dashboard" className="hover:text-primary hover:underline">Dashboard</a>
             </nav>
         </div>
       </footer>
