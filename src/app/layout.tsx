@@ -12,13 +12,13 @@ const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: '700', variable
 
 export const metadata: Metadata = {
   title: 'MetaMagic - AI-Powered SEO Metadata Generator',
-  description: 'Generate perfect, SEO-optimized titles, descriptions, and keywords for your images and content in seconds. Boost your SEO with AI.',
+  description: 'Automate your image SEO with MetaMagic. Generate AI-powered alt text, alt tags, and meta descriptions in seconds—boost rankings, accessibility, and traffic.',
   alternates: {
     canonical: 'https://metamagic.cloud/',
   },
   openGraph: {
     title: 'MetaMagic - AI-Powered SEO Metadata Generator',
-    description: 'Stop guessing. Start dominating your media SEO with AI-generated metadata.',
+    description: 'Automate your image SEO with MetaMagic. Generate AI-powered alt text, alt tags, and meta descriptions in seconds—boost rankings, accessibility, and traffic.',
     url: 'https://metamagic.cloud',
     siteName: 'MetaMagic',
     images: [
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'MetaMagic - AI-Powered SEO Metadata Generator',
-    description: 'Stop guessing. Start dominating your media SEO with AI-generated metadata.',
+    description: 'Automate your image SEO with MetaMagic. Generate AI-powered alt text, alt tags, and meta descriptions in seconds—boost rankings, accessibility, and traffic.',
     creator: '@webbrewery',
     images: ['https://metamagic.cloud/twitter-image.png'],
   },
