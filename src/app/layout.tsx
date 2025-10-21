@@ -45,6 +45,9 @@ export const metadata: Metadata = {
     },
   },
   themeColor: 'hsl(273 67% 61%)',
+  verification: {
+    google: 'EywvD6AaP0O3W_Kb7fnaD6OrFOgCQj5U_ic6E-KGw1w',
+  },
 };
 
 
