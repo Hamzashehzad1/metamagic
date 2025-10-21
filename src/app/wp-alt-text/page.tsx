@@ -119,7 +119,7 @@ function WpAltText() {
     if (result.error) {
         setMediaError('Could not fetch media. Please check your site connection and permissions.');
     } else {
-        setMedia(prev => reset ? result.media.map(m => ({...m, status: 'pending'})) : [...prev, ...result.media.map(m => ({...m, status: 'pending'}))]);
+        setMedia(prev => reset ? result.media.map(m => ({...m, status: 'pending' as MediaStatus})) : [...prev, ...result.media.map(m => ({...m, status: 'pending' as MediaStatus}))]);
         if(result.totalMedia !== undefined) setTotalMedia(result.totalMedia);
         if (result.media.length < MEDIA_PER_PAGE) {
             setHasMoreMedia(false);
@@ -142,7 +142,7 @@ function WpAltText() {
       if (result.error) {
           setMediaError('Could not fetch all media. The connection may have been interrupted.');
       } else {
-          setMedia(result.media.map(m => ({...m, status: 'pending'})));
+          setMedia(result.media.map(m => ({...m, status: 'pending' as MediaStatus})));
           setTotalMedia(result.media.length);
           setHasMoreMedia(false);
           toast({ title: "All Media Loaded", description: `Found ${result.media.length} images.`});
@@ -341,7 +341,7 @@ function WpAltText() {
                         </CardDescription>
                     </CardHeader>
                     <CardFooter className="flex justify-between">
-                         <Button variant="outline" onClick={() => handleFetchMedia(connectedSite, true)} disabled={isFetchingMedia}>
+                         <Button variant="outline" onClick={() => handleFetchMedia(connectedSite, true)} disabled={!!isFetchingMedia}>
                             <RefreshCw className="mr-2 h-4 w-4" />
                             Refresh Media
                          </Button>
@@ -367,7 +367,7 @@ function WpAltText() {
                     </div>
 
                     <div className="flex flex-col items-center gap-4 w-full md:w-auto">
-                         <Button onClick={handleGenerateAll} disabled={isGenerating || mediaWithoutAltText === 0 || !isConnected || hasNoKeys} className="w-full md:w-auto">
+                         <Button onClick={handleGenerateAll} disabled={!!isGenerating || mediaWithoutAltText === 0 || !isConnected || !!hasNoKeys} className="w-full md:w-auto">
                             <Sparkles className="mr-2 h-4 w-4" />
                             {isGenerating ? 'Generating...' : `Generate for ${mediaWithoutAltText} missing`}
                         </Button>
@@ -435,12 +435,12 @@ function WpAltText() {
 
                         <div className="mt-8 text-center flex justify-center gap-4">
                             {hasMoreMedia && (
-                                <Button onClick={() => handleFetchMedia(connectedSite!)} disabled={isFetchingMedia}>
+                                <Button onClick={() => handleFetchMedia(connectedSite!)} disabled={!!isFetchingMedia}>
                                     {isFetchingMedia ? <Loader2 className="mr-2 animate-spin" /> : null}
                                     Load More
                                 </Button>
                             )}
-                             <Button onClick={() => handleFetchAllMedia(connectedSite!)} disabled={isFetchingMedia}>
+                             <Button onClick={() => handleFetchAllMedia(connectedSite!)} disabled={!!isFetchingMedia}>
                                 {isFetchingMedia && media.length > 0 ? <Loader2 className="mr-2 animate-spin" /> : null}
                                 Load All Media
                             </Button>
@@ -479,3 +479,5 @@ export default function WpAltTextPage() {
         </AuthGuard>
     )
 }
+
+    
