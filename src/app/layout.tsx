@@ -7,6 +7,9 @@ import { FirebaseClientProvider } from '@/firebase';
 export const metadata: Metadata = {
   title: 'MetaMagic - AI-Powered SEO Metadata Generator',
   description: 'Generate perfect, SEO-optimized titles, descriptions, and keywords for your images and content in seconds. Boost your SEO with AI.',
+  alternates: {
+    canonical: 'https://metamagic.cloud/',
+  },
   openGraph: {
     title: 'MetaMagic - AI-Powered SEO Metadata Generator',
     description: 'Stop guessing. Start dominating your media SEO with AI-generated metadata.',
