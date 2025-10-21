@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
@@ -47,24 +48,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         }
     }, [user, userProfile, isLoading, router, pathname]);
 
-    const isAuthRoute = pathname === '/login' || pathname === '/signup';
-    const isPublicRoute = pathname === '/' || pathname === '/pricing';
-    const isAdminRoute = pathname.startsWith('/admin');
-
     if (isLoading) {
-        return (
-            <div className="flex items-center justify-center h-screen bg-background">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
-        );
-    }
-    
-    // While loading, or if conditions for redirect are met, show loading spinner
-    if (
-        (user && (isAuthRoute || isPublicRoute)) || 
-        (!user && !isPublicRoute && !isAuthRoute) ||
-        (user && isAdminRoute && userProfile && !userProfile.isAdmin)
-    ) {
         return (
             <div className="flex items-center justify-center h-screen bg-background">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
