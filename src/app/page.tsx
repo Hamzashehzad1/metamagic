@@ -58,7 +58,7 @@ export default function LandingPage() {
         <section id="features" className="py-16 md:py-20">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold font-headline">The Tools You Need to Win at SEO</h2>
+              <h2 className="text-3xl md:text-4xl font-bold font-headline">Features Built to Dominate SEO</h2>
               <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">Don't just compete. Dominate. These aren't just tools; they're your unfair advantage.</p>
             </div>
             <div className="grid md:grid-cols-3 gap-8">
@@ -109,7 +109,7 @@ export default function LandingPage() {
         <section className="py-16 md:py-20 bg-muted/50">
             <div className="container mx-auto px-4">
                 <div className="text-center mb-12">
-                    <h2 className="text-3xl md:text-4xl font-bold font-headline">Stop Wasting Time. Start Seeing Results.</h2>
+                    <h2 className="text-3xl md:text-4xl font-bold font-headline">Why You'll Love MetaMagic</h2>
                     <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
                         Here’s the deal: Your competitors are either paying agencies thousands or spending countless hours on SEO. You can beat them with a few clicks.
                     </p>
