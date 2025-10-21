@@ -9,8 +9,8 @@
  * - SummarizeContentOutput - The return type for the function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { genkit, z } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 
 const SummarizeContentInputSchema = z.object({
   apiKey: z.string().describe("The user's Gemini API key."),
@@ -27,14 +27,16 @@ export type SummarizeContentOutput = z.infer<typeof SummarizeContentOutputSchema
 
 export async function summarizeContentForMeta(input: SummarizeContentInput): Promise<SummarizeContentOutput> {
   const { apiKey, ...rest } = input;
-  return summarizeContentFlow.withAuth({ apiKey })(rest);
-}
 
-const prompt = ai.definePrompt({
-  name: 'summarizeContentForMetaPrompt',
-  input: {schema: SummarizeContentInputSchema.omit({apiKey: true})},
-  output: {schema: SummarizeContentOutputSchema},
-  prompt: `You are an expert SEO analyst. Your task is to read the following webpage content and distill it into a short, potent summary. This summary will be used by another AI to write a meta description.
+  const ai = genkit({
+    plugins: [googleAI({ apiKey })],
+  });
+
+  const prompt = ai.definePrompt({
+    name: 'summarizeContentForMetaPrompt',
+    input: {schema: SummarizeContentInputSchema.omit({apiKey: true})},
+    output: {schema: SummarizeContentOutputSchema},
+    prompt: `You are an expert SEO analyst. Your task is to read the following webpage content and distill it into a short, potent summary. This summary will be used by another AI to write a meta description.
 
 Focus on the most important topics, keywords, and the core value proposition of the content. Ignore boilerplate text like menus, footers, and ads. The output should be a dense paragraph of the most critical information.
 
@@ -43,18 +45,21 @@ Webpage Content:
 {{{pageContent}}}
 ---
 `,
-});
+  });
 
-const summarizeContentFlow = ai.defineFlow(
-  {
-    name: 'summarizeContentFlow',
-    inputSchema: SummarizeContentInputSchema.omit({apiKey: true}),
-    outputSchema: SummarizeContentOutputSchema,
-  },
-  async (promptData) => {
-    // Truncate content to avoid hitting model context limits, focusing on the start of the content
-    const truncatedContent = promptData.pageContent.substring(0, 15000);
-    const {output} = await prompt({ ...promptData, pageContent: truncatedContent });
-    return output!;
-  }
-);
+  const summarizeContentFlow = ai.defineFlow(
+    {
+      name: 'summarizeContentFlow',
+      inputSchema: SummarizeContentInputSchema.omit({apiKey: true}),
+      outputSchema: SummarizeContentOutputSchema,
+    },
+    async (promptData) => {
+      // Truncate content to avoid hitting model context limits, focusing on the start of the content
+      const truncatedContent = promptData.pageContent.substring(0, 15000);
+      const {output} = await prompt({ ...promptData, pageContent: truncatedContent });
+      return output!;
+    }
+  );
+
+  return summarizeContentFlow(rest);
+}

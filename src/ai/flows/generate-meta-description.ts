@@ -9,8 +9,8 @@
  * - GenerateMetaDescriptionOutput - The return type for the generateMetaDescription function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { genkit, z } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 
 const GenerateMetaDescriptionInputSchema = z.object({
   apiKey: z.string().describe("The user's Gemini API key."),
@@ -27,14 +27,16 @@ export type GenerateMetaDescriptionOutput = z.infer<typeof GenerateMetaDescripti
 
 export async function generateMetaDescription(input: GenerateMetaDescriptionInput): Promise<GenerateMetaDescriptionOutput> {
   const { apiKey, ...rest } = input;
-  return generateMetaDescriptionFlow.withAuth({ apiKey })(rest);
-}
 
-const prompt = ai.definePrompt({
-  name: 'generateMetaDescriptionPrompt',
-  input: {schema: GenerateMetaDescriptionInputSchema.omit({apiKey: true})},
-  output: {schema: GenerateMetaDescriptionOutputSchema},
-  prompt: `You are an expert SEO copywriter. Analyze the following webpage content and write a compelling, SEO-friendly meta description.
+  const ai = genkit({
+    plugins: [googleAI({ apiKey })],
+  });
+
+  const prompt = ai.definePrompt({
+    name: 'generateMetaDescriptionPrompt',
+    input: {schema: GenerateMetaDescriptionInputSchema.omit({apiKey: true})},
+    output: {schema: GenerateMetaDescriptionOutputSchema},
+    prompt: `You are an expert SEO copywriter. Analyze the following webpage content and write a compelling, SEO-friendly meta description.
 
 Rules:
 - The meta description must be a single paragraph.
@@ -47,18 +49,21 @@ Webpage Content:
 {{{pageContent}}}
 ---
 `,
-});
+  });
 
-const generateMetaDescriptionFlow = ai.defineFlow(
-  {
-    name: 'generateMetaDescriptionFlow',
-    inputSchema: GenerateMetaDescriptionInputSchema.omit({apiKey: true}),
-    outputSchema: GenerateMetaDescriptionOutputSchema,
-  },
-  async (promptData) => {
-    // Truncate content to avoid hitting model context limits
-    const truncatedContent = promptData.pageContent.substring(0, 10000);
-    const {output} = await prompt({ ...promptData, pageContent: truncatedContent });
-    return output!;
-  }
-);
+  const generateMetaDescriptionFlow = ai.defineFlow(
+    {
+      name: 'generateMetaDescriptionFlow',
+      inputSchema: GenerateMetaDescriptionInputSchema.omit({apiKey: true}),
+      outputSchema: GenerateMetaDescriptionOutputSchema,
+    },
+    async (promptData) => {
+      // Truncate content to avoid hitting model context limits
+      const truncatedContent = promptData.pageContent.substring(0, 10000);
+      const {output} = await prompt({ ...promptData, pageContent: truncatedContent });
+      return output!;
+    }
+  );
+
+  return generateMetaDescriptionFlow(rest);
+}

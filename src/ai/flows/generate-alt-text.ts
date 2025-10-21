@@ -9,8 +9,8 @@
  * - GenerateAltTextOutput - The return type for the generateAltText function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { genkit, z } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 
 const GenerateAltTextInputSchema = z.object({
   apiKey: z.string().describe('The user\'s Gemini API key.'),
@@ -27,27 +27,32 @@ export type GenerateAltTextOutput = z.infer<typeof GenerateAltTextOutputSchema>;
 
 export async function generateAltText(input: GenerateAltTextInput): Promise<GenerateAltTextOutput> {
   const { apiKey, ...rest } = input;
-  return generateAltTextFlow.withAuth({ apiKey })(rest);
-}
 
-const prompt = ai.definePrompt({
-  name: 'generateAltTextPrompt',
-  input: {schema: GenerateAltTextInputSchema.omit({apiKey: true})},
-  output: {schema: GenerateAltTextOutputSchema},
-  model: 'googleai/gemini-pro-vision',
-  prompt: `You are an AI expert in SEO and accessibility. Generate a concise, descriptive, and SEO-friendly alt text for the following image. The alt text should accurately describe the image for visually impaired users and search engines. Do not include phrases like "image of" or "picture of".
+  const ai = genkit({
+    plugins: [googleAI({ apiKey })],
+  });
+
+  const prompt = ai.definePrompt({
+    name: 'generateAltTextPrompt',
+    input: {schema: GenerateAltTextInputSchema.omit({apiKey: true})},
+    output: {schema: GenerateAltTextOutputSchema},
+    model: 'gemini-pro-vision',
+    prompt: `You are an AI expert in SEO and accessibility. Generate a concise, descriptive, and SEO-friendly alt text for the following image. The alt text should accurately describe the image for visually impaired users and search engines. Do not include phrases like "image of" or "picture of".
 
 Image: {{media url=imageUrl}}`,
-});
+  });
 
-const generateAltTextFlow = ai.defineFlow(
-  {
-    name: 'generateAltTextFlow',
-    inputSchema: GenerateAltTextInputSchema.omit({apiKey: true}),
-    outputSchema: GenerateAltTextOutputSchema,
-  },
-  async (promptData) => {
-    const {output} = await prompt(promptData);
-    return output!;
-  }
-);
+  const generateAltTextFlow = ai.defineFlow(
+    {
+      name: 'generateAltTextFlow',
+      inputSchema: GenerateAltTextInputSchema.omit({apiKey: true}),
+      outputSchema: GenerateAltTextOutputSchema,
+    },
+    async (promptData) => {
+      const {output} = await prompt(promptData);
+      return output!;
+    }
+  );
+
+  return generateAltTextFlow(rest);
+}

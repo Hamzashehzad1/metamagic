@@ -9,8 +9,8 @@
  * - ExtractSeoMetadataOutput - The return type for the extractSeoMetadata function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { genkit, z } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 
 const ExtractSeoMetadataInputSchema = z.object({
   apiKey: z.string().describe('The user\'s Gemini API key.'),
@@ -38,15 +38,17 @@ export type ExtractSeoMetadataOutput = z.infer<typeof ExtractSeoMetadataOutputSc
 
 export async function extractSeoMetadata(input: ExtractSeoMetadataInput): Promise<ExtractSeoMetadataOutput> {
   const { apiKey, ...rest } = input;
-  return extractSeoMetadataFlow.withAuth({ apiKey })(rest);
-}
+  
+  const ai = genkit({
+    plugins: [googleAI({ apiKey })],
+  });
 
-const prompt = ai.definePrompt({
-  name: 'extractSeoMetadataPrompt',
-  input: {schema: ExtractSeoMetadataInputSchema.omit({apiKey: true})},
-  output: {schema: ExtractSeoMetadataOutputSchema},
-  model: 'googleai/gemini-pro-vision',
-  prompt: `You are an expert at creating metadata for stock photography websites like Adobe Stock and Getty Images. Your goal is to maximize the visibility and saleability of the image.
+  const prompt = ai.definePrompt({
+    name: 'extractSeoMetadataPrompt',
+    input: {schema: ExtractSeoMetadataInputSchema.omit({apiKey: true})},
+    output: {schema: ExtractSeoMetadataOutputSchema},
+    model: 'gemini-pro-vision',
+    prompt: `You are an expert at creating metadata for stock photography websites like Adobe Stock and Getty Images. Your goal is to maximize the visibility and saleability of the image.
 
 Image Caption: {{{imageCaption}}}
 
@@ -60,17 +62,22 @@ Constraints:
 - Must Include Keywords: {{{includeKeywords}}}.
 - Must Exclude Keywords: {{{excludeKeywords}}}.
 
-Generate the metadata based on these rules, focusing on commercial value and searchability.`,
-});
+Generate the metadata based on these rules, focusing on commercial value and searchability.
 
-const extractSeoMetadataFlow = ai.defineFlow(
-  {
-    name: 'extractSeoMetadataFlow',
-    inputSchema: ExtractSeoMetadataInputSchema.omit({apiKey: true}),
-    outputSchema: ExtractSeoMetadataOutputSchema,
-  },
-  async (promptData) => {
-    const {output} = await prompt(promptData);
-    return output!;
-  }
-);
+Image: {{media url=photoDataUri}}`,
+  });
+
+  const extractSeoMetadataFlow = ai.defineFlow(
+    {
+      name: 'extractSeoMetadataFlow',
+      inputSchema: ExtractSeoMetadataInputSchema.omit({apiKey: true}),
+      outputSchema: ExtractSeoMetadataOutputSchema,
+    },
+    async (promptData) => {
+      const {output} = await prompt(promptData);
+      return output!;
+    }
+  );
+
+  return extractSeoMetadataFlow(rest);
+}

@@ -9,8 +9,9 @@
  * - GenerateImageCaptionOutput - The return type for the generateImageCaption function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { genkit, z } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
+
 
 const GenerateImageCaptionInputSchema = z.object({
   apiKey: z.string().describe('The user\'s Gemini API key.'),
@@ -29,27 +30,32 @@ export type GenerateImageCaptionOutput = z.infer<typeof GenerateImageCaptionOutp
 
 export async function generateImageCaption(input: GenerateImageCaptionInput): Promise<GenerateImageCaptionOutput> {
   const { apiKey, ...rest } = input;
-  return generateImageCaptionFlow.withAuth({ apiKey })(rest);
-}
 
-const prompt = ai.definePrompt({
-  name: 'generateImageCaptionPrompt',
-  input: {schema: GenerateImageCaptionInputSchema.omit({apiKey: true})},
-  output: {schema: GenerateImageCaptionOutputSchema},
-  model: 'googleai/gemini-pro-vision',
-  prompt: `You are an AI image captioning expert for stock photography. Generate a concise, factual, and descriptive caption for the image. The caption should be suitable for use as a description on a stock photo website.
+  const ai = genkit({
+    plugins: [googleAI({ apiKey })],
+  });
+
+  const prompt = ai.definePrompt({
+    name: 'generateImageCaptionPrompt',
+    input: {schema: GenerateImageCaptionInputSchema.omit({apiKey: true})},
+    output: {schema: GenerateImageCaptionOutputSchema},
+    model: 'gemini-pro-vision',
+    prompt: `You are an AI image captioning expert for stock photography. Generate a concise, factual, and descriptive caption for the image. The caption should be suitable for use as a description on a stock photo website.
 
 Image: {{media url=photoDataUri}}`,
-});
+  });
 
-const generateImageCaptionFlow = ai.defineFlow(
-  {
-    name: 'generateImageCaptionFlow',
-    inputSchema: GenerateImageCaptionInputSchema.omit({apiKey: true}),
-    outputSchema: GenerateImageCaptionOutputSchema,
-  },
-  async (promptData) => {
-    const {output} = await prompt(promptData);
-    return output!;
-  }
-);
+  const generateImageCaptionFlow = ai.defineFlow(
+    {
+      name: 'generateImageCaptionFlow',
+      inputSchema: GenerateImageCaptionInputSchema.omit({apiKey: true}),
+      outputSchema: GenerateImageCaptionOutputSchema,
+    },
+    async (promptData) => {
+      const {output} = await prompt(promptData);
+      return output!;
+    }
+  );
+
+  return generateImageCaptionFlow(rest);
+}
