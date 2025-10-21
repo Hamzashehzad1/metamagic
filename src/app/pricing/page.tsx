@@ -1,4 +1,3 @@
-
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +22,7 @@ export default function PricingPage() {
         <section className="text-center py-20 md:py-32 bg-gradient-to-b from-background to-muted/50">
           <div className="container mx-auto px-4">
             <h1 className="text-4xl md:text-6xl font-extrabold font-headline text-primary tracking-tighter">
-              The Best Price You'll Ever See.
+              Simple, Transparent Pricing
             </h1>
             <p className="mt-6 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground">
               We believe powerful SEO tools should be accessible to everyone. No hidden fees, no enterprise plans, no nonsense. Just powerful, free tools to help you succeed.

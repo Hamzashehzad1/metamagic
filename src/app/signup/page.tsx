@@ -14,6 +14,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import AuthGuard from '@/components/auth-guard';
+import { Logo } from '@/components/logo';
 
 function SignUpPage() {
     const [email, setEmail] = useState('');
@@ -80,7 +81,18 @@ function SignUpPage() {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-background p-4">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+             <Link href="/" className="flex items-center gap-2 mb-8">
+                <Logo className="h-10 w-auto"/>
+                <div className="flex flex-col">
+                    <span className="font-headline font-bold text-2xl tracking-tighter text-primary">MetaMagic</span>
+                </div>
+            </Link>
+             <h1 className="text-3xl md:text-4xl font-bold font-headline text-primary tracking-tighter mb-2">
+                Create Your Free MetaMagic Account
+            </h1>
+            <p className="text-muted-foreground mb-6">Get started in seconds. It's free forever.</p>
+
             <Card className="mx-auto max-w-sm w-full">
                 <CardHeader>
                     <CardTitle className="text-xl">Sign Up</CardTitle>
