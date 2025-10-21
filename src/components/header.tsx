@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -56,8 +57,7 @@ export function Header() {
 
   const renderNavLinks = (isDropdown = false) => {
     const Comp = isDropdown ? DropdownMenuItem : NavigationMenuItem;
-    const LinkComp = isDropdown ? 'div' : NavigationMenuLink;
-
+    
     if (user && isNotAdminArea) {
       return (
         <>
@@ -82,18 +82,53 @@ export function Header() {
     if (!user) {
        return (
         <>
-            <Comp asChild>
-                <Link href="/#features" className={!isDropdown ? navigationMenuTriggerStyle() : ''}>
-                    Features
+            <NavigationMenuItem asChild>
+                <Link href="/#features" legacyBehavior passHref>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                        Features
+                    </NavigationMenuLink>
                 </Link>
-            </Comp>
-            <Comp asChild>
-                <Link href="/pricing" className={!isDropdown ? navigationMenuTriggerStyle() : ''}>
-                    Pricing
+            </NavigationMenuItem>
+            <NavigationMenuItem asChild>
+                <Link href="/pricing" legacyBehavior passHref>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                        Pricing
+                    </NavigationMenuLink>
                 </Link>
-            </Comp>
+            </NavigationMenuItem>
         </>
        )
+    }
+    return null;
+  }
+
+  const renderMobileNavLinks = () => {
+     if (user && isNotAdminArea) {
+      return (
+        <>
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard">Metadata Generator</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/wp-alt-text">WP Alt Text</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/meta-description">Meta Description</Link>
+          </DropdownMenuItem>
+        </>
+      );
+    }
+    if (!user) {
+        return (
+            <>
+                <DropdownMenuItem asChild>
+                    <Link href="/#features">Features</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/pricing">Pricing</Link>
+                </DropdownMenuItem>
+            </>
+        )
     }
     return null;
   }
@@ -109,13 +144,13 @@ export function Header() {
             </div>
         </Link>
         
-        {!isMobile ? (
+        {!isMobile && (
           <NavigationMenu>
             <NavigationMenuList>
               {renderNavLinks()}
             </NavigationMenuList>
           </NavigationMenu>
-        ) : <div />}
+        )}
 
         <div className="flex items-center gap-2 md:gap-4">
             {isUserLoading ? (
@@ -160,7 +195,7 @@ export function Header() {
                 </DropdownMenu>
             ) : (
                 <>
-                    {isMobile ? null : (
+                    {!isMobile && (
                         <div className="flex items-center gap-2">
                             <Button variant="ghost" asChild>
                                 <Link href="/login">Login</Link>
@@ -182,7 +217,7 @@ export function Header() {
                       </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    {renderNavLinks(true)}
+                    {renderMobileNavLinks()}
                     {!user && (
                       <>
                         <DropdownMenuSeparator/>

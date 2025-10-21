@@ -1,3 +1,4 @@
+
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -85,7 +86,7 @@ export default function PricingPage() {
                  <Button asChild size="lg" className="w-full">
                     <Link href="/signup">Get Started - It's Free! <ChevronRight className="ml-2" /></Link>
                  </Button>
-                 <p className="text-xs text-muted-foreground">No credit card required.</p>
+                 <p className="text-xs text-muted-foreground">No credit card required. <Link href="/#features" className='underline'>Learn more</Link>.</p>
               </CardFooter>
             </Card>
           </div>
