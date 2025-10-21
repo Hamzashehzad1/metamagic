@@ -31,7 +31,7 @@ export default function LandingPage() {
                   Done with Tedious Alt Text? Automate It.
                 </h1>
                 <p className="mt-6 text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground text-balance">
-                  Tired of the soul-crushing, repetitive task of writing alt text for images? It's time to stop. MetaMagic is your secret weapon for turning hours of manual work into seconds. Our AI doesn't just fill in a blank `img alt` tag—it crafts a meaningful **alt description** that boosts your **alt text SEO** and improves **image accessibility**. Reclaim your time. Rank higher. It's that simple.
+                  Tired of the soul-crushing, repetitive task of writing alt text for images? It's time to stop. MetaMagic is your secret weapon for turning hours of manual work into seconds. Our AI doesn't just fill in a blank img alt tag—it crafts a meaningful alt description that boosts your alt text SEO and improves image accessibility. Reclaim your time. Rank higher. It's that simple.
                 </p>
                 <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
                 <Button asChild size="lg" className="group">
@@ -68,7 +68,7 @@ export default function LandingPage() {
                   <CardTitle className="text-center text-xl font-bold">AI Metadata Generator</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-center text-muted-foreground text-balance">Perfect for photographers and e-commerce stores. Upload your images, and our AI becomes your personal **alt text writer**. It instantly generates a **picture alt text**, titles, and keywords that help you rank on Google and sell on stock sites. It's the ultimate tool for **writing alt text** at scale.</p>
+                  <p className="text-center text-muted-foreground text-balance">Perfect for photographers and e-commerce stores. Upload your images, and our AI becomes your personal alt text writer. It instantly generates a picture alt text, titles, and keywords that help you rank on Google and sell on stock sites. It's the ultimate tool for writing alt text at scale.</p>
                 </CardContent>
               </Card>
               <Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
@@ -82,7 +82,7 @@ export default function LandingPage() {
                   <CardTitle className="text-center text-xl font-bold">WordPress Alt Text Auditor</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-center text-muted-foreground text-balance">Is your media library an SEO graveyard of missing **alt tags**? Connect your WordPress site, and our tool scans everything. We make **adding alt text to images** a one-click job, fixing your site’s **alt tags for images** and boosting your **image alt text SEO** overnight.</p>
+                  <p className="text-center text-muted-foreground text-balance">Is your media library an SEO graveyard of missing alt tags? Connect your WordPress site, and our tool scans everything. We make adding alt text to images a one-click job, fixing your site’s alt tags for images and boosting your image alt text SEO overnight.</p>
                 </CardContent>
               </Card>
               <Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
@@ -125,7 +125,7 @@ export default function LandingPage() {
                              <div className="flex-shrink-0 w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-headline text-2xl text-primary font-bold">2</div>
                             <div className="flex-1 text-center md:text-right">
                                 <h3 className="text-2xl font-semibold">Click "Generate"</h3>
-                                <p className="text-muted-foreground mt-2">This is the magic button. Our **AI alt text** engine analyzes your content and instantly writes everything you need: a descriptive **alt attribute**, SEO titles, and commercially-valuable keywords.</p>
+                                <p className="text-muted-foreground mt-2">This is the magic button. Our AI alt text engine analyzes your content and instantly writes everything you need: a descriptive alt attribute, SEO titles, and commercially-valuable keywords.</p>
                             </div>
                         </div>
                         <div className="flex flex-col md:flex-row items-center gap-8">
@@ -172,7 +172,7 @@ export default function LandingPage() {
                             <ul className="space-y-4">
                                 <li className="flex items-start gap-3"><span className="text-green-500 mt-1">&#10003;</span><div><strong>Upload 50 images.</strong> Go grab a coffee.</div></li>
                                 <li className="flex items-start gap-3"><span className="text-green-500 mt-1">&#10003;</span><div><strong>Click one button.</strong> Seriously, just one.</div></li>
-                                <li className="flex items-start gap-3"><span className="text-green-500 mt-1">&#10003;</span><div><strong>Review perfect metadata.</strong> Our AI handles the **alt attribute for images**, titles, and keywords.</div></li>
+                                <li className="flex items-start gap-3"><span className="text-green-500 mt-1">&#10003;</span><div><strong>Review perfect metadata.</strong> Our AI handles the alt attribute for images, titles, and keywords.</div></li>
                                 <li className="flex items-start gap-3"><span className="text-green-500 mt-1">&#10003;</span><div><strong>Export or Sync.</strong> All 50 images are done and optimized.</div></li>
                                 <li className="flex items-start gap-3 font-bold mt-4"><span className="text-green-500 mt-1">&#10003;</span><div>Result: Minutes spent, expert-level optimization.</div></li>
                             </ul>
@@ -189,23 +189,23 @@ export default function LandingPage() {
                 <div className="text-center mb-16">
                     <p className="text-sm font-semibold uppercase tracking-wider text-primary">SEO 101</p>
                     <h2 className="mt-2 text-3xl md:text-4xl font-bold font-headline">Why Does Google Care So Much About Alt Text?</h2>
-                    <p className="mt-4 max-w-3xl mx-auto text-muted-foreground">It’s not just busy work. That small piece of **alt text HTML** is one of the most powerful and overlooked tools for SEO and accessibility. Let's break down the **alt tag meaning**.</p>
+                    <p className="mt-4 max-w-3xl mx-auto text-muted-foreground">It’s not just busy work. That small piece of alt text HTML is one of the most powerful and overlooked tools for SEO and accessibility. Let's break down the alt tag meaning.</p>
                 </div>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                     <div className="flex flex-col items-center text-center p-6 border rounded-lg hover:shadow-lg transition-shadow">
                         <BarChart className="h-10 w-10 text-primary mb-4" />
                         <h3 className="text-xl font-semibold">It's a Ranking Signal</h3>
-                        <p className="text-muted-foreground mt-2">A good **alt description** gives search engines like Google critical context about your image. This helps them understand what your page is about, improving your chances to rank not just in Google Images, but in regular search results too. Strong **alt tags and SEO** go hand-in-hand.</p>
+                        <p className="text-muted-foreground mt-2">A good alt description gives search engines like Google critical context about your image. This helps them understand what your page is about, improving your chances to rank not just in Google Images, but in regular search results too. Strong alt tags and SEO go hand-in-hand.</p>
                     </div>
                     <div className="flex flex-col items-center text-center p-6 border rounded-lg hover:shadow-lg transition-shadow">
                         <Users className="h-10 w-10 text-primary mb-4" />
                         <h3 className="text-xl font-semibold">It's About Accessibility</h3>
-                        <p className="text-muted-foreground mt-2">For visually impaired users who rely on screen readers, the **alternative text** is their only way to "see" your images. A descriptive **alt text image HTML** tag ensures everyone has access to your content, which is not only the right thing to do, it's also a factor in modern SEO.</p>
+                        <p className="text-muted-foreground mt-2">For visually impaired users who rely on screen readers, the alternative text is their only way to "see" your images. A descriptive alt text image HTML tag ensures everyone has access to your content, which is not only the right thing to do, it's also a factor in modern SEO.</p>
                     </div>
                     <div className="flex flex-col items-center text-center p-6 border rounded-lg hover:shadow-lg transition-shadow">
                         <ImageIcon className="h-10 w-10 text-primary mb-4" />
                         <h3 className="text-xl font-semibold">It's Your Broken Image Backup</h3>
-                        <p className="text-muted-foreground mt-2">Ever seen a broken image icon on a webpage? If an image fails to load, the browser displays the **alternate tags** instead. A well-written **alternative text for images** ensures the user still understands what was supposed to be there, maintaining the context of your page.</p>
+                        <p className="text-muted-foreground mt-2">Ever seen a broken image icon on a webpage? If an image fails to load, the browser displays the alternate tags instead. A well-written alternative text for images ensures the user still understands what was supposed to be there, maintaining the context of your page.</p>
                     </div>
                 </div>
             </div>
@@ -226,28 +226,28 @@ export default function LandingPage() {
                         <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-full"><Check className="h-6 w-6 text-green-500 flex-shrink-0"/></div>
                         <div>
                             <h3 className="font-semibold text-lg">Save Dozens of Hours Every Week</h3>
-                            <p className="text-muted-foreground mt-1">What would you do with all that extra time? The endless chore of **adding alt tags to images** is over. Focus on your actual work, not tedious SEO chores that our AI can do in seconds.</p>
+                            <p className="text-muted-foreground mt-1">What would you do with all that extra time? The endless chore of adding alt tags to images is over. Focus on your actual work, not tedious SEO chores that our AI can do in seconds.</p>
                         </div>
                     </div>
                      <div className="flex items-start gap-4">
                         <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-full"><Check className="h-6 w-6 text-green-500 flex-shrink-0"/></div>
                         <div>
                             <h3 className="font-semibold text-lg">Finally Master Alt Text and SEO</h3>
-                            <p className="text-muted-foreground mt-1">Our AI is trained on top-ranking content and follows **alt text best practices**. It understands that a great **Google alt** attribute is descriptive and useful, improving both **alt text and SEO** performance and accessibility.</p>
+                            <p className="text-muted-foreground mt-1">Our AI is trained on top-ranking content and follows alt text best practices. It understands that a great Google alt attribute is descriptive and useful, improving both alt text and SEO performance and accessibility.</p>
                         </div>
                     </div>
                      <div className="flex items-start gap-4">
                         <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-full"><Check className="h-6 w-6 text-green-500 flex-shrink-0"/></div>
                         <div>
                             <h3 className="font-semibold text-lg">Drive More Organic Traffic</h3>
-                            <p className="text-muted-foreground mt-1">Proper **alt tags SEO** is a cornerstone of modern digital marketing. By ensuring every **image alt attributes SEO** is filled with a meaningful, keyword-rich description, you open the floodgates to more visitors from Google Images.</p>
+                            <p className="text-muted-foreground mt-1">Proper alt tags SEO is a cornerstone of modern digital marketing. By ensuring every image alt attributes SEO is filled with a meaningful, keyword-rich description, you open the floodgates to more visitors from Google Images.</p>
                         </div>
                     </div>
                      <div className="flex items-start gap-4">
                         <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-full"><Check className="h-6 w-6 text-green-500 flex-shrink-0"/></div>
                         <div>
                             <h3 className="font-semibold text-lg">Secure and Private by Design</h3>
-                            <p className="text-muted-foreground mt-1">Your API keys and site connections are encrypted and stored securely in your own private data space, linked only to your account. Your data is yours, period. The **alt attribute SEO** is for your site, not for our servers.</p>
+                            <p className="text-muted-foreground mt-1">Your API keys and site connections are encrypted and stored securely in your own private data space, linked only to your account. Your data is yours, period. The alt attribute SEO is for your site, not for our servers.</p>
                         </div>
                     </div>
                 </div>
@@ -274,7 +274,7 @@ export default function LandingPage() {
                     <div className="flex flex-col items-center text-center p-6 border rounded-lg bg-background hover:shadow-lg hover:-translate-y-1 transition-all">
                         <div className="p-4 bg-primary/10 rounded-xl border border-primary/20 mb-4"><Globe className="h-8 w-8 text-primary"/></div>
                         <h3 className="font-semibold text-lg">E-Commerce Stores</h3>
-                        <p className="text-muted-foreground text-sm mt-1">Turn your product images into traffic magnets. Optimize thousands of images with descriptive **alternative text SEO** to boost your Google Shopping and organic search visibility.
+                        <p className="text-muted-foreground text-sm mt-1">Turn your product images into traffic magnets. Optimize thousands of images with descriptive alternative text SEO to boost your Google Shopping and organic search visibility.
                         <br/><br/>
                         <span className="italic text-primary/80">Example: A boutique owner used MetaMagic to fix alt text on 500 product images. Within a month, their "blue floral dress" started ranking on the first page of Google Images, driving direct sales.</span>
                         </p>
@@ -282,7 +282,7 @@ export default function LandingPage() {
                     <div className="flex flex-col items-center text-center p-6 border rounded-lg bg-background hover:shadow-lg hover:-translate-y-1 transition-all">
                         <div className="p-4 bg-primary/10 rounded-xl border border-primary/20 mb-4"><BookOpen className="h-8 w-8 text-primary"/></div>
                         <h3 className="font-semibold text-lg">Bloggers & Publishers</h3>
-                        <p className="text-muted-foreground text-sm mt-1">Ensure every image in your articles has a perfect **alt picture** tag, boosting your **SEO image alt text** and making your content more accessible to all readers.
+                        <p className="text-muted-foreground text-sm mt-1">Ensure every image in your articles has a perfect alt picture tag, boosting your SEO image alt text and making your content more accessible to all readers.
                         <br/><br/>
                         <span className="italic text-primary/80">Example: A food blogger ran our WordPress tool and found 150 posts with missing alt text. After a few clicks, her image accessibility score improved, and she saw a 20% bump in traffic from niche recipe searches.</span>
                         </p>
@@ -290,7 +290,7 @@ export default function LandingPage() {
                      <div className="flex flex-col items-center text-center p-6 border rounded-lg bg-background hover:shadow-lg hover:-translate-y-1 transition-all">
                         <div className="p-4 bg-primary/10 rounded-xl border border-primary/20 mb-4"><Layers className="h-8 w-8 text-primary"/></div>
                         <h3 className="font-semibold text-lg">Agencies & Developers</h3>
-                        <p className="text-muted-foreground text-sm mt-1">Turn a tedious chore into a quick win. Audit and fix entire client websites in minutes. Our WordPress integration makes **adding alt text to images** a profitable, high-value service.
+                        <p className="text-muted-foreground text-sm mt-1">Turn a tedious chore into a quick win. Audit and fix entire client websites in minutes. Our WordPress integration makes adding alt tags to images a profitable, high-value service.
                         <br/><br/>
                         <span className="italic text-primary/80">Example: A freelance developer onboarded a new client and used MetaMagic to fix 1,000+ missing alt tags in under 10 minutes, immediately demonstrating value and improving the site’s technical SEO baseline.</span>
                         </p>
@@ -308,10 +308,10 @@ export default function LandingPage() {
                         <h2 className="mt-2 text-3xl md:text-4xl font-bold font-headline">Powered by Google's Best AI</h2>
                         <p className="mt-4 text-muted-foreground">This isn't just any AI. MetaMagic is built on Google's state-of-the-art Gemini family of models. We use the right tool for every job:</p>
                         <ul className="mt-4 space-y-2 text-left">
-                            <li className="flex items-start gap-3"><Check className="text-primary mt-1 flex-shrink-0"/><span>**Gemini 2.5 Flash:** For lightning-fast text generation, like writing meta descriptions.</span></li>
-                            <li className="flex items-start gap-3"><Check className="text-primary mt-1 flex-shrink-0"/><span>**Gemini Pro Vision:** For its incredible ability to analyze and understand the content of your images, which is key for high-quality **alt text for images**.</span></li>
+                            <li className="flex items-start gap-3"><Check className="text-primary mt-1 flex-shrink-0"/><span>Gemini 2.5 Flash: For lightning-fast text generation, like writing meta descriptions.</span></li>
+                            <li className="flex items-start gap-3"><Check className="text-primary mt-1 flex-shrink-0"/><span>Gemini Pro Vision: For its incredible ability to analyze and understand the content of your images, which is key for high-quality alt text for images.</span></li>
                         </ul>
-                         <p className="mt-4 text-muted-foreground">This multi-model approach means you get exceptionally high-quality **alt text AI** that understands nuance and context, far beyond simple object recognition. We follow all **alt text guidelines** to ensure the output is top-notch.</p>
+                         <p className="mt-4 text-muted-foreground">This multi-model approach means you get exceptionally high-quality alt text AI that understands nuance and context, far beyond simple object recognition. We follow all alt text guidelines to ensure the output is top-notch.</p>
                     </div>
                     <div className="flex justify-center">
                         <BrainCircuit className="h-48 w-48 text-primary/30" />
@@ -340,7 +340,7 @@ export default function LandingPage() {
                     <div className="p-6 border rounded-lg">
                         <div className="text-4xl font-extrabold text-primary">2X</div>
                         <p className="font-semibold mt-2">More Image Search Traffic</p>
-                        <p className="text-sm text-muted-foreground mt-1">Proper **image alt attributes SEO** is your ticket to higher rankings in Google Images.</p>
+                        <p className="text-sm text-muted-foreground mt-1">Proper image alt attributes SEO is your ticket to higher rankings in Google Images.</p>
                     </div>
                 </div>
             </div>
@@ -400,7 +400,7 @@ export default function LandingPage() {
                             <CardTitle className="text-lg">Be Descriptive, Not Spammy</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-muted-foreground text-sm">Good **alt text** describes what's in the image. Bad alt text is just a list of keywords. Instead of `alt="dog cat pet buy"`, write `alt="A golden retriever playing with a calico cat in a sunny field"`. It's better for **alt tags SEO** and for users.</p>
+                            <p className="text-muted-foreground text-sm">Good alt text describes what's in the image. Bad alt text is just a list of keywords. Instead of `alt="dog cat pet buy"`, write `alt="A golden retriever playing with a calico cat in a sunny field"`. It's better for alt tags SEO and for users.</p>
                         </CardContent>
                     </Card>
                     <Card className="bg-background">
@@ -408,7 +408,7 @@ export default function LandingPage() {
                             <CardTitle className="text-lg">Don't Forget the `title`</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-muted-foreground text-sm">The **alt title** attribute, while less crucial than the main **alt attribute**, provides a handy tooltip on hover. It's a small user experience win that adds a touch of polish. Our tool generates both for you.</p>
+                            <p className="text-muted-foreground text-sm">The alt title attribute, while less crucial than the main alt attribute, provides a handy tooltip on hover. It's a small user experience win that adds a touch of polish. Our tool generates both for you.</p>
                         </CardContent>
                     </Card>
                      <Card className="bg-background">
@@ -416,7 +416,7 @@ export default function LandingPage() {
                             <CardTitle className="text-lg">Context is King</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-muted-foreground text-sm">Your **alt** tag should reflect the context of the page. If an image of a laptop is on a page selling that exact model, it's a good idea to include the model name in the alt text. This is a key part of our AI's process for creating relevant **image alt text**.</p>
+                            <p className="text-muted-foreground text-sm">Your alt tag should reflect the context of the page. If an image of a laptop is on a page selling that exact model, it's a good idea to include the model name in the alt text. This is a key part of our AI's process for creating relevant image alt text.</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -428,7 +428,7 @@ export default function LandingPage() {
             <div className="container mx-auto px-4 text-center">
                  <p className="text-sm font-semibold uppercase tracking-wider text-primary">Plays Well With Others</p>
                 <h2 className="mt-2 text-3xl md:text-4xl font-bold font-headline">Seamless Integrations</h2>
-                <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">We connect with the tools you already use, ensuring a smooth workflow.</p>
+                <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">We connect with the tools you already use, ensuring a smooth workflow from generation to publication.</p>
                 <div className="mt-12 flex justify-center items-center gap-12">
                     <div className="flex flex-col items-center gap-2">
                         <Image src="https://raw.githubusercontent.com/firebase/firebase-brand-guidelines/main/static/images/brand-guidelines/logo-logomark.svg" width={64} height={64} alt="Firebase Logo" data-ai-hint="logo" />
@@ -438,12 +438,12 @@ export default function LandingPage() {
                      <div className="flex flex-col items-center gap-2">
                         <Image src="https://upload.wikimedia.org/wikipedia/commons/2/20/WordPress_logo.svg" width={64} height={64} alt="WordPress Logo" data-ai-hint="logo" />
                         <span className="font-semibold">WordPress</span>
-                        <p className="text-sm text-muted-foreground">For direct media library integration and **adding alt tags to images**.</p>
+                        <p className="text-sm text-muted-foreground">For direct media library integration and adding alt tags to images.</p>
                     </div>
                     <div className="flex flex-col items-center gap-2">
                         <Image src="https://www.gstatic.com/images/branding/product/1x/gemini_48dp.png" width={64} height={64} alt="Google Gemini Logo" data-ai-hint="logo" />
                         <span className="font-semibold">Google Gemini</span>
-                        <p className="text-sm text-muted-foreground">The AI engine powering our **alt text AI** generation.</p>
+                        <p className="text-sm text-muted-foreground">The AI engine powering our intelligent alt text generation.</p>
                     </div>
                 </div>
                  <p className="text-xs text-muted-foreground mt-8">Our tool also generates a standard CSV for stock sites, making your life easier.</p>
@@ -477,7 +477,7 @@ export default function LandingPage() {
             <Zap className="h-12 w-12 text-primary mx-auto" />
             <h2 className="mt-4 text-3xl md:text-4xl font-bold font-headline text-balance">Ready to Revolutionize Your SEO Workflow?</h2>
             <p className="mt-4 text-lg max-w-2xl mx-auto text-muted-foreground text-balance">
-              You're seconds away from taking the guesswork out of your metadata. Stop leaving traffic and money on the table. The perfect **alternative text** for your images is just a click away.
+              You're seconds away from taking the guesswork out of your metadata. Stop leaving traffic and money on the table. The perfect alternative text for your images is just a click away.
             </p>
             <div className="mt-10">
               <Button asChild size="lg" className="group">
@@ -505,3 +505,5 @@ export default function LandingPage() {
     </div>
   );
 }
+
+    
