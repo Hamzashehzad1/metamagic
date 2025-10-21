@@ -144,8 +144,8 @@ export function Header() {
   }
 
   return (
-    <header className="py-4 px-4 md:px-6 border-b sticky top-0 bg-background/95 backdrop-blur-sm z-20">
-      <div className="container mx-auto flex justify-between items-center">
+    <header className="py-4 px-0 md:px-6 border-b sticky top-0 bg-background/95 backdrop-blur-sm z-20">
+      <div className="container mx-auto flex justify-between items-center px-4 md:px-0">
         <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2">
             <Logo className="h-8 w-auto"/>
             <div className="flex flex-col">
