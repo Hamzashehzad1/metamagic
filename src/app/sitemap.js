@@ -1,6 +1,5 @@
-import { MetadataRoute } from 'next'
- 
-export default function sitemap(): MetadataRoute.Sitemap {
+/** @type {import('next').MetadataRoute.Sitemap} */
+export default function sitemap() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://metamagic.cloud';
 
   return [
