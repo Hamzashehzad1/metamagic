@@ -161,8 +161,9 @@ function MetaDescriptionPage() {
       setMetaDescription(result.metaDescription);
       toast({ title: "Success!", description: "Meta description generated." });
     } catch(e) {
-      setError('Could not generate a meta description. Please try again.');
-      toast({ variant: 'destructive', title: 'Generation Error', description: "Could not generate a meta description. Please try again." });
+      const message = e instanceof Error ? e.message : "Could not generate a meta description. Please try again.";
+      setError(message);
+      toast({ variant: 'destructive', title: 'Generation Error', description: message });
     } finally {
       setIsGenerating(false);
     }
@@ -280,8 +281,8 @@ function MetaDescriptionPage() {
     });
   }, [contentItems, wpFilter]);
 
-  const hasNoKeys = !isLoadingKeys && apiKeys && apiKeys.length === 0;
-  const hasNoConnections = !isLoadingConnections && wpConnections && wpConnections.length === 0;
+  const hasNoKeys = !isLoadingKeys && !!apiKeys && apiKeys.length === 0;
+  const hasNoConnections = !isLoadingConnections && !!wpConnections && wpConnections.length === 0;
 
   if (isLoadingConnections || isLoadingKeys) {
       return (
@@ -449,7 +450,7 @@ function MetaDescriptionPage() {
                                 )}
                                 <div className="flex flex-col gap-4">
                                     {wpConnections?.map(site => (
-                                        <Button key={site.id} variant="outline" onClick={() => handleWpConnect(site)} disabled={isWpLoading || hasNoKeys}>
+                                        <Button key={site.id} variant="outline" onClick={() => handleWpConnect(site)} disabled={!!isWpLoading || !!hasNoKeys}>
                                             {isWpLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
                                             Connect to {site.url}
                                         </Button>
@@ -602,3 +603,5 @@ export default function MetaDescriptionPageWithAuth() {
         </AuthGuard>
     )
 }
+
+    
