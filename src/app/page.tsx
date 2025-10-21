@@ -436,7 +436,7 @@ export default function LandingPage() {
                 <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">We connect with the tools you already use, ensuring a smooth workflow from generation to publication.</p>
                 <div className="mt-12 flex justify-center items-center gap-12">
                     <div className="flex flex-col items-center gap-2">
-                        <Image src="https://raw.githubusercontent.com/firebase/firebase-brand-guidelines/main/static/images/brand-guidelines/logo-logomark.svg" width={64} height={64} alt="Firebase Logo" data-ai-hint="logo" />
+                        <Image src="https://firebase.google.com/static/images/brand-guidelines/logo-logomark.png" width={64} height={64} alt="Firebase Logo" data-ai-hint="logo" />
                         <span className="font-semibold">Firebase</span>
                         <p className="text-sm text-muted-foreground">For secure user authentication and data storage.</p>
                     </div>
@@ -510,5 +510,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
-    
