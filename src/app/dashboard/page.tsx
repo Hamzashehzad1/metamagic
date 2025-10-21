@@ -12,7 +12,7 @@ import { Terminal, Wand2, Loader2 } from 'lucide-react';
 import { MetadataSettings, type MetadataSettings as TMetadataSettings } from '@/components/metadata-settings';
 import { Button } from '@/components/ui/button';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection } from 'firebase/firestore';
 import { type ApiKey } from '@/app/account/page';
 import AuthGuard from '@/components/auth-guard';
 import { AuthOverlay } from '@/components/auth-overlay';
@@ -300,3 +300,5 @@ export default function DashboardPage() {
         </AuthGuard>
     )
 }
+
+    
